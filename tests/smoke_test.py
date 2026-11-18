@@ -106,13 +106,58 @@ with sync_playwright() as p:
     check(nights == J(pg, "() => R.stages.length") and pg.query_selector("#stages li.day.last .night.arr") is not None, f"frise : une nuit par jour + l'arrivée ({nights})")
 
     # Modifier une étape : dormir en bivouac à la fin de l'étape 2 au lieu du refuge
-    pg.locator("#stages li").nth(1).locator(".chg").click(); pg.wait_for_timeout(400)
-    pg.locator("#stages li").nth(1).locator("[data-sleep=bivouac]").click(); pg.wait_for_timeout(1200)
+    pg.locator("#stages li.day").nth(1).locator(".chg").click(); pg.wait_for_timeout(400)
+    pg.locator("#stages li.day").nth(1).locator(".sleep details summary").click(); pg.wait_for_timeout(200)
+    pg.locator("#stages li.day").nth(1).locator("[data-sleep=bivouac]").click(); pg.wait_for_timeout(1200)
     st = J(pg, "() => ({ t: R.stages[1].endType, c: R.stages[1].endPoi && R.stages[1].endPoi.cat, miss: R.stages[1].endMiss, o: S.over[1], first: R.stages[0].endPoi && R.stages[0].endPoi.cat })")
     check(st["o"] == "bivouac" and st["t"] == "bivouac" and (st["c"] in ("bivouac", "water") or st["miss"]), f"étape 2 modifiée : fin en bivouac ({st})")
     check(st["first"] == "hut", "les autres étapes gardent le refuge")
-    pg.locator("#stages li").nth(1).locator(".reset").click(); pg.wait_for_timeout(1000)
+    pg.locator("#stages li.day").nth(1).locator(".reset").click(); pg.wait_for_timeout(1000)
     check(J(pg, "() => !(1 in S.over) && R.stages[1].endType === 'refuge'"), "retour au réglage général")
+
+    # Choisir sa nuit : la liste propose tous les lieux atteignables, le tracé passe par le lieu choisi
+    day2 = pg.locator("#stages li.day").nth(1)
+    n_opts = day2.locator(".opt").count()
+    check(n_opts > 1, f"jour 2 : plusieurs nuits proposées ({n_opts})")
+    J(pg, "() => { state.optFlt = 'all'; renderStages(); }"); pg.wait_for_timeout(200)
+    target = J(pg, """() => { const o = nightOptions(R.stages[1]).filter(o => o.p.cat !== 'water' && o.p.id !== (R.stages[1].endPoi || {}).id);
+      const far = o.filter(x => x.p.d >= 60); const c = (far.length ? far : o)[0]; return c && { id: c.p.id, d: c.p.d, legs: state.legs.length, end0: R.lat[R.stages[0].i1] }; }""")
+    b0 = calls["brouter"]
+    pg.locator(f"#stages li.day >> nth=1 >> [data-opt='{target['id']}']").click(); pg.wait_for_timeout(1500)
+    res = J(pg, f"""() => {{ const s = R.stages[1], p = R.pois.find(q => q.id === '{target['id']}') || s.endPoi;
+      return {{ chosen: s.endChosen && s.endPoi && s.endPoi.id === '{target['id']}', fixed: s.dayFixed, frozen: R.stages[0].pinEnd, end0: R.lat[R.stages[0].i1],
+        m: nearestIdx(R, s.endPoi.lat, s.endPoi.lon).m, legs: state.legs.length }}; }}""")
+    check(res["chosen"] and res["fixed"], f"nuit choisie : le jour 2 finit au lieu choisi ({res})")
+    check(res["frozen"] and abs(res["end0"] - target["end0"]) < 1e-4, "le jour 1 ne bouge pas")
+    if target["d"] >= 40:
+        check(res["m"] < 60 and res["legs"] == target["legs"] + 1 and calls["brouter"] >= b0 + 2, f"le tracé passe par le lieu choisi (à {res['m']:.0f} m, détour recalculé)")
+    check("Annuler" in (pg.text_content("#status") or ""), "message avec « Annuler »")
+
+    # Raccourcir / allonger une journée
+    t3 = J(pg, "() => R.stages[2].time")
+    pg.locator("#stages li.day").nth(2).locator(".chg").click(); pg.wait_for_timeout(300)
+    pg.locator("#stages li.day").nth(2).locator("[data-adj='0.5']").click(); pg.wait_for_timeout(800)
+    t3b = J(pg, "() => R.stages[2].time")
+    check(0.3 < t3b - t3 < 0.7 and J(pg, "() => R.stages[2].dayFixed && R.stages[1].endChosen"), f"jour 3 allongé de 30 min ({t3:.2f} → {t3b:.2f} h), jour 2 gardé")
+    pg.locator("#status .tact-btn").last.click(); pg.wait_for_timeout(800)
+    check(abs(J(pg, "() => R.stages[2].time") - t3) < 0.02, "« Annuler » revient en arrière")
+
+    # Depuis la carte : « Dormir ici » sur un refuge
+    hut = J(pg, """() => { const s = R.stages[3]; const o = nightOptions(s).find(o => o.p.cat === 'hut' && o.p.id !== (s.endPoi || {}).id); return o && o.p.id; }""")
+    if hut:
+        J(pg, f"() => {{ map.setView([R.pois.find(q => q.id === '{hut}').lat, R.pois.find(q => q.id === '{hut}').lon], 14); }}"); pg.wait_for_timeout(300)
+        J(pg, f"() => poiMarkers.get('{hut}').openPopup()"); pg.wait_for_timeout(300)
+        pg.click(".leaflet-popup [data-pa=sleep]"); pg.wait_for_timeout(1500)
+        check(J(pg, f"() => R.stages.some(s => s.endChosen && s.endPoi.id === '{hut}')"), "carte : « Dormir ici » fixe la nuit à ce refuge")
+    # Jour de repos
+    J(pg, "() => toggleRest(0)"); pg.wait_for_timeout(300)
+    check(pg.query_selector("#stages li.restday") is not None and "de repos" in (pg.text_content("#trekSum") or ""), "jour de repos ajouté dans la frise")
+    J(pg, "() => toggleRest(0)")
+    # Tout rendre à Orri
+    pg.click("#bAdjust"); pg.wait_for_timeout(200)
+    pg.click("#bFreeAll"); pg.click("#bFreeAll"); pg.wait_for_timeout(800)
+    check(J(pg, "() => S.pins.length === 0 && !R.stages.some(s => s.endChosen)"), "« Rendre toutes les nuits à Orri » efface les choix")
+    pg.click("#bAdjDone"); pg.wait_for_timeout(300)
 
     # Pastilles : masquer l'eau sur la carte
     pg.click("#chips .chip[data-k=water]"); pg.wait_for_timeout(500)

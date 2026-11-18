@@ -255,6 +255,35 @@ button:active:not(:disabled),.btn:active,.chip:active,.wcard:active,.fab:active,
 .night .chg{flex:none;min-height:44px;padding:0 14px;border-radius:22px;background:#fff;border:1px solid var(--line);font-weight:600;color:var(--forest)}
 .night .pinned{font-size:12.5px;color:var(--muted);white-space:nowrap}
 .day .sleep{margin:8px 0 2px}
+/* Choisir ses nuits */
+.night.mine{background:#f6e7dc}
+.night .chg.on{background:var(--forest);color:#fff;border-color:var(--forest)}
+.len{display:flex;align-items:center;gap:8px;margin:4px 0 10px;background:var(--bg);border-radius:14px;padding:6px}
+.len button{flex:none;min-height:44px;padding:0 12px;border-radius:12px;background:#fff;font-weight:600;font-size:14px}
+.len button .ii{margin-right:2px}
+.len span{flex:1;text-align:center;line-height:1.15}.len span b{display:block;font-size:17px;color:var(--forest)}.len span small{color:var(--muted);font-size:12px}
+.flt{display:flex;gap:6px;overflow-x:auto;margin:8px 0 6px;scrollbar-width:none}
+.flt button{flex:none;min-height:36px;padding:0 12px;border-radius:18px;font-size:13.5px;font-weight:600;background:#fff}
+.flt button.on{background:var(--forest);border-color:var(--forest);color:#fff}
+.flt button em{font-style:normal;opacity:.7;font-weight:500}
+.opts{list-style:none;margin:0;padding:0;max-height:330px;overflow-y:auto;border-radius:12px;border:1px solid var(--line)}
+.opt{display:flex;align-items:stretch;border-bottom:1px solid var(--line);background:#fff}
+.opt:last-child{border-bottom:0}
+.opt.on{background:#fbeadf}
+.opt .pick{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:0;border-radius:0;background:transparent;text-align:left;padding:8px 10px;min-height:56px;justify-content:flex-start}
+.opt .oi .ii{width:20px;height:20px;margin:0}
+.opt .ot{flex:1;min-width:0;line-height:1.2}.opt .ot b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14.5px}
+.opt .ot small,.opt .oh small{color:var(--muted);font-size:12px;font-weight:400}
+.opt .oh{flex:none;text-align:right;line-height:1.2}.opt .oh b{display:block;font-size:14px;color:var(--forest)}
+.opt.on .oh small{color:var(--terra-2);font-weight:600}
+.opt .look{flex:none;width:44px;border:0;border-left:1px solid var(--line);border-radius:0;background:transparent;padding:0;color:var(--forest-2)}
+.opt .look .ii{margin:0}
+.pact{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.pact button{min-height:38px;padding:0 10px;border-radius:19px;font-size:13px;font-weight:600;background:var(--terra);border-color:var(--terra);color:#fff}
+.pact button+button{background:#fff;color:var(--forest);border-color:var(--line)}
+.pact .ii{width:15px;height:15px}
+.toast .tact-btn{pointer-events:auto;margin-left:10px;min-height:32px;padding:0 12px;border-radius:16px;border:0;background:rgba(255,255,255,.22);color:#fff;font-weight:700;font-size:13.5px}
+#stages li.restday{cursor:default;border:0;box-shadow:none;display:flex;align-items:center;gap:8px;margin:0 0 12px 44px;padding:8px 12px;border-radius:12px;background:var(--moss);font-size:13.5px;color:var(--forest)}
 .day .open{font-size:13px;color:var(--forest-2);margin-top:8px;font-weight:500}
 #page-adjust .pbody h2:first-of-type{margin-top:6px}
 .box{background:var(--sand);border-radius:16px}
@@ -304,6 +333,7 @@ details.why summary::-webkit-details-marker{display:none}
   <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h8M8 9h2"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
   <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></symbol>
   <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 2.5s6.5 7.2 6.5 12a6.5 6.5 0 0 1-13 0c0-4.8 6.5-12 6.5-12Z"/></symbol>
   <symbol id="i-hut" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></symbol>
@@ -529,6 +559,11 @@ details.why summary::-webkit-details-marker{display:none}
           <option value="1.4">Très sportive</option>
         </select>
       </div>
+      <div class="box" id="nightBox" style="margin-top:8px">
+        <div class="lim"><input type="checkbox" id="cVia"><label for="cVia">Quand je choisis une nuit, faire passer le tracé par le lieu</label></div>
+        <p class="note" id="pinCount" style="margin:0 0 6px"></p>
+        <button id="bFreeAll" style="width:100%;margin-bottom:10px"><svg class="ico"><use href="#i-undo"/></svg>Rendre toutes les nuits à Orri</button>
+      </div>
       <details class="why" id="pinNote"><summary><svg class="ico ii"><use href="#i-info"/></svg>Déplacer une fin de journée</summary>
         <p>Touche une étiquette « J » sur la carte pour fixer la fin de cette journée, ou glisse-la ailleurs sur le tracé. Touche une étiquette verte pour la libérer. Double-clic sur le profil : nouvelle fin de journée.</p></details>
 
@@ -560,7 +595,7 @@ const CFG = {
 const DEFAULT_S = { mode: 'limits', useH: true, h: 7, useUp: false, up: 1500, useKm: false, km: 30, balance: true, days: 10, pace: 1, pins: [],
   endType: 'any', tol: 1, show: { water: true, hut: true, bivouac: true, shop: true, train: true },
   startDate: '', startTime: '08:00', pause: 60,
-  over: {} };   // over : fin d'étape choisie pour une étape précise { n° d'étape (0 = 1re) : 'refuge' | 'bivouac' | 'any' }
+  over: {}, via: true, rest: [] };   // via : faire passer le tracé par la nuit choisie ; rest : jours de repos (après la journée n°)   // over : fin d'étape choisie pour une étape précise { n° d'étape (0 = 1re) : 'refuge' | 'bivouac' | 'any' }
 const COLORS = ['#cf6a3c', '#2f6650'];
 // Icônes dessinées (sprite SVG de la page) : I('drop'), CI('water') = icône de catégorie dans sa couleur
 const I = (n, c) => `<svg class="ico ii"${c ? ` style="color:${c}"` : ''}><use href="#i-${n}"/></svg>`;
@@ -708,7 +743,12 @@ function splitDays(B, a, b, d, snap, ends, info) {
   }
 }
 // Répartition de N jours entre les sections délimitées par les fins d'étape fixées
-function allocDays(B, secs, N) {
+function allocDays(B, secs, N, one) {
+  if (one && one.some(Boolean)) {      // journées fixées à la main : 1 jour chacune, le reste se répartit entre les autres sections
+    const free = secs.map((x, i) => i).filter(i => !one[i]), out = secs.map(() => 1);
+    if (free.length) { const sub = allocDays(B, free.map(i => secs[i]), Math.max(free.length, (Math.round(N) || 1) - (secs.length - free.length))); free.forEach((i, j) => out[i] = sub[j]); }
+    return out;
+  }
   const T = secs.map(([a, b]) => B.cumT[b] - B.cumT[a]), tot = T.reduce((x, y) => x + y, 0) || 1;
   N = Math.max(secs.length, Math.round(N) || 1);
   const raw = T.map(t => N * t / tot), alloc = raw.map(r => Math.max(1, Math.floor(r)));
@@ -810,7 +850,7 @@ function escXml(s) { return String(s).replace(/[<>&"']/g, c => ({ '<': '&lt;', '
 
 /* ================= État ================= */
 // start : [lat,lon] ; legs : {to:[lat,lon], pts:[[lat,lon,ele]], kind:'route'|'line'|'import', name, stageBreak}
-const state = { start: null, legs: [], draw: true, mode: 'route', selStage: -1, chg: -1 };
+const state = { start: null, legs: [], draw: true, mode: 'route', selStage: -1, chg: -1, optFlt: 'all' };
 let S = JSON.parse(JSON.stringify(DEFAULT_S));    // réglages du découpage
 let R = null;                                      // résultats calculés
 const placeCache = {};
@@ -821,32 +861,38 @@ function endOf(li) { const p = state.legs[li].pts; const q = p[p.length - 1]; re
 function lastPoint() { return state.legs.length ? endOf(state.legs.length - 1) : state.start; }
 
 function flatten() {
-  const lat = [], lon = [], ele = [], kind = [], legBreaks = [];
-  if (state.start) { lat.push(state.start[0]); lon.push(state.start[1]); ele.push(null); kind.push(null); }
+  const lat = [], lon = [], ele = [], kind = [], legBreaks = [], legOf = [], posOf = [];
+  if (state.start) { lat.push(state.start[0]); lon.push(state.start[1]); ele.push(null); kind.push(null); legOf.push(-1); posOf.push(0); }
   state.legs.forEach((leg, li) => {
     leg.pts.forEach((p, k) => {
       if (k === 0 && lat.length) {
         const j = lat.length - 1;
         if (Math.abs(lat[j] - p[0]) < 1e-6 && Math.abs(lon[j] - p[1]) < 1e-6) { if (ele[j] == null) ele[j] = p[2]; return; }
       }
-      lat.push(p[0]); lon.push(p[1]); ele.push(p[2] == null ? null : p[2]); kind.push(leg.kind);
+      lat.push(p[0]); lon.push(p[1]); ele.push(p[2] == null ? null : p[2]); kind.push(leg.kind); legOf.push(li); posOf.push(k);
     });
     if (leg.stageBreak && li < state.legs.length - 1) legBreaks.push(lat.length - 1);
   });
-  return { lat, lon, ele, kind, legBreaks };
+  return { lat, lon, ele, kind, legBreaks, legOf, posOf };
 }
 function nearestIdx(B, la, lo) {
   let best = -1, bd = Infinity; const c = Math.cos(la * Math.PI / 180);
   for (let i = 0; i < B.n; i++) { const d = (B.lat[i] - la) ** 2 + ((B.lon[i] - lo) * c) ** 2; if (d < bd) { bd = d; best = i; } }
   return { i: best, m: Math.sqrt(bd) * 111195 };
 }
+// S.pins : fins de journée fixées [lat, lon, meta?] ; meta = { one: 1 (la journée qui finit ici ne se redécoupe pas),
+// poi: {id, name, kind, cat, lat, lon} (la nuit choisie) }
 function mapPins(B) {
-  const idx = [], kept = [];
+  const idx = [], kept = [], meta = new Map();
   for (const p of S.pins) {
     const r = nearestIdx(B, p[0], p[1]);
-    if (r.i > 0 && r.i < B.n - 1 && r.m < 400 && !idx.includes(r.i)) { idx.push(r.i); kept.push([B.lat[r.i], B.lon[r.i]]); }
+    if (r.i > 0 && r.i < B.n - 1 && r.m < 400 && !idx.includes(r.i)) {
+      idx.push(r.i); kept.push(p[2] ? [B.lat[r.i], B.lon[r.i], p[2]] : [B.lat[r.i], B.lon[r.i]]);
+      if (p[2]) meta.set(r.i, p[2]);
+    }
   }
   S.pins = kept;
+  B.pinMeta = meta;
   return idx.sort((a, b) => a - b);
 }
 function compute() {
@@ -855,7 +901,7 @@ function compute() {
   for (let i = 1; i < n; i++) cum[i] = cum[i - 1] + hav([F.lat[i - 1], F.lon[i - 1]], [F.lat[i], F.lon[i]]);
   const zr = n ? interpNulls(F.ele) : null;
   const zs = zr && n > 1 ? smoothByDist(zr, cum, CFG.smoothWindow) : zr;
-  const B = { lat: F.lat, lon: F.lon, kind: F.kind, zr, zs, cum, n, cumT: cumulativeTime(cum, zs, n, S.pace) };
+  const B = { lat: F.lat, lon: F.lon, kind: F.kind, legOf: F.legOf, posOf: F.posOf, zr, zs, cum, n, cumT: cumulativeTime(cum, zs, n, S.pace), pinMeta: new Map() };
   B.pois = projectPOIs(B);
   const hasGpx = F.legBreaks.length > 0;
   if (S.mode === 'gpx' && !hasGpx && n > 1) S.mode = 'limits';
@@ -892,12 +938,14 @@ function compute() {
         if (!best && own && S.tol < 2) { best = findIn(cs, s, b, ideal, 2); wide = !!best; }   // choix pour cette étape : on cherche jusqu'à ±2 h
         return best ? { i: best.idx, poi: best, delta: best.t - ideal, type, own: !!own, wide } : { i: e, miss: true, type, own: !!own };   // écart détour compris
       };
+      // une journée choisie à la main (« one ») ne se redécoupe pas
+      const one = secs.map(([a, b]) => !!(B.pinMeta.get(b) || {}).one);
       if (S.mode === 'days') {
-        const alloc = allocDays(B, secs, S.days);
-        secs.forEach(([a, b], s) => { splitDays(B, a, b, alloc[s], snap, ends, info); if (s < secs.length - 1) ends.push(b); });
+        const alloc = allocDays(B, secs, S.days, one);
+        secs.forEach(([a, b], s) => { if (!one[s]) splitDays(B, a, b, alloc[s], snap, ends, info); if (s < secs.length - 1) ends.push(b); });
       } else {
         const lim = { h: S.useH ? S.h : 0, up: S.useUp ? S.up : 0, km: S.useKm ? S.km : 0 };
-        secs.forEach(([a, b], s) => { if (lim.h || lim.up || lim.km) splitLimits(B, a, b, lim, S.balance, snap, cands ? S.tol : 0, ends, info); if (s < secs.length - 1) ends.push(b); });
+        secs.forEach(([a, b], s) => { if (!one[s] && (lim.h || lim.up || lim.km)) splitLimits(B, a, b, lim, S.balance, snap, cands ? S.tol : 0, ends, info); if (s < secs.length - 1) ends.push(b); });
       }
     }
   }
@@ -906,9 +954,12 @@ function compute() {
     const i0 = bounds[s], i1 = bounds[s + 1];
     const gl = zs ? gainLoss(zs, i0, i1, CFG.gainThreshold) : { up: 0, dn: 0 };
     const r = s + 2 < bounds.length ? info.get(i1) : null;
+    const pm = s + 2 < bounds.length && pinIdx.includes(i1) ? B.pinMeta.get(i1) : null;
+    const chosen = pm && pm.poi ? Object.assign({}, pm.poi, { d: hav([pm.poi.lat, pm.poi.lon], [F.lat[i1], F.lon[i1]]) }) : null;
     stages.push({ i0, i1, dist: cum[i1] - cum[i0], up: gl.up, dn: gl.dn, time: B.cumT[i1] - B.cumT[i0], pinEnd: pinIdx.includes(i1),
-      endPoi: r && r.poi || null, endDelta: r && r.poi ? r.delta : 0, endMiss: !!(r && r.miss), counts: {},
-      endType: r ? r.type || 'any' : null, endOwn: !!(r && r.own), endWide: !!(r && r.wide) });
+      endPoi: chosen || (r && r.poi) || null, endDelta: r && r.poi ? r.delta : 0, endMiss: !!(r && r.miss), counts: {},
+      endType: chosen ? (chosen.cat === 'hut' ? 'refuge' : 'bivouac') : r ? r.type || 'any' : null, endOwn: !!(r && r.own), endWide: !!(r && r.wide),
+      endChosen: !!chosen, endKept: !!(pm && pm.auto), dayFixed: !!(pm && pm.one) });
   }
   // nombre de points d'intérêt par étape
   let si = 0;
@@ -994,7 +1045,7 @@ function renderPOIs() {
     const ch = chosen.has(p.id);
     if (!S.show[p.cat] && !ch) continue;
     const m = L.circleMarker([p.lat, p.lon], { renderer: poiRenderer, bubblingMouseEvents: false, radius: ch ? 8 : (p.cat === 'water' ? 4.5 : 6), color: ch ? '#1c2320' : '#fff', weight: ch ? 3 : 1.5, fillColor: CAT[p.cat].color, fillOpacity: 1 })
-      .bindPopup(`<b>${CI(p.cat)} ${escXml(p.name || p.kind)}</b><br>${escXml(p.kind)}<br>km ${nf1.format(R.cum[p.idx] / 1000)} · ${p.d < 50 ? 'sur le tracé' : 'à ' + fM(p.d) + ' du tracé'}${ch ? '<br><b>Fin d\'étape</b>' : ''}`)
+      .bindPopup(`<b>${CI(p.cat)} ${escXml(p.name || p.kind)}</b><br>${escXml(p.kind)}<br>km ${nf1.format(R.cum[p.idx] / 1000)} · ${p.d < 50 ? 'sur le tracé' : 'à ' + fM(p.d) + ' du tracé'}${ch ? '<br><b>Ta nuit</b>' : ''}${S.mode === 'gpx' ? '' : `<div class="pact">${NIGHT_CATS.includes(p.cat) && !ch ? `<button data-pa="sleep" data-id="${p.id}">${I('moon')}Dormir ici</button>` : ''}${p.d >= 40 ? `<button data-pa="via" data-id="${p.id}">${I('route')}Passer par ici</button>` : ''}</div>`}`)
       .addTo(poiLayer);
     poiMarkers.set(p.id, m);
   }
@@ -1088,6 +1139,10 @@ function syncUI() {
   $('#cH').checked = S.useH; $('#cUp').checked = S.useUp; $('#cKm').checked = S.useKm; $('#cBal').checked = S.balance;
   setNum('#vH', S.h); setNum('#vUp', S.up); setNum('#vKm', S.km); setNum('#vDays', S.days);
   $('#pace').value = String(S.pace);
+  $('#cVia').checked = S.via !== false;
+  $('#nightBox').style.display = S.mode === 'gpx' ? 'none' : '';
+  const np = S.pins.length;
+  $('#pinCount').textContent = np ? `${np} fin${np > 1 ? 's' : ''} de journée choisie${np > 1 ? 's' : ''} par toi${(S.rest || []).length ? `, ${S.rest.length} jour${S.rest.length > 1 ? 's' : ''} de repos` : ''}. Les réglages ci-dessus ne s'appliquent qu'aux autres journées.` : 'Toutes les nuits sont calculées par Orri avec les réglages ci-dessus.';
 }
 function renderStats() {
   const has = R && R.n > 1;
@@ -1134,7 +1189,9 @@ function renderPoiStatus() {
   });
 }
 function placeName(i) { return placeCache[R.lat[i].toFixed(3) + ',' + R.lon[i].toFixed(3)] || null; }
-function stageDate(k) { if (!S.startDate) return null; const d = new Date(S.startDate + 'T12:00:00'); if (isNaN(d)) return null; d.setDate(d.getDate() + k); return d; }
+const restCount = () => R ? (S.rest || []).filter(r => r < R.stages.length - 1).length : 0;
+const restBefore = k => (S.rest || []).filter(r => r < k).length;   // jours de repos (après la journée r)
+function stageDate(k) { if (!S.startDate) return null; const d = new Date(S.startDate + 'T12:00:00'); if (isNaN(d)) return null; d.setDate(d.getDate() + k + restBefore(k)); return d; }
 function timeOn(d, hhmm) { const [h, m] = String(hhmm || '08:00').split(':').map(Number); const x = new Date(d); x.setHours(h || 0, m || 0, 0, 0); return x; }
 const fT = d => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 function stageTiming(s, k) {
@@ -1170,8 +1227,9 @@ function stageDetail(s, k) {
 }
 function nightOf(s) {          // comment se termine la journée : icône, titre, détail
   const p = s.endPoi;
-  if (p) return { ico: p.cat === 'hut' ? I('hut', CAT.hut.color) : I('tent', CAT.bivouac.color),
-    t: escXml(p.name || p.kind), d: escXml(p.kind.toLowerCase()) + (p.d >= 50 ? ', à ' + fM(p.d) + ' du tracé' : '') + ' · ' + fDelta(s.endDelta) };
+  if (p) return { ico: p.cat === 'hut' ? I('hut', CAT.hut.color) : p.cat === 'water' ? I('drop', CAT.water.color) : I('tent', CAT.bivouac.color),
+    t: escXml(p.name || p.kind), d: escXml(p.kind.toLowerCase()) + (p.d >= 50 ? ', à ' + fM(p.d) + ' du tracé' : '') + ' · ' + (s.endChosen ? (s.endKept ? 'gardée telle quelle' : 'ton choix') : fDelta(s.endDelta)) };
+  if (s.pinEnd) return { ico: I('pin', 'var(--terra)'), t: s.dayFixed && (R.pinMeta.get(s.i1) || {}).auto ? 'Nuit libre, gardée telle quelle' : 'Nuit libre, à ton choix', d: placeName(s.i1) ? 'vers ' + escXml(placeName(s.i1)) : 'là où tu as arrêté la journée' };
   if (s.endMiss) return { ico: I('alert', 'var(--warn)'), warn: true,
     t: poiState === 'loading' ? 'On cherche où dormir…' : poiState === 'error' ? 'Refuges et bivouacs indisponibles' : `Pas de ${END_LABEL[s.endType] || END_LABEL[S.endType]} trouvé`,
     d: poiState === 'loading' || poiState === 'error' ? 'fin de journée libre pour l\'instant' : `rien à ${fTol(s.endOwn ? Math.max(2, S.tol) : S.tol)} : nuit libre` };
@@ -1191,7 +1249,7 @@ function renderSummary() {
   const dry = poiState !== 'loading' && R.pois.length ? R.stages.filter(s => s.waterGap && s.waterGap.h > 3).length : 0;
   const keep = !t ? ['Garder ce trek', false] : dirty ? ['Mettre à jour Mes parcours', false] : ['Gardé dans Mes parcours', true];
   box.innerHTML = `<div class="tsum">
-    <div class="kick">${n > 1 ? `Ton trek en ${n} jours` : 'Ta rando'}</div>
+    <div class="kick">${n > 1 ? `Ton trek en ${n + restCount()} jours${restCount() ? ` dont ${restCount()} de repos` : ''}` : 'Ta rando'}</div>
     <h3>${escXml(t ? t.name : defaultName())}</h3>
     ${when ? `<div class="sub">${I('cal')}${when}</div>` : ''}
     ${nl.length ? `<div class="nights">${n - 1} nuit${n > 2 ? 's' : ''} : ${nl.join(' · ')}</div>` : ''}
@@ -1225,15 +1283,9 @@ function renderStages() {
     let night;
     if (k < last) {
       const nt = nightOf(s);
-      const canChange = S.mode !== 'gpx' && !s.pinEnd;
-      night = `<div class="night${nt.warn ? ' miss' : ''}"><span class="ni">${nt.ico}</span><div class="nt"><b>${nt.t}</b><small>${nt.d}</small></div>${canChange ? `<button class="chg" data-chg="${k}">Changer</button>` : s.pinEnd ? `<span class="pinned">${I('pin', 'var(--ok)')}fixée</span>` : ''}</div>`;
-      if (canChange && state.chg === k) {
-        const cur = s.endType || 'any';
-        const opt = [['refuge', I('hut') + 'Refuge'], ['bivouac', I('tent') + 'Bivouac'], ['any', I('moon') + 'Libre']];
-        night += `<div class="sleep"><div class="info"><b>Ce soir-là, tu préfères dormir</b>${s.endOwn ? ' · <a href="#" class="reset" data-k="' + k + '">comme les autres soirs</a>' : ''}</div>
-          <div class="seg">${opt.map(([v, l]) => `<button data-sleep="${v}" data-k="${k}" class="${cur === v ? 'on' : ''}">${l}</button>`).join('')}</div>
-          ${s.endWide ? `<div class="info warnline">Rien dans ta tolérance de ${fTol(S.tol)} : journée ajustée de ${fDur(Math.abs(s.endDelta))}.</div>` : ''}</div>`;
-      }
+      const canChange = S.mode !== 'gpx';
+      night = `<div class="night${nt.warn ? ' miss' : ''}${s.pinEnd ? ' mine' : ''}"><span class="ni">${nt.ico}</span><div class="nt"><b>${nt.t}</b><small>${nt.d}</small></div>${canChange ? `<button class="chg${state.chg === k ? ' on' : ''}" data-chg="${k}">${state.chg === k ? 'Fermer' : 'Changer'}</button>` : ''}</div>`;
+      if (canChange && state.chg === k) night += sleepPanel(s, k);
     } else night = `<div class="night arr"><span class="ni">${I('flag', 'var(--terra)')}</span><div class="nt"><b>Arrivée${b ? ' à ' + escXml(b) : ''}</b><small>${R.stages.length > 1 ? 'bravo, c\'est la fin du trek' : 'fin de la rando'}</small></div></div>`;
     li.innerHTML = `<div class="rail"><span class="num" style="background:${COLORS[k % 2]}">${k + 1}</span></div>
       <div class="body">
@@ -1249,10 +1301,26 @@ function renderStages() {
       if (ch) { ev.stopPropagation(); state.chg = state.chg === k ? -1 : k; renderStages(); return; }
       const sl = ev.target.closest('[data-sleep], .reset');
       if (sl) { ev.preventDefault(); ev.stopPropagation(); setStageEnd(k, sl.dataset.sleep || null); return; }
+      const op = ev.target.closest('[data-opt]');
+      if (op) { ev.stopPropagation(); const p = R.pois.find(q => q.id === op.dataset.opt); if (p) enqueue(() => chooseNight(k, p)); return; }
+      const lk = ev.target.closest('[data-look]');
+      if (lk) { ev.stopPropagation(); focusPOI(lk.dataset.look); if (!desk.matches) sheet.set('peek'); return; }
+      const fl = ev.target.closest('[data-flt]');
+      if (fl) { ev.stopPropagation(); state.optFlt = fl.dataset.flt; renderStages(); return; }
+      const ad = ev.target.closest('[data-adj]');
+      if (ad) { ev.stopPropagation(); adjustDay(k, +ad.dataset.adj); return; }
+      if (ev.target.closest('[data-free]')) { ev.stopPropagation(); freeNight(k); return; }
+      if (ev.target.closest('[data-rest]')) { ev.stopPropagation(); toggleRest(k); return; }
       if (ev.target.closest('.detail, .sleep')) return;
       selectStage(state.selStage === k ? -1 : k);
     };
     ul.appendChild(li);
+    if (k < last && (S.rest || []).includes(k)) {
+      const r = document.createElement('li'); r.className = 'restday';
+      const d = stageDate(k); if (d) d.setDate(d.getDate() + 1);
+      r.innerHTML = `${I('moon')}<span><b>Jour de repos</b>${d ? ' · ' + d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) : ''}${b ? ' à ' + escXml(b) : ''}</span>`;
+      ul.appendChild(r);
+    }
   });
   queueNames();
 }
@@ -1265,6 +1333,149 @@ function setStageEnd(k, type) {
   if (s.endPoi) toast(`Étape ${k + 1} : fin à ${s.endPoi.name || s.endPoi.kind}`, 'ok');
   else if (s.endMiss) toast(`Aucun ${END_LABEL[s.endType]} trouvé près de la fin de l'étape ${k + 1}`, 'warn');
 }
+/* ===== Choisir ses nuits (libre arbitre) =====
+   Chaque soir, l'utilisateur voit tous les refuges, cabanes, gîtes, bivouacs et sources atteignables ce jour-là.
+   En choisir un fixe la fin de la journée exactement là (épingle « one » : la journée ne se redécoupe pas),
+   fige les journées d'avant telles qu'il les voit, et fait passer le tracé par le lieu (détour recalculé par BRouter). */
+const NIGHT_CATS = ['hut', 'bivouac', 'water'];
+const FLT = { all: ['Tout', ['hut', 'bivouac']], hut: ['Refuges', ['hut']], bivouac: ['Bivouacs', ['bivouac']], water: ['Sources', ['water']] };
+const lite = p => ({ id: p.id, name: p.name || '', kind: p.kind, cat: p.cat, lat: p.lat, lon: p.lon });
+const poiTime = p => R.cumT[p.idx] + p.d / 4000 / S.pace;          // heure d'arrivée détour compris (aller)
+function nightOptions(s) {   // lieux où la journée peut finir : de 3 h plus tôt à 3 h plus tard que maintenant
+  const t0 = R.cumT[s.i0], tEnd = R.cumT[R.n - 1], lo = t0 + Math.max(1, s.time - 3), hi = Math.min(t0 + s.time + 3, tEnd - 0.25);
+  return (R.pois || []).filter(p => NIGHT_CATS.includes(p.cat) && p.idx > s.i0).map(p => ({ p, t: poiTime(p) - t0 }))
+    .filter(o => o.t + t0 >= lo && o.t + t0 <= hi).sort((a, b) => a.t - b.t);
+}
+function sleepPanel(s, k) {
+  const all = nightOptions(s), flt = FLT[state.optFlt] ? state.optFlt : 'all';
+  const cnt = f => all.filter(o => FLT[f][1].includes(o.p.cat)).length;
+  const list = all.filter(o => FLT[flt][1].includes(o.p.cat)).slice(0, 40);
+  const curId = s.endPoi && s.endPoi.id, rel = t => { const m = Math.round((t - s.time) * 60); return Math.abs(m) < 5 ? 'comme prévu' : (m > 0 ? '+' : '−') + fDur(Math.abs(m) / 60); };
+  const rows = list.map(o => {
+    const p = o.p, on = p.id === curId;
+    return `<li class="opt${on ? ' on' : ''}"><button class="pick" data-opt="${p.id}" aria-label="Dormir à ${escXml(p.name || p.kind)}">
+        <span class="oi">${CI(p.cat)}</span><span class="ot"><b>${escXml(p.name || p.kind)}</b><small>${escXml(p.kind.toLowerCase())}${p.d >= 50 ? ' · à ' + fM(p.d) + ' du tracé' : ' · sur le tracé'}</small></span>
+        <span class="oh"><b>${fH(o.t)}</b><small>${on ? 'ce soir' : rel(o.t)}</small></span></button>
+        <button class="look" data-look="${p.id}" title="Voir sur la carte" aria-label="Voir sur la carte">${I('tap')}</button></li>`;
+  }).join('');
+  const empty = poiState === 'loading' ? 'Recherche des lieux en cours…' : flt === 'water' ? 'Aucune source atteignable ce jour-là.' : 'Rien d\'atteignable ce jour-là (3 h plus tôt ou plus tard). Essaie les sources, ou raccourcis / allonge la journée.';
+  const cur = s.endType || 'any', auto = [['refuge', I('hut') + 'Refuge'], ['bivouac', I('tent') + 'Bivouac'], ['any', I('moon') + 'Libre']];
+  return `<div class="sleep">
+    <div class="len"><button data-adj="-0.5" ${s.time < 1.2 ? 'disabled' : ''} aria-label="Raccourcir la journée de 30 min">${I('minus')}30 min</button>
+      <span><b>${fH(s.time)}</b><small>de marche ce jour-là</small></span>
+      <button data-adj="0.5" aria-label="Allonger la journée de 30 min">${I('plus')}30 min</button></div>
+    <div class="info"><b>Où dormir ce soir-là ?</b> Touche un lieu : la journée finira exactement là${S.via !== false ? ' et le tracé y passera' : ''}.</div>
+    <div class="flt">${Object.keys(FLT).map(f => `<button data-flt="${f}" class="${f === flt ? 'on' : ''}">${FLT[f][0]} <em>${cnt(f)}</em></button>`).join('')}</div>
+    ${rows ? `<ul class="opts">${rows}</ul>` : `<p class="info" style="color:var(--muted)">${empty}</p>`}
+    ${s.pinEnd ? `<button class="linkbtn" data-free="1">${I('undo')}Rendre ce soir à Orri (calcul automatique)</button>` : ''}
+    <details class="why"${s.endOwn ? ' open' : ''}><summary>${I('info')}Laisser Orri choisir</summary>
+      <div class="seg" style="margin-top:6px">${auto.map(([v, l]) => `<button data-sleep="${v}" data-k="${k}" class="${!s.pinEnd && cur === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+      ${s.endOwn ? `<p><a href="#" class="reset" data-k="${k}">comme les autres soirs</a></p>` : ''}
+      ${s.endWide ? `<p class="warnline">Rien dans ta tolérance de ${fTol(S.tol)} : journée ajustée de ${fDur(Math.abs(s.endDelta))}.</p>` : ''}</details>
+    <button class="linkbtn" data-rest="1">${I('moon')}${(S.rest || []).includes(k) ? 'Retirer le jour de repos' : 'Ajouter un jour de repos ici'}</button>
+  </div>`;
+}
+// Historique des modifications (bouton « Annuler » du message)
+const hist = [];
+function remember() { hist.push(JSON.stringify(draftData())); if (hist.length > 20) hist.shift(); }
+function undoLast() {
+  const h = hist.pop(); if (!h) return;
+  const d = JSON.parse(h);
+  S = Object.assign(JSON.parse(JSON.stringify(DEFAULT_S)), d.S); state.start = d.start; state.legs = d.legs; state.chg = -1;
+  changed(); toast('Modification annulée');
+}
+// Fige les journées 0..k-1 telles qu'elles sont (leur nuit reste la même quand on change la suite)
+function freezeBefore(k) {
+  for (let j = 0; j < k && j < R.stages.length - 1; j++) {
+    const s = R.stages[j]; if (s.pinEnd) continue;
+    S.pins.push([R.lat[s.i1], R.lon[s.i1], s.endPoi ? { one: 1, poi: lite(s.endPoi), auto: 1 } : { one: 1, auto: 1 }]);
+  }
+  for (let j = 0; j <= k; j++) if (S.over) delete S.over[j];
+}
+// Fait passer le tracé par p : on coupe le tronçon au plus près et on recalcule un détour local (aller et retour),
+// le reste du tracé ne bouge pas. Le lieu devient un point de passage.
+async function viaPoint(p) {
+  const nr = nearestIdx(R, p.lat, p.lon); if (nr.i < 0) return false;
+  const li = R.legOf[nr.i], leg = state.legs[li]; if (!leg) return false;
+  const pts = leg.pts, k = Math.min(Math.max(R.posOf[nr.i], 0), pts.length - 1);
+  const cumL = [0]; for (let j = 1; j < pts.length; j++) cumL.push(cumL[j - 1] + hav(pts[j - 1], pts[j]));
+  const w = Math.max(400, 2 * nr.m);
+  let a = k; while (a > 0 && cumL[k] - cumL[a] < w) a--;
+  let b = k; while (b < pts.length - 1 && cumL[b] - cumL[k] < w) b++;
+  const from = li === 0 && a === 0 ? state.start : [pts[a][0], pts[a][1]], to = [pts[b][0], pts[b][1]], q = [p.lat, p.lon];
+  const mode = leg.kind === 'line' ? 'line' : 'route';
+  busy(true);
+  let A, Z;
+  try { [A, Z] = await Promise.all([computeLeg(from, q, mode), computeLeg(q, to, mode)]); } finally { busy(false); }
+  const head = pts.slice(0, a + 1), tail = pts.slice(b), mid = A.pts[A.pts.length - 1];
+  const legA = { to: [mid[0], mid[1]], pts: head.concat(A.pts.slice(head.length ? 1 : 0)), kind: leg.kind, name: leg.name || '', stageBreak: false, via: 1 };
+  const legB = { to: leg.to, pts: Z.pts.concat(tail.slice(1)), kind: leg.kind, name: leg.name || '', stageBreak: !!leg.stageBreak };
+  if (b === pts.length - 1) legB.to = [Z.pts[Z.pts.length - 1][0], Z.pts[Z.pts.length - 1][1]];
+  state.legs.splice(li, 1, legA, legB);
+  return true;
+}
+async function chooseNight(k, p) {
+  if (!R || !R.stages[k] || S.mode === 'gpx') return;
+  remember();
+  const s = R.stages[k], via = S.via !== false && p.d >= 40;
+  freezeBefore(k);
+  if (s.pinEnd && k < R.stages.length - 1) removePinNear(R.lat[s.i1], R.lon[s.i1]);
+  let ok = false;
+  if (via) { try { ok = await viaPoint(p); } catch (e) { toast('Détour impossible à calculer : la nuit est fixée au plus près du tracé', 'warn'); } }
+  compute();
+  const r = nearestIdx(R, p.lat, p.lon);
+  if (r.i > 0 && r.i < R.n - 1) S.pins.push([R.lat[r.i], R.lon[r.i], { one: 1, poi: lite(p) }]);
+  state.chg = -1; state.selStage = k;
+  changed();
+  toast(`Jour ${k + 1} : nuit à ${p.name || p.kind}${ok ? ', le tracé y passe' : ''}`, 'ok', { label: 'Annuler', fn: undoLast });
+}
+// Raccourcir / allonger une journée (± 30 min) : la nuit devient libre à cet endroit, la suite se recalcule
+function adjustDay(k, dh) {
+  const s = R.stages[k]; if (!s || S.mode === 'gpx') return;
+  remember();
+  freezeBefore(k);
+  const last = k === R.stages.length - 1;
+  if (s.pinEnd && !last) removePinNear(R.lat[s.i1], R.lon[s.i1]);
+  const target = R.cumT[s.i0] + Math.max(0.5, s.time + dh);
+  let i = lowerBound(R.cumT, target, s.i0 + 1, R.n - 1);
+  if (i >= R.n - 1) { toast('C\'est déjà la fin du trek', 'warn'); hist.pop(); return; }
+  S.pins.push([R.lat[i], R.lon[i], { one: 1 }]);
+  state.selStage = k; changed();
+  const n = R.stages[k];
+  toast(`Jour ${k + 1} : ${fH(n.time)} de marche`, 'ok', { label: 'Annuler', fn: undoLast });
+}
+function freeNight(k) {
+  const s = R.stages[k]; if (!s || !s.pinEnd) return;
+  remember(); removePinNear(R.lat[s.i1], R.lon[s.i1]); state.chg = -1; changed();
+  toast(`Jour ${k + 1} : Orri recalcule la nuit`, 'ok', { label: 'Annuler', fn: undoLast });
+}
+function toggleRest(k) {
+  remember();
+  S.rest = (S.rest || []).includes(k) ? S.rest.filter(x => x !== k) : (S.rest || []).concat(k).sort((a, b) => a - b);
+  changed();
+  toast(S.rest.includes(k) ? `Jour de repos après le jour ${k + 1}` : 'Jour de repos retiré', 'ok', { label: 'Annuler', fn: undoLast });
+}
+// Depuis la carte : « Dormir ici » sur un refuge ou un bivouac, « Passer par ici » sur n'importe quel point
+function nightFor(p) {
+  const t = poiTime(p); let k = R.stages.findIndex(s => p.idx <= s.i1); if (k < 0) k = R.stages.length - 1;
+  const s = R.stages[k];
+  if (k > 0 && t - R.cumT[s.i0] < (R.cumT[s.i1] - t)) k--;   // plus près du début de la journée : c'est la nuit d'avant
+  return k;
+}
+async function passBy(p) {
+  remember();
+  let ok = false; try { ok = await viaPoint(p); } catch (e) { }
+  changed();
+  toast(ok ? `Le tracé passe par ${p.name || p.kind}` : 'Détour impossible à calculer', ok ? 'ok' : 'warn', ok ? { label: 'Annuler', fn: undoLast } : null);
+}
+map.on('popupopen', e => {
+  const el = e.popup.getElement(); if (!el) return;
+  el.querySelectorAll('[data-pa]').forEach(b => b.onclick = () => {
+    const p = R.pois.find(q => q.id === b.dataset.id); if (!p) return; map.closePopup();
+    if (b.dataset.pa === 'sleep') { const k = nightFor(p); enqueue(() => chooseNight(k, p)); }
+    else enqueue(() => passBy(p));
+  });
+});
 function selectStage(k) {
   state.selStage = k;
   render();
@@ -1472,14 +1683,14 @@ let clearArmed = null;
 function clearAll() {
   if (!clearArmed) { $('#bClear span').textContent = 'Confirmer ?'; clearArmed = setTimeout(() => { clearArmed = null; $('#bClear span').textContent = 'Effacer'; }, 3000); return; }
   clearTimeout(clearArmed); clearArmed = null; $('#bClear span').textContent = 'Effacer';
-  state.start = null; state.legs = []; state.selStage = -1; S.pins = []; S.over = {}; changed();
+  state.start = null; state.legs = []; state.selStage = -1; S.pins = []; S.over = {}; S.rest = []; changed();
 }
 function importTracks(tracks) {
   const names = new Set(tracks.map(t => t.name));
   const useNames = names.size === tracks.length;
   state.start = [tracks[0].pts[0][0], tracks[0].pts[0][1]];
   state.legs = tracks.map(t => { const e = t.pts[t.pts.length - 1]; return { to: [e[0], e[1]], pts: t.pts, kind: 'import', name: useNames ? t.name : '', stageBreak: true }; });
-  state.selStage = -1; S.pins = [];
+  state.selStage = -1; S.pins = []; S.over = {}; S.rest = [];
   if (tracks.length > 1) S.mode = 'gpx';
   changed();
   map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), fitPad(20));
@@ -1678,9 +1889,10 @@ async function fetchPOIs() {
 }
 
 /* ================= Interface ================= */
-function toast(msg, kind) {
+function toast(msg, kind, act) {
   const el = document.createElement('div'); el.className = 'toast ' + (kind || ''); el.textContent = msg;
-  $('#status').appendChild(el); setTimeout(() => el.remove(), 4500);
+  if (act) { const b = document.createElement('button'); b.className = 'tact-btn'; b.textContent = act.label; b.onclick = () => { el.remove(); act.fn(); }; el.appendChild(b); }
+  $('#status').appendChild(el); setTimeout(() => el.remove(), act ? 8000 : 4500);
 }
 map.on('click', e => { if (state.draw) enqueue(() => addPoint([e.latlng.lat, e.latlng.lng])); });
 $('#bDraw').onclick = () => { state.draw = !state.draw; $('#bDraw').classList.toggle('on', state.draw); map.getContainer().style.cursor = state.draw ? 'crosshair' : ''; };
@@ -1719,6 +1931,11 @@ function readDates() {      // dates et horaires : ne changent pas le découpage
 ['#vDate', '#vTime', '#vPause'].forEach(id => { $(id).addEventListener('change', readDates); $(id).addEventListener('input', readDates); });
 ['#cH', '#cUp', '#cKm', '#cBal', '#pace', '#endType'].forEach(id => $(id).addEventListener('change', readSettings));
 ['#vH', '#vUp', '#vKm', '#vDays', '#vTol'].forEach(id => $(id).addEventListener('input', () => { clearTimeout(settingsTimer); settingsTimer = setTimeout(readSettings, 300); }));
+$('#cVia').addEventListener('change', e => { S.via = e.target.checked; save(); renderStages(); });
+$('#bFreeAll').onclick = () => {
+  if (!S.pins.length && !(S.rest || []).length) return toast('Toutes les nuits sont déjà calculées par Orri');
+  confirmTap($('#bFreeAll'), 'Touche encore : toutes tes nuits choisies seront recalculées', () => { remember(); S.pins = []; S.over = {}; S.rest = []; changed(); toast('Orri a recalculé toutes les nuits', 'ok', { label: 'Annuler', fn: undoLast }); });
+};
 
 /* Recherche de lieux : IGN (France, très précis) + Photon (OpenStreetMap, monde entier) */
 let searchSeq = 0, searchTimer = null, userPos = null;
@@ -1828,7 +2045,7 @@ function openTrek(id) {
 }
 function newTrek() {
   treks.cur = null; treks.store();
-  state.start = null; state.legs = []; state.selStage = -1; S.pins = []; S.over = {};
+  state.start = null; state.legs = []; state.selStage = -1; S.pins = []; S.over = {}; S.rest = [];
   changed(); closePage(); showTab('trace');
   toast('Nouveau parcours : touche la carte pour poser ton départ');
 }
@@ -1984,7 +2201,7 @@ function sheetHTML() {
       ${a || b ? `<p class="route">${escXml(a || '…')} → ${escXml(b || '…')}</p>` : ''}
       <p class="nums"><b>${fKm(s.dist)}</b> · +${fM(s.up)} / −${fM(s.dn)} · <b>${fH(s.time)}</b> de marche</p>
       ${tm ? `<p>Départ ${fT(tm.dep)} → arrivée vers <b>${fT(tm.arr)}</b>${tm.sun ? ` · coucher du soleil ${fT(tm.sun.set)}` : ''}${tm.late ? ' · <b class="w">arrivée après la nuit</b>' : ''}</p>` : ''}
-      <p class="sleep">Nuit : <b>${sleep}</b></p>
+      <p class="sleep">Nuit : <b>${sleep}</b>${(S.rest || []).includes(k) && k < R.stages.length - 1 ? ' · <b>jour de repos le lendemain</b>' : ''}</p>
       ${g && g.km > 0.5 && R.pois.length ? `<p class="${g.h > 3 ? 'w' : ''}">${g.h > 3 ? I('alert') : I('drop', CAT.water.color)} Plus long tronçon sans eau connue : ${nf1.format(g.km)} km (≈ ${fDur(g.h)})</p>` : ''}
       ${pois.length ? `<table>${pois.map(p => `<tr><td>km ${kmAt(p.idx)}</td><td>${CI(p.cat)} ${escXml(p.name || p.kind)}${p.name ? ` <i>${escXml(p.kind.toLowerCase())}</i>` : ''}${p.d >= 50 ? ` <i>à ${fM(p.d)}</i>` : ''}</td></tr>`).join('')}</table>` : ''}
     </section>`;
@@ -2032,7 +2249,7 @@ function renderWelcome() {
   if (treks.list.length) $('#wTreks').onclick = () => openPage('profile');
 }
 function startDrawing() {
-  if (state.start) { treks.cur = null; treks.store(); state.start = null; state.legs = []; state.selStage = -1; S.pins = []; S.over = {}; changed(); }
+  if (state.start) { treks.cur = null; treks.store(); state.start = null; state.legs = []; state.selStage = -1; S.pins = []; S.over = {}; S.rest = []; changed(); }
   closeWelcome(); showTab('trace'); sheet.set('peek');
   state.draw = true; $('#bDraw').classList.add('on');
   toast('Touche la carte pour poser ton départ, puis chaque point de passage');
