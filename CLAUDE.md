@@ -34,6 +34,10 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   (`app: 'orri'`, fusion par `id`). Actions sensibles : 2e touche (`confirmTap`), jamais de boîte de dialogue du navigateur.
 - **Fiche du trek** (`sheetHTML`) : page HTML autonome (tracé et profil en SVG, étapes, nuits, eau, points), affichée
   dans une iframe, téléchargeable et imprimable ; elle ne dépend d'aucun réseau.
+- **Onglet Étapes** : résumé du trek (`renderSummary` : nom, dates, nuits refuge/bivouac/libres, manque d'eau, « Garder ce trek »
+  = `saveTrek`, « Ajuster ») puis frise **Jour après jour** (`renderStages`, `li.day`) : une carte par jour avec sa nuit
+  (`nightOf`) et un bouton « Changer » (`state.chg`) qui propose Refuge / Bivouac / Libre pour ce soir-là (`setStageEnd`).
+  Les réglages du découpage (rythme, nuits, tolérance, allure) sont dans la page **Ajuster** (`#page-adjust`, `#adjLive`).
 - **Accueil** (`#page-welcome`) au premier lancement seulement (`orri.welcomed`, et aucun parcours enregistré) : Tracer,
   Importer un GPX, Voir un exemple (`DEMO` : 4 villages des Pyrénées reliés par BRouter, 3 requêtes). Revoir depuis le profil.
   Conseils uniques au bon moment (`coach`, clés `orri.tip.*`).
