@@ -581,7 +581,7 @@ function compute() {
   // plus long tronçon sans eau connue dans chaque étape (eau, commerces, refuges gardés, gîtes, campings)
   const wIdx = B.pois.filter(hasWater).map(p => p.idx);
   stages.forEach(s => {
-    const pts = [s.i0, ...wIdx.filter(i => i > s.i0 && i < s.i1), s.i1];
+    const near = wIdx.filter(i => i >= s.i0 && i <= s.i1), pts = [s.i0, ...near, s.i1];
     let g = { km: 0, h: 0, a: s.i0, b: s.i0 };
     for (let k = 1; k < pts.length; k++) {
       const km = (cum[pts[k]] - cum[pts[k - 1]]) / 1000;
@@ -791,7 +791,7 @@ function stageDetail(s, k) {
   h += `<div class="prow end" data-i="${s.i0}"><span class="km">km 0,0</span><span>▶ Départ${placeName(s.i0) ? ' : ' + escXml(placeName(s.i0)) : ''} · ${nf0.format(Math.round(R.zs ? R.zs[s.i0] : 0))} m</span></div>`;
   list.forEach(p => {
     const fin = s.endPoi && s.endPoi.id === p.id;
-    h += `<div class="prow${fin ? ' end' : ''}" data-poi="${p.id}"><span class="km">km ${kmS(p.idx)}</span><span>${CAT[p.cat].emoji} ${escXml(p.name || p.kind)}${p.name ? ` <span class="k">· ${escXml(p.kind.toLowerCase())}</span>` : ''}${p.d >= 50 ? ` <span class="k">· à ${fM(p.d)} du tracé</span>` : ''}${fin ? ' · fin d\'étape' : ''}</span></div>`;
+    h += `<div class="prow${fin ? ' end' : ''}" data-poi="${p.id}"><span class="km">km ${kmS(p.idx)}</span><span>${CAT[p.cat].emoji} ${escXml(p.name || p.kind)}${p.name && p.name.toLowerCase() !== p.kind.toLowerCase() ? ` <span class="k">· ${escXml(p.kind.toLowerCase())}</span>` : ''}${p.d >= 50 ? ` <span class="k">· à ${fM(p.d)} du tracé</span>` : ''}${fin ? ' · fin d\'étape' : ''}</span></div>`;
   });
   if (!list.length) h += `<div class="info" style="color:var(--muted)">${poiState === 'loading' ? '⏳ Recherche des points en cours…' : poiState === 'error' ? '⚠️ Points indisponibles (serveur OpenStreetMap).' : 'Aucun point d\'eau, refuge ou commerce trouvé dans OpenStreetMap sur cette étape.'}</div>`;
   h += `<div class="prow end" data-i="${s.i1}"><span class="km">km ${kmS(s.i1)}</span><span>🏁 Arrivée${placeName(s.i1) ? ' : ' + escXml(placeName(s.i1)) : ''} · ${nf0.format(Math.round(R.zs ? R.zs[s.i1] : 0))} m</span></div>`;
