@@ -11,7 +11,8 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 
 | Fichier | Rôle |
 | --- | --- |
-| `index.html` | Toute l'appli : HTML, CSS et JS dans un seul fichier, sans étape de build. Leaflet 1.9.4 depuis cdnjs. |
+| `index.html` | Toute l'appli : HTML, CSS et JS dans un seul fichier, sans étape de build. Leaflet 1.9.4 depuis cdnjs ; MapLibre GL 4.7.1 + maplibre-gl-leaflet 0.1.4 depuis unpkg. |
+| `carte/orri-style.json` | Style MapLibre de la **carte Orri** (fond par défaut). |
 | `sw.js` | Service worker : l'appli s'ouvre hors ligne (réseau d'abord, cache ensuite pour les fichiers du site). **Incrémenter `VERSION` à chaque publication.** |
 | `manifest.webmanifest`, `icons/` | Appli installable (Android : Chrome → ⋮ → Installer l'application). Icône = un orri (cabane de berger en pierre sèche). |
 | `data/poi/` | Points d'intérêt générés par le robot — **ne pas éditer à la main**. |
@@ -46,6 +47,10 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 
 - **BRouter** `brouter.de` (profil `hiking-mountain`, GeoJSON) : tracé qui suit les sentiers. Serveur communautaire : usage modéré.
 - **IGN Géoplateforme** `data.geopf.fr` : tuiles Plan IGN v2 et ortho (le SCAN 25 n'est pas libre), altimétrie (`ign_rge_alti_wld`), géocodage et géocodage inverse.
+- **Carte Orri** (fond par défaut, toute l'Europe) : tuiles vectorielles **OpenFreeMap** (`tiles.openfreemap.org/planet`, schéma
+  OpenMapTiles, polices Noto du même serveur) + relief ombré **AWS Terrain Tiles** (terrarium) + Natural Earth aux petits zooms,
+  dessinées par MapLibre dans Leaflet (`L.maplibreGL`). Sans WebGL, repli sur OpenTopoMap. Choix du fond gardé sous `orri.base`.
+  Couleurs du style alignées sur la palette (crème, vert forêt, sentiers terre). IGN (France seulement) reste en option.
 - **Kartverket** (topo Norvège, CC BY 4.0), **OpenTopoMap** (monde), **Photon** `photon.komoot.io` (noms de lieux hors France).
 - **Overpass** (4 serveurs en cascade, 25 s max chacun) : seulement pour les zones hors couverture de `data/poi/`.
 - Les attributions (OSM ODbL, IGN, Kartverket) doivent rester dans le pied de page.
@@ -98,7 +103,7 @@ Overpass en panne, tuiles) et utilise les vraies données `data/poi/` servies en
 
 ```bash
 python3 -m http.server 8765            # à la racine du dépôt, dans un autre terminal
-cd tests && npm install leaflet@1.9.4 && pip install playwright
+cd tests && npm install leaflet@1.9.4 maplibre-gl@4.7.1 @maplibre/maplibre-gl-leaflet@0.1.4 && pip install playwright
 ORRI_GPX=/chemin/vers/un/trek.gpx python3 smoke_test.py
 ```
 
