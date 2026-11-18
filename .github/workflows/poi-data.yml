@@ -10,7 +10,7 @@ on:
     - cron: "17 3 2 * *"          # le 2 de chaque mois à 03:17 UTC
   push:
     branches: [main]
-    paths: ["tools/build_pois.py", ".github/workflows/poi-data.yml"]
+    paths: ["tools/build_pois.py"]
 
 permissions:
   contents: write
@@ -66,13 +66,11 @@ jobs:
         run: |
           set -euo pipefail
           n="${{ matrix.region.id }}"
-          curl -fsSL --retry 5 --retry-all-errors -o "$n.poly" "${{ matrix.region.poly }}"
-          ok=0
-          for i in 1 2 3 4 5 6; do
-            if curl -fSL -s -S --retry 3 --retry-all-errors -C - -o "$n.osm.pbf" "${{ matrix.region.pbf }}"; then ok=1; break; fi
-            echo "Coupure, reprise ($i)…"; sleep 10
-          done
-          [ "$ok" = 1 ]
+          # Geofabrik refuse parfois les connexions quand trop de téléchargements arrivent à la fois :
+          # on attend de plus en plus longtemps entre deux essais (jusqu'à ~20 min au total).
+          get() { for d in 0 30 60 120 240 480; do sleep $d; curl -fSL -s -S --retry 2 --retry-all-errors -C - -o "$1" "$2" && return 0; echo "Échec, nouvel essai après $d s…"; done; return 1; }
+          get "$n.poly" "${{ matrix.region.poly }}"
+          get "$n.osm.pbf" "${{ matrix.region.pbf }}"
           osmium tags-filter "$n.osm.pbf" \
             nwr/tourism=alpine_hut,wilderness_hut,hostel,guest_house,camp_site,camp_pitch \
             nwr/amenity=shelter,drinking_water,water_point \
