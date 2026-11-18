@@ -40,7 +40,15 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   `photos` (`[{id, lat, lon, date}]`). Page **Souvenirs** (`#page-trek`, `renderTrekPage`) : statut, date, souvenir, photos, renommer /
   dupliquer / supprimer. Photos dans **IndexedDB** (`photoDB`, base `orri-photos`) réduites à 1600 px + vignette 360 px (`shrink`) ;
   date et GPS lus dans l'EXIF avant réduction (`exifInfo`). La sauvegarde JSON ne contient pas les images. Visionneuse `#viewer`.
-- **Globe souvenir** (`class Globe`, `mountGlobe`) : la Terre en projection orthographique (d3-geo 3.1.1 + d3-array 3.2.4 depuis unpkg,
+- **Globe 3D** (`class Globe3D`, par défaut) : MapLibre GL **5.24.0** chargé à la demande depuis unpkg (`loadML5`, l'ancien
+  `maplibregl` 4.7.1 global est remis en place juste après), projection `globe`, ciel/atmosphère, altitudes AWS Terrain Tiles :
+  couche `color-relief` (`RELIEF_COLORS` : fonds marins, plaines, forêts, alpages, roche, neige) + `hillshade` multidirectionnel,
+  relief en volume (`setTerrain`, ×1,5) à partir du zoom 5,5. Treks en couches GeoJSON (`tline`, `tline2` pointillés, `tpt` points de loin,
+  `sline` trek choisi qui se dessine), photos en `Marker` (`.gph`, de près). Toucher un trek : vol incliné (`focus`) puis la caméra en fait
+  le tour (`orbit`). Accueil : globe en grand dans `.whero.g3d` (titre par-dessus), la Terre tourne puis plonge en 3D sur le parcours en cours.
+  Sans WebGL, hors ligne, si le chargement échoue ou avec `?globe3d=0` : globe dessiné ci-dessous (`can3D`). `globeCard` = carte du trek touché.
+  Le service worker garde les tuiles d'altitude (cache `orri-relief`, cache d'abord, 1 500 tuiles max).
+- **Globe dessiné** (`class Globe`, repli) : la Terre en projection orthographique (d3-geo 3.1.1 + d3-array 3.2.4 depuis unpkg,
   chargés à la demande par `loadGlobeLibs`), terres et frontières de `carte/monde.json` (Natural Earth 1:110m, généré par
   `tools/build_globe.mjs`), océan vert forêt, terres crème. Treks du carnet (`globeTreks`) : faits en terracotta, à faire en pointillés,
   parcours en cours en jaune ; photos géolocalisées en vignettes à partir du zoom 6. Glisser / pincer / molette, toucher un trek =
@@ -66,8 +74,13 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   « Passer par ici ». **Variante d'une journée** (`startVariant` depuis le détail d'un jour) : points de passage touchés sur la carte,
   `compareVariant` (BRouter + `trackStats`), tableau Actuel / Variante dans `#varBar`, `keepVariant` remplace le morceau de tracé
   du jour (journées d'avant figées). **Tracé animé** (`animateRoute`) à l'ouverture d'un trek, à l'import et dans l'exemple.
-  **Carte postale** (`postcard`, page Souvenirs) : image 1080 × 1350 (photo ou courbes de niveau, tracé, chiffres), partagée par
-  `navigator.share` ou téléchargée.
+  **Souvenirs** (`showSouvenirs`, bouton de la page Souvenirs) : cartes 1080 × 1920 façon « story » (`#story`, `storyGo`) : couverture
+  (photo ou relief), le parcours sur une carte en relief (`svRelief` : tuiles d'altitude, couleurs `NAT`, fins de journée numérotées,
+  échelle), en chiffres (km, D+/D−, jours, heures, point culminant, profil, nuits), jour après jour, photos. Données : `svData` (le résumé
+  `sum` garde désormais `days`, `prof`, `dn`, `h` ; repli calculé depuis le tracé). Partage d'une carte ou de toutes (`shareFiles`,
+  `navigator.share`, sinon téléchargement). Dernière carte : **survol 3D** (`startFly`, `flyPlay` : vue d'ensemble, caméra qui suit le
+  tracé au-dessus du relief, recul final) et **vidéo** (`#stRec` : `MediaRecorder` sur un canevas 720 × 1280, mp4 si possible sinon webm,
+  pause tant que les tuiles chargent), tout sur le téléphone.
 - **Accueil** (`#page-welcome`) à **chaque ouverture** (demande de Viktor) : `renderWelcome` met en premier « Reprendre » le parcours
   en cours (`#wGo`) et « Mes parcours » (`#wTreks`) ; puis Nouveau parcours / Tracer (`#wDraw`, 2e touche si non enregistré),
   Importer un GPX, Voir un exemple (`DEMO` : 4 villages des Pyrénées reliés par BRouter, 3 requêtes). Lien depuis le profil.
