@@ -27,6 +27,12 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 - Pastilles de catégories sur la carte (`#chips`, `setShow`) synchronisées avec les cases de l'onglet Préparer (`S.show`).
 - Recherche : IGN + Photon en parallèle (IGN d'abord si la carte est en France), suggestions dès 3 lettres ;
   bouton « me localiser » (la position n'est demandée qu'au toucher).
+- **Mes parcours** (profil sans compte, bouton rond dans la barre de recherche) : `treks`, gardés dans `localStorage`
+  sous `orri.treks.v1` (`{v, list:[{id, name, created, updated, data, sum}]}`) et `orri.current` (parcours ouvert).
+  `data` = `draftData()` (même format que le brouillon `trekplanner.v0`). Sauvegarde/restauration en fichier JSON
+  (`app: 'orri'`, fusion par `id`). Actions sensibles : 2e touche (`confirmTap`), jamais de boîte de dialogue du navigateur.
+- **Fiche du trek** (`sheetHTML`) : page HTML autonome (tracé et profil en SVG, étapes, nuits, eau, points), affichée
+  dans une iframe, téléchargeable et imprimable ; elle ne dépend d'aucun réseau.
 - Identité : vert forêt `--forest` et tons pierre ; icônes SVG en ligne (`<symbol id="i-…">`) ; cibles tactiles ≥ 44 px.
 
 ## Services externes (tous gratuits, sans clé)
