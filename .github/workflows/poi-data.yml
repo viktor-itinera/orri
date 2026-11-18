@@ -1,61 +1,115 @@
 name: Données des points d'intérêt (OpenStreetMap)
 
 # Extrait chaque mois l'eau, les refuges, les bivouacs, les commerces et les gares
-# d'OpenStreetMap pour les pays couverts, et les publie dans data/poi/ (servi par GitHub Pages).
+# d'OpenStreetMap et les publie dans data/poi/ (servi par GitHub Pages).
+# Les pays sont téléchargés région par région (fichiers plus petits, en parallèle,
+# reprise automatique en cas de coupure) depuis Geofabrik.
 on:
   workflow_dispatch:
   schedule:
     - cron: "17 3 2 * *"          # le 2 de chaque mois à 03:17 UTC
   push:
     branches: [main]
-    paths: ["tools/build_pois.py"]
+    paths: ["tools/build_pois.py", ".github/workflows/poi-data.yml"]
 
 permissions:
   contents: write
 
 concurrency:
   group: poi-data
-  cancel-in-progress: false
+  cancel-in-progress: true
+
+env:
+  COUNTRIES: "france spain andorra norway switzerland italy"
 
 jobs:
-  build:
+  plan:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    env:
-      COUNTRIES: "europe/france europe/spain europe/andorra europe/norway europe/switzerland europe/italy"
+    outputs:
+      regions: ${{ steps.plan.outputs.regions }}
     steps:
-      - uses: actions/checkout@v4
+      - id: plan
+        name: Lister les régions à télécharger
+        run: |
+          curl -fsSL --retry 5 -o index.json https://download.geofabrik.de/index-v1-nogeom.json
+          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
+          import json, os
+          feats = [f["properties"] for f in json.load(open("index.json"))["features"]]
+          children = {}
+          for p in feats: children.setdefault(p.get("parent"), []).append(p)
+          byid = {p["id"]: p for p in feats}
+          def leaves(i):
+              kids = children.get(i, [])
+              return [x for k in kids for x in leaves(k["id"])] if kids else [byid[i]]
+          out = []
+          for c in os.environ["COUNTRIES"].split():
+              for p in leaves(c):
+                  pbf = p["urls"]["pbf"]
+                  out.append({"id": p["id"], "pbf": pbf, "poly": pbf.replace("-latest.osm.pbf", ".poly")})
+          print("regions=" + json.dumps(out))
+          EOF
+          grep -o '"id"' "$GITHUB_OUTPUT" | wc -l
 
+  extract:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        region: ${{ fromJSON(needs.plan.outputs.regions) }}
+    steps:
       - name: Installer osmium
         run: sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
-
-      - name: Télécharger et filtrer les pays
+      - name: Télécharger (avec reprise) et filtrer ${{ matrix.region.id }}
         run: |
           set -euo pipefail
-          mkdir -p work
-          PAIRS=""
-          for c in $COUNTRIES; do
-            n=$(basename "$c")
-            echo "::group::$n"
-            curl -fsSL --retry 3 -o "work/$n.poly" "https://download.geofabrik.de/$c.poly"
-            curl -fsSL --retry 3 -o "work/$n.osm.pbf" "https://download.geofabrik.de/$c-latest.osm.pbf"
-            osmium tags-filter "work/$n.osm.pbf" \
-              nwr/tourism=alpine_hut,wilderness_hut,hostel,guest_house,camp_site,camp_pitch \
-              nwr/amenity=shelter,drinking_water,water_point \
-              nwr/natural=spring nwr/man_made=water_tap \
-              nwr/shop=supermarket,convenience,general,bakery \
-              nwr/railway=station,halt \
-              -o "work/$n.f.osm.pbf" --overwrite
-            rm "work/$n.osm.pbf"
-            osmium export "work/$n.f.osm.pbf" -f geojsonseq -a type,id -o "work/$n.geojsonseq" --overwrite
-            PAIRS="$PAIRS work/$n.geojsonseq:work/$n.poly"
-            echo "::endgroup::"
+          n="${{ matrix.region.id }}"
+          curl -fsSL --retry 5 --retry-all-errors -o "$n.poly" "${{ matrix.region.poly }}"
+          ok=0
+          for i in 1 2 3 4 5 6; do
+            if curl -fSL -s -S --retry 3 --retry-all-errors -C - -o "$n.osm.pbf" "${{ matrix.region.pbf }}"; then ok=1; break; fi
+            echo "Coupure, reprise ($i)…"; sleep 10
           done
-          python3 tools/build_pois.py data/poi $PAIRS
+          [ "$ok" = 1 ]
+          osmium tags-filter "$n.osm.pbf" \
+            nwr/tourism=alpine_hut,wilderness_hut,hostel,guest_house,camp_site,camp_pitch \
+            nwr/amenity=shelter,drinking_water,water_point \
+            nwr/natural=spring nwr/man_made=water_tap \
+            nwr/shop=supermarket,convenience,general,bakery \
+            nwr/railway=station,halt \
+            -o "$n.f.osm.pbf" --overwrite
+          osmium export "$n.f.osm.pbf" -f geojsonseq -a type,id -o "$n.geojsonseq" --overwrite
+          mkdir out && mv "$n.geojsonseq" "$n.poly" out/
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: poi-${{ matrix.region.id }}
+          path: out/
+          retention-days: 3
 
+  build:
+    needs: extract
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: poi-*
+          merge-multiple: true
+          path: work
+      - name: Construire les tuiles
+        run: |
+          set -euo pipefail
+          PAIRS=""
+          for f in work/*.geojsonseq; do n="${f%.geojsonseq}"; PAIRS="$PAIRS $f:$n.poly"; done
+          [ -n "$PAIRS" ] || { echo "Aucune région extraite"; exit 1; }
+          python3 tools/build_pois.py data/poi $PAIRS
       - name: Publier si les données ont changé
         run: |
-          git config user.name "itinera-bot"
+          git config user.name "orri-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/poi
           if git diff --cached --quiet; then echo "Aucun changement"; exit 0; fi

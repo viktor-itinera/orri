@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Construit les données de points d'intérêt d'Itinera à partir d'extraits OpenStreetMap.
+"""Construit les données de points d'intérêt d'Orri à partir d'extraits OpenStreetMap.
 
 Entrée : des fichiers GeoJSONSeq produits par `osmium export` (un par pays) et les
 polygones Geofabrik (.poly) de ces pays.
