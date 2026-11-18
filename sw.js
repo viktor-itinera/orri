@@ -1,6 +1,6 @@
 // Itinera — service worker : l'application s'ouvre même sans réseau.
 // (Les cartes et données hors ligne du trek arriveront en semaine 7.)
-const VERSION = 'itinera-v0.5.0';
+const VERSION = 'itinera-v0.5.1';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/favicon-32.png'

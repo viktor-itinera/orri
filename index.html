@@ -104,7 +104,7 @@ footer{font-size:11px;color:var(--muted);margin-top:18px;border-top:1px solid va
 <div id="app">
   <aside id="panel">
     <h1>Itinera</h1>
-    <p class="sub">Planificateur de treks au long cours · prototype v0.5</p>
+    <p class="sub">Planificateur de treks au long cours · prototype v0.5.1</p>
 
     <input id="q" type="search" placeholder="Aller à… (ex. Cauterets, Pic du Canigou)" autocomplete="off">
     <ul id="results"></ul>
@@ -755,8 +755,8 @@ function buildPoiRows() {
 function renderPoiStatus() {
   const el = $('#poiStatus'), has = R && R.n > 1, n = has && R.pois ? R.pois.length : 0;
   const prog = poiProgress.total ? ` ${nf0.format(Math.min(poiProgress.done, poiProgress.total))} / ${nf0.format(poiProgress.total)} km analysés` : '';
-  if (poiState === 'loading') el.textContent = `⏳ Recherche dans OpenStreetMap…${prog}. ${n ? nf0.format(n) + ' points déjà trouvés.' : ''}`;
-  else if (poiState === 'error') { el.innerHTML = `⚠️ Le serveur OpenStreetMap (Overpass) ne répond pas (${prog.trim() || 'aucune donnée'}).<button id="poiRetry">Réessayer</button>`; $('#poiRetry').onclick = () => fetchPOIs(); }
+  if (poiState === 'loading') el.textContent = `⏳ Recherche dans OpenStreetMap…${prog}${poiProgress.server > 1 ? ` (serveur de secours ${poiProgress.server - 1}/${OVERPASS.length - 1})` : ''}. ${n ? nf0.format(n) + ' points déjà trouvés.' : ''}`;
+  else if (poiState === 'error') { el.innerHTML = `⚠️ Aucun des ${OVERPASS.length} serveurs OpenStreetMap (Overpass) n'a répondu (${prog.trim() || 'aucune donnée'}). Ils sont parfois saturés : réessaie dans quelques minutes.<button id="poiRetry">Réessayer</button>`; $('#poiRetry').onclick = () => fetchPOIs(); }
   else el.textContent = has ? `${nf0.format(n)} points à moins de 1 km du tracé (1,5 km pour les commerces, 3 km pour les gares). Clique sur une étape pour voir le détail.` : 'Trace un itinéraire pour voir l\'eau, les refuges et les commerces.';
   Object.keys(CAT).forEach(k => { const c = $('#cnt_' + k); if (c) c.textContent = has && R.pois ? nf0.format(R.pois.filter(p => p.cat === k).length) : '—'; });
 }
@@ -892,7 +892,7 @@ function drawProfile() {
   g.strokeStyle = '#ebe9e2'; g.fillStyle = '#68716c'; g.lineWidth = 1;
   for (let z = z0; z <= z1 + 1e-6; z += step) { g.beginPath(); g.moveTo(PAD.l, Y(z) + .5); g.lineTo(W - PAD.r, Y(z) + .5); g.stroke(); g.fillText(nf0.format(z), 4, Y(z) + 4); }
   const kstep = niceStep(Math.max(D / 1000 / 8, 0.1));
-  for (let k = 0; k * 1000 <= D; k += kstep) { const x = X(k * 1000); g.fillText(nf0.format(k) + (k === 0 ? ' km' : ''), x - 6, H - 6); }
+  for (let j = 0; j * kstep * 1000 <= D; j++) { const k = j * kstep, x = X(k * 1000); g.fillText((kstep < 1 ? nf1.format(k) : nf0.format(k)) + (j === 0 ? ' km' : ''), x - 6, H - 6); }
   if (state.selStage >= 0 && R.stages[state.selStage]) {
     const s = R.stages[state.selStage]; g.fillStyle = 'rgba(28,35,32,.07)';
     g.fillRect(X(R.cum[s.i0]), PAD.t, X(R.cum[s.i1]) - X(R.cum[s.i0]), h);
@@ -1096,7 +1096,9 @@ function changed() { compute(); render(); save(); schedulePOIs(); }
 /* ================= Points d'intérêt OpenStreetMap (Overpass) ================= */
 // Recherche dans un couloir autour du tracé (around), par morceaux de 20 km, 3 morceaux par requête.
 // Chaque morceau déjà analysé est gardé en cache : tracer plus loin ne relance que la fin.
-const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+let poiServer = 0;                                   // dernier serveur qui a répondu (on y retourne en premier)
 const CHUNK_M = 20000, BATCH = 3;
 const chunkDone = new Set();
 let poiTimer = null, poiRunning = false, poiAgain = false, poiProgress = { done: 0, total: 0 };
@@ -1127,17 +1129,20 @@ function buildQuery(chunks) {
       `nwr["shop"~"^(supermarket|convenience|general|bakery)$"](around:1500,${ls});`,
       `nwr["railway"~"^(station|halt)$"](around:3000,${ls});`);
   }
-  return `[out:json][timeout:90];(${st.join('')});out center tags qt;`;
+  return `[out:json][timeout:30];(${st.join('')});out center tags qt;`;
 }
 async function overpass(q) {
   let lastErr;
-  for (const url of OVERPASS) {
-    const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 100000);
+  for (let k = 0; k < OVERPASS.length; k++) {
+    const idx = (poiServer + k) % OVERPASS.length, url = OVERPASS[idx];
+    poiProgress.server = k + 1; renderPoiStatus();
+    const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 40000);   // 40 s max par serveur
     try {
       const r = await fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal: ctrl.signal });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const j = await r.json();
       if (j.remark && /timed out|out of memory|runtime error/i.test(j.remark) && !(j.elements && j.elements.length)) throw new Error(j.remark);
+      poiServer = idx;
       return j;
     } catch (e) { lastErr = e; console.warn('Overpass', url, e); }
     finally { clearTimeout(t); }
