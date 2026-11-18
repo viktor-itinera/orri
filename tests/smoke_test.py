@@ -88,6 +88,9 @@ with sync_playwright() as p:
     check(pois > 0 and tiles > 0, "points d'intérêt chargés depuis data/poi/ (Overpass en panne)")
 
     pg.click("#tabs button[data-tab=stages]"); pg.wait_for_timeout(200)
+    check(pg.is_visible("#trekSum .tsum") and pg.is_visible("#bKeep"), "résumé du trek affiché (« Garder ce trek »)")
+    pg.click("#bAdjust"); pg.wait_for_timeout(300)
+    check(pg.is_visible("#page-adjust #modeSeg"), "« Ajuster » ouvre les réglages")
     pg.click("#modeSeg button[data-m=limits]"); pg.wait_for_timeout(800)
     worst = J(pg, "() => Math.max(...R.stages.map(s => s.time))")
     check(worst <= 7.01, f"limite 7 h/jour respectée (max {worst:.2f} h)")
@@ -97,14 +100,18 @@ with sync_playwright() as p:
     dmax = J(pg, "() => Math.max(0, ...R.stages.filter(s => s.endPoi).map(s => Math.abs(s.endDelta)))")
     check(hits > 0, f"fins d'étape au refuge trouvées ({hits})")
     check(dmax <= J(pg, "() => S.tol") + 1e-6, f"écart dans la tolérance (max {dmax:.2f} h)")
+    check("jour" in (pg.text_content("#adjLive") or ""), "« Ajuster » montre l'effet des réglages")
+    pg.click("#bAdjDone"); pg.wait_for_timeout(300)
+    nights = len(pg.query_selector_all("#stages li.day .night"))
+    check(nights == J(pg, "() => R.stages.length") and pg.query_selector("#stages li.day.last .night.arr") is not None, f"frise : une nuit par jour + l'arrivée ({nights})")
 
     # Modifier une étape : dormir en bivouac à la fin de l'étape 2 au lieu du refuge
-    pg.locator("#stages li").nth(1).click(); pg.wait_for_timeout(400)
-    pg.click("#stages li.sel [data-sleep=bivouac]"); pg.wait_for_timeout(1200)
+    pg.locator("#stages li").nth(1).locator(".chg").click(); pg.wait_for_timeout(400)
+    pg.locator("#stages li").nth(1).locator("[data-sleep=bivouac]").click(); pg.wait_for_timeout(1200)
     st = J(pg, "() => ({ t: R.stages[1].endType, c: R.stages[1].endPoi && R.stages[1].endPoi.cat, miss: R.stages[1].endMiss, o: S.over[1], first: R.stages[0].endPoi && R.stages[0].endPoi.cat })")
     check(st["o"] == "bivouac" and st["t"] == "bivouac" and (st["c"] in ("bivouac", "water") or st["miss"]), f"étape 2 modifiée : fin en bivouac ({st})")
     check(st["first"] == "hut", "les autres étapes gardent le refuge")
-    pg.click("#stages li.sel .reset"); pg.wait_for_timeout(1000)
+    pg.locator("#stages li").nth(1).locator(".reset").click(); pg.wait_for_timeout(1000)
     check(J(pg, "() => !(1 in S.over) && R.stages[1].endType === 'refuge'"), "retour au réglage général")
 
     # Pastilles : masquer l'eau sur la carte
@@ -117,8 +124,10 @@ with sync_playwright() as p:
     check("Norvège" in (pg.text_content("#results") or ""), "recherche hors de France (Photon)")
     pg.click("#results li >> nth=0"); pg.wait_for_timeout(300)
 
+    pg.click("#bAdjust"); pg.wait_for_timeout(300)
     pg.click("#modeSeg button[data-m=days]"); pg.fill("#vDays", "12"); pg.dispatch_event("#vDays", "input"); pg.wait_for_timeout(1500)
     check(J(pg, "() => R.stages.length") == 12, "12 jours imposés = 12 étapes")
+    pg.click("#bAdjDone"); pg.wait_for_timeout(300)
 
     pg.locator("#stages li").first.click(); pg.wait_for_timeout(500)
     check(pg.query_selector("#stages li.sel .detail") is not None, "feuille d'étape affichée")

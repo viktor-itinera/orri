@@ -226,6 +226,37 @@ button:active:not(:disabled),.btn:active,.chip:active,.wcard:active,.fab:active,
 .stat b{font-size:18px;font-weight:700}
 #stages li{border:0;box-shadow:0 1px 0 var(--line),0 2px 8px rgba(31,70,54,.06);border-radius:16px}
 #stages li.sel{box-shadow:0 0 0 2px var(--forest)}
+/* S7 : résumé du trek et frise « Jour après jour » */
+.tsum{margin:14px 0 4px;padding:16px;border-radius:18px;background:linear-gradient(160deg,#fff 0%,var(--moss) 140%);box-shadow:0 1px 0 var(--line),0 4px 14px rgba(31,70,54,.08)}
+.tsum .kick{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--terra-2)}
+.tsum h3{font-family:Fraunces,Georgia,serif;font-size:22px;line-height:1.2;margin:4px 0 6px;color:var(--forest)}
+.tsum .sub,.tsum .nights{font-size:14px;margin-top:4px}
+.tsum .nights .ii{margin-left:2px}
+#stages li.day{display:flex;gap:10px;padding:0 0 12px;margin:0;background:transparent;box-shadow:none;border:0;border-radius:0;position:relative}
+#stages li.day:active{transform:none}
+#stages li.day::before{content:"";position:absolute;left:16px;top:34px;bottom:0;border-left:2px dashed #e3c9b3}
+#stages li.day.last::before{display:none}
+.day .rail{flex:none;width:34px;display:flex;justify-content:center;padding-top:12px}
+.day .num{width:30px;height:30px;border-radius:50%;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px var(--bg);position:relative;z-index:1}
+.day .body{flex:1;min-width:0;background:#fff;border-radius:16px;padding:12px 14px;box-shadow:0 1px 0 var(--line),0 2px 8px rgba(31,70,54,.06);transition:box-shadow .2s}
+.day.sel .body{box-shadow:0 0 0 2px var(--forest)}
+.day .t{font-family:Fraunces,Georgia,serif;font-size:17px;font-weight:700;color:var(--forest)}
+.day .t .date{font-family:Figtree,system-ui,sans-serif;font-size:14px;font-weight:500;color:var(--muted)}
+.day .where{font-weight:600;margin-top:2px}
+.day .w{font-size:13px;margin-top:6px}
+.night{display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 10px;border-radius:12px;background:var(--sand)}
+.night.miss{background:#fbeee2}
+.night.arr{background:#fbeadf}
+.night .ni{flex:none;width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center}
+.night .ni .ii{margin:0;width:20px;height:20px}
+.night .nt{flex:1;min-width:0;line-height:1.25}
+.night .nt b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.night .nt small{color:var(--muted);font-size:12.5px}
+.night .chg{flex:none;min-height:44px;padding:0 14px;border-radius:22px;background:#fff;border:1px solid var(--line);font-weight:600;color:var(--forest)}
+.night .pinned{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.day .sleep{margin:8px 0 2px}
+.day .open{font-size:13px;color:var(--forest-2);margin-top:8px;font-weight:500}
+#page-adjust .pbody h2:first-of-type{margin-top:6px}
 .box{background:var(--sand);border-radius:16px}
 .more div{background:var(--sand)}
 .stg{border-radius:12px;font-size:12px}
@@ -375,49 +406,8 @@ details.why summary::-webkit-details-marker{display:none}
 
       <!-- ===== Étapes ===== -->
       <section class="tab" id="tab-stages">
-        <h2>Ton rythme</h2>
-        <div class="seg" id="modeSeg">
-          <button data-m="limits" title="Des limites par jour, combinables">Limites / jour</button>
-          <button data-m="days" title="Un nombre de jours imposé, étapes d'effort égal">Nb de jours</button>
-          <button data-m="gpx" title="Les étapes contenues dans le fichier GPX importé">Du GPX</button>
-        </div>
-        <div class="box" id="limitsBox">
-          <div class="lim"><input type="checkbox" id="cH"><label for="cH">Marcher au plus</label><input type="number" id="vH" min="1" max="16" step="0.5" inputmode="decimal"><span class="u">h / jour</span></div>
-          <div class="lim"><input type="checkbox" id="cUp"><label for="cUp">Monter au plus</label><input type="number" id="vUp" min="100" max="6000" step="100" inputmode="numeric"><span class="u">m / jour</span></div>
-          <div class="lim"><input type="checkbox" id="cKm"><label for="cKm">Parcourir au plus</label><input type="number" id="vKm" min="1" max="150" step="1" inputmode="numeric"><span class="u">km / jour</span></div>
-          <div class="lim"><input type="checkbox" id="cBal"><label for="cBal">Des journées équilibrées (pas de mini-étape à la fin)</label></div>
-        </div>
-        <div class="box" id="daysBox">
-          <div class="lim"><label for="vDays">Nombre de jours</label><input type="number" id="vDays" min="1" max="300" step="1" inputmode="numeric"><span class="u">jours</span></div>
-          <p class="note" style="margin:0 0 6px">Étapes d'effort égal (même temps de marche), pas de distance égale.</p>
-        </div>
-        <div class="box" id="gpxBox">
-          <p class="note" style="margin:6px 0">Étapes telles qu'elles sont dans le fichier GPX importé (une trace = une étape).</p>
-        </div>
-        <div class="box" id="endBox">
-          <div class="lim"><label for="endType">Le soir, dormir</label>
-            <select id="endType">
-              <option value="any">où ça tombe</option>
-              <option value="refuge">en refuge, cabane ou gîte</option>
-              <option value="bivouac">en bivouac</option>
-              <option value="both">en refuge ou en bivouac</option>
-            </select>
-          </div>
-          <div class="lim" id="tolRow"><label for="vTol">Journée plus longue ou plus courte de</label><input type="number" id="vTol" min="0" max="4" step="0.25" inputmode="decimal"><span class="u">h</span></div>
-          <p class="note" id="endNote" style="margin:0 0 6px"></p>
-        </div>
-        <div class="lim" style="margin-top:8px"><label for="pace">Ton allure</label>
-          <select id="pace">
-            <option value="0.85">Tranquille</option>
-            <option value="1">Standard</option>
-            <option value="1.2">Sportive</option>
-            <option value="1.4">Très sportive</option>
-          </select>
-        </div>
-        <details class="why" id="pinNote"><summary><svg class="ico ii"><use href="#i-info"/></svg>Déplacer une fin de journée</summary>
-          <p>Touche une étiquette « J » sur la carte pour fixer la fin de cette journée, ou glisse-la ailleurs sur le tracé. Touche une étiquette verte pour la libérer. Double-clic sur le profil : nouvelle fin de journée.</p></details>
-
-        <h2 id="hStages">Étapes</h2>
+        <div id="trekSum"></div>
+        <h2 id="hStages">Jour après jour</h2>
         <ul id="stages"></ul>
         <div class="more">
           <div><b id="sDown">—</b><span>dénivelé négatif</span></div>
@@ -491,6 +481,57 @@ details.why summary::-webkit-details-marker{display:none}
       </div>
       <button id="bWelcome" class="linkbtn">Revoir la présentation d'Orri</button>
       <p class="note">Tes parcours sont gardés dans ce navigateur, sur cet appareil, sans compte. Ils disparaissent si tu effaces les données du navigateur : garde une sauvegarde dans un fichier (par exemple sur ton drive).</p>
+    </div>
+  </div>
+
+  <!-- ===== Ajuster le trek (réglages des étapes) ===== -->
+  <div class="page" id="page-adjust" role="dialog" aria-label="Ajuster ton trek">
+    <header><button class="close" aria-label="Fermer"><svg class="ico"><use href="#i-x"/></svg></button><h1>Ajuster ton trek</h1></header>
+    <div class="pbody">
+      <p class="note" id="adjLive" style="margin-top:0"></p>
+      <h2>Ton rythme</h2>
+      <div class="seg" id="modeSeg">
+        <button data-m="limits" title="Des limites par jour, combinables">Limites / jour</button>
+        <button data-m="days" title="Un nombre de jours imposé, étapes d'effort égal">Nb de jours</button>
+        <button data-m="gpx" title="Les étapes contenues dans le fichier GPX importé">Du GPX</button>
+      </div>
+      <div class="box" id="limitsBox">
+        <div class="lim"><input type="checkbox" id="cH"><label for="cH">Marcher au plus</label><input type="number" id="vH" min="1" max="16" step="0.5" inputmode="decimal"><span class="u">h / jour</span></div>
+        <div class="lim"><input type="checkbox" id="cUp"><label for="cUp">Monter au plus</label><input type="number" id="vUp" min="100" max="6000" step="100" inputmode="numeric"><span class="u">m / jour</span></div>
+        <div class="lim"><input type="checkbox" id="cKm"><label for="cKm">Parcourir au plus</label><input type="number" id="vKm" min="1" max="150" step="1" inputmode="numeric"><span class="u">km / jour</span></div>
+        <div class="lim"><input type="checkbox" id="cBal"><label for="cBal">Des journées équilibrées (pas de mini-étape à la fin)</label></div>
+      </div>
+      <div class="box" id="daysBox">
+        <div class="lim"><label for="vDays">Nombre de jours</label><input type="number" id="vDays" min="1" max="300" step="1" inputmode="numeric"><span class="u">jours</span></div>
+        <p class="note" style="margin:0 0 6px">Étapes d'effort égal (même temps de marche), pas de distance égale.</p>
+      </div>
+      <div class="box" id="gpxBox">
+        <p class="note" style="margin:6px 0">Étapes telles qu'elles sont dans le fichier GPX importé (une trace = une étape).</p>
+      </div>
+      <div class="box" id="endBox">
+        <div class="lim"><label for="endType">Le soir, dormir</label>
+          <select id="endType">
+            <option value="any">où ça tombe</option>
+            <option value="refuge">en refuge, cabane ou gîte</option>
+            <option value="bivouac">en bivouac</option>
+            <option value="both">en refuge ou en bivouac</option>
+          </select>
+        </div>
+        <div class="lim" id="tolRow"><label for="vTol">Journée plus longue ou plus courte de</label><input type="number" id="vTol" min="0" max="4" step="0.25" inputmode="decimal"><span class="u">h</span></div>
+        <p class="note" id="endNote" style="margin:0 0 6px"></p>
+      </div>
+      <div class="lim" style="margin-top:8px"><label for="pace">Ton allure</label>
+        <select id="pace">
+          <option value="0.85">Tranquille</option>
+          <option value="1">Standard</option>
+          <option value="1.2">Sportive</option>
+          <option value="1.4">Très sportive</option>
+        </select>
+      </div>
+      <details class="why" id="pinNote"><summary><svg class="ico ii"><use href="#i-info"/></svg>Déplacer une fin de journée</summary>
+        <p>Touche une étiquette « J » sur la carte pour fixer la fin de cette journée, ou glisse-la ailleurs sur le tracé. Touche une étiquette verte pour la libérer. Double-clic sur le profil : nouvelle fin de journée.</p></details>
+
+      <button id="bAdjDone" class="primary" style="width:100%;margin-top:16px"><svg class="ico"><use href="#i-flag"/></svg>Voir mes journées</button>
     </div>
   </div>
 
@@ -768,7 +809,7 @@ function escXml(s) { return String(s).replace(/[<>&"']/g, c => ({ '<': '&lt;', '
 
 /* ================= État ================= */
 // start : [lat,lon] ; legs : {to:[lat,lon], pts:[[lat,lon,ele]], kind:'route'|'line'|'import', name, stageBreak}
-const state = { start: null, legs: [], draw: true, mode: 'route', selStage: -1 };
+const state = { start: null, legs: [], draw: true, mode: 'route', selStage: -1, chg: -1 };
 let S = JSON.parse(JSON.stringify(DEFAULT_S));    // réglages du découpage
 let R = null;                                      // résultats calculés
 const placeCache = {};
@@ -1013,7 +1054,7 @@ function render() {
     }
     m.addTo(markLayer);
   });
-  renderPOIs(); syncUI(); renderStats(); renderStages(); renderPoiStatus(); drawProfile();
+  renderPOIs(); syncUI(); renderStats(); renderStages(); renderAdjLive(); renderPoiStatus(); drawProfile();
 }
 function removePinNear(la, lo) {
   let best = -1, bd = Infinity;
@@ -1111,14 +1152,7 @@ function stageDetail(s, k) {
     if (tm.sun) h += `<div class="info">${I('sun')}Soleil : lever ${fT(tm.sun.rise)}, coucher ${fT(tm.sun.set)}</div>`;
     if (tm.late) h += `<div class="info warnline">${I('alert')}Arrivée après le coucher du soleil : pars plus tôt ou raccourcis l'étape.</div>`;
     if (tm.early) h += `<div class="info warnline">${I('moon')}Départ avant le lever du soleil : prévois la frontale.</div>`;
-  } else h += `<div class="info" style="color:var(--muted)">${I('cal')}Indique une date de départ (réglages ci-dessus) pour voir la date, les horaires et le coucher du soleil.</div>`;
-  if (S.mode !== 'gpx' && k < R.stages.length - 1 && !s.pinEnd) {     // choisir où dormir pour cette étape seulement
-    const cur = s.endType || 'any';
-    const opt = [['refuge', I('hut') + 'Refuge'], ['bivouac', I('tent') + 'Bivouac'], ['any', 'Libre']];
-    h += `<div class="sleep"><div class="info"><b>Le soir, tu dors</b>${s.endOwn ? ' · <a href="#" class="reset" data-k="' + k + '">revenir au réglage général</a>' : ''}</div>
-      <div class="seg">${opt.map(([v, l]) => `<button data-sleep="${v}" data-k="${k}" class="${cur === v ? 'on' : ''}">${l}</button>`).join('')}</div>
-      ${s.endWide ? `<div class="info warnline">Rien dans ta tolérance de ${fTol(S.tol)} : étape ajustée de ${fDur(Math.abs(s.endDelta))}.</div>` : ''}</div>`;
-  }
+  } else h += `<div class="info" style="color:var(--muted)">${I('cal')}Indique une date de départ (onglet Préparer) pour voir la date, les horaires et le coucher du soleil.</div>`;
   const g = s.waterGap;
   if (poiState !== 'loading' && R.pois.length && g && g.km > 0.5)
     h += `<div class="info${g.h > 3 ? ' warnline' : ''}">${g.h > 3 ? I('alert') : I('drop', CAT.water.color)} Plus long tronçon sans eau connue : <b>${nf1.format(g.km)} km</b> (≈ ${fDur(g.h)}), du km ${kmS(g.a)} au km ${kmS(g.b)}</div>`;
@@ -1133,33 +1167,88 @@ function stageDetail(s, k) {
   h += `<div class="prow end" data-i="${s.i1}"><span class="km">km ${kmS(s.i1)}</span><span>${I('flag')}Arrivée${placeName(s.i1) ? ' : ' + escXml(placeName(s.i1)) : ''} · ${nf0.format(Math.round(R.zs ? R.zs[s.i1] : 0))} m</span></div>`;
   return `<div class="detail">${h}</div></div>`;
 }
+function nightOf(s) {          // comment se termine la journée : icône, titre, détail
+  const p = s.endPoi;
+  if (p) return { ico: p.cat === 'hut' ? I('hut', CAT.hut.color) : I('tent', CAT.bivouac.color),
+    t: escXml(p.name || p.kind), d: escXml(p.kind.toLowerCase()) + (p.d >= 50 ? ', à ' + fM(p.d) + ' du tracé' : '') + ' · ' + fDelta(s.endDelta) };
+  if (s.endMiss) return { ico: I('alert', 'var(--warn)'), warn: true,
+    t: poiState === 'loading' ? 'On cherche où dormir…' : poiState === 'error' ? 'Refuges et bivouacs indisponibles' : `Pas de ${END_LABEL[s.endType] || END_LABEL[S.endType]} trouvé`,
+    d: poiState === 'loading' || poiState === 'error' ? 'fin de journée libre pour l\'instant' : `rien à ${fTol(s.endOwn ? Math.max(2, S.tol) : S.tol)} : nuit libre` };
+  return { ico: I('moon', 'var(--forest-2)'), t: 'Nuit libre', d: placeName(s.i1) ? 'vers ' + escXml(placeName(s.i1)) : 'là où s\'arrête la journée' };
+}
+function renderSummary() {
+  const box = $('#trekSum');
+  if (!R || R.n < 2) { box.innerHTML = ''; return; }
+  let t = null, dirty = true; const n = R.stages.length;
+  try { t = treks.cur && treks.get(treks.cur); dirty = treks.dirty(); } catch (e) { }   // treks pas encore prêt au démarrage
+  const t0 = stageTiming(R.stages[0], 0), t1 = stageTiming(R.stages[n - 1], n - 1);
+  const dOpt = { weekday: 'short', day: 'numeric', month: 'short' };
+  const when = t0 ? (n > 1 ? `Du ${t0.d.toLocaleDateString('fr-FR', dOpt)} au ${t1.d.toLocaleDateString('fr-FR', dOpt)}` : `Le ${t0.d.toLocaleDateString('fr-FR', dOpt)}`) : '';
+  const nights = R.stages.slice(0, -1), cnt = { hut: 0, biv: 0, free: 0 };
+  nights.forEach(s => { if (s.endPoi && s.endPoi.cat === 'hut') cnt.hut++; else if (s.endPoi) cnt.biv++; else cnt.free++; });
+  const nl = [cnt.hut && `${I('hut', CAT.hut.color)}${cnt.hut} en refuge`, cnt.biv && `${I('tent', CAT.bivouac.color)}${cnt.biv} en bivouac`, cnt.free && `${I('moon', 'var(--forest-2)')}${cnt.free} ${cnt.free > 1 ? 'libres' : 'libre'}`].filter(Boolean);
+  const dry = poiState !== 'loading' && R.pois.length ? R.stages.filter(s => s.waterGap && s.waterGap.h > 3).length : 0;
+  const keep = !t ? ['Garder ce trek', false] : dirty ? ['Mettre à jour Mes parcours', false] : ['Gardé dans Mes parcours', true];
+  box.innerHTML = `<div class="tsum">
+    <div class="kick">${n > 1 ? `Ton trek en ${n} jours` : 'Ta rando'}</div>
+    <h3>${escXml(t ? t.name : defaultName())}</h3>
+    ${when ? `<div class="sub">${I('cal')}${when}</div>` : ''}
+    ${nl.length ? `<div class="nights">${n - 1} nuit${n > 2 ? 's' : ''} : ${nl.join(' · ')}</div>` : ''}
+    ${dry ? `<div class="sub warnline">${I('nowater', 'var(--warn)')}${dry} journée${dry > 1 ? 's' : ''} avec plus de 3 h sans eau connue : prévois de la réserve.</div>` : ''}
+    <div class="row" style="margin-top:12px">
+      <button id="bKeep" class="primary grow"${keep[1] ? ' disabled' : ''}>${I('save')}<span>${keep[0]}</span></button>
+      <button id="bAdjust" class="grow">${I('pen')}Ajuster</button>
+    </div></div>`;
+  $('#bKeep').onclick = () => { renderProfile(); saveTrek(false); renderSummary(); };
+  $('#bAdjust').onclick = () => openPage('adjust');
+}
 function renderStages() {
+  renderSummary();
   const ul = $('#stages'); ul.innerHTML = '';
   if (!R || R.n < 2) { $('#hStages').textContent = 'Tes journées'; ul.innerHTML = '<li class="empty" style="cursor:default;text-align:center"><svg class="empty-ill" viewBox="0 0 120 70"><path d="M5 62 38 22l16 18 14-14 47 36Z" fill="#e2ece4" stroke="#2f6650" stroke-width="2" stroke-linejoin="round"/><path d="M14 60c18-8 30-4 44-12s26-6 46 2" fill="none" stroke="#cf6a3c" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round"/></svg>Trace ton itinéraire : tes journées apparaîtront ici.</li>'; return; }
-  $('#hStages').textContent = R.stages.length > 1 ? `Ton trek en ${R.stages.length} jours` : 'Ton itinéraire';
+  $('#hStages').textContent = R.stages.length > 1 ? 'Jour après jour' : 'Ton itinéraire';
+  const last = R.stages.length - 1;
   R.stages.forEach((s, k) => {
     const li = document.createElement('li');
-    if (state.selStage === k) li.className = 'sel';
+    li.className = 'day' + (state.selStage === k ? ' sel' : '') + (k === last ? ' last' : '');
     const a = placeName(s.i0), b = placeName(s.i1);
     const tm = stageTiming(s, k);
-    const title = (R.stages.length > 1 ? `Jour ${k + 1}` : 'Itinéraire') + (tm ? ' · ' + tm.d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) : '');
-    let end = '';
-    if (s.endPoi) {
-      const p = s.endPoi;
-      end = `<div class="e">${CI(p.cat)} Fin : ${escXml(p.name || p.kind)}${p.name ? ' (' + escXml(p.kind.toLowerCase()) + ')' : ''}${p.d >= 50 ? ', à ' + fM(p.d) + ' du tracé' : ''} · ${fDelta(s.endDelta)}</div>`;
-    } else if (s.endMiss) {
-      end = `<div class="e miss">${I('alert')}${poiState === 'loading' ? 'Recherche des refuges et bivouacs en cours…' : poiState === 'error' ? 'Refuges et bivouacs indisponibles (serveur OpenStreetMap)' : `Aucun ${END_LABEL[s.endType] || END_LABEL[S.endType]} à ${fTol(s.endOwn ? Math.max(2, S.tol) : S.tol)} : fin d'étape libre`}</div>`;
-    }
-    const cnt = Object.keys(CAT).filter(c => s.counts[c]).map(c => CI(c) + s.counts[c]).join(' · ');
-    const flags = (tm && tm.late ? ' ' + I('moon', 'var(--warn)') : '') + (s.waterGap && s.waterGap.h > 3 && R.pois.length && poiState !== 'loading' ? ' ' + I('nowater', 'var(--warn)') : '');
-    li.innerHTML = `<div class="t"><span class="dot" style="background:${COLORS[k % 2]}"></span>${title}${s.pinEnd ? ' ' + I('pin', 'var(--ok)') : ''}${flags}${a || b ? ' · ' + escXml(a || '…') + ' → ' + escXml(b || '…') : ''}</div>
-      <div class="m">${fKm(s.dist)} · +${fM(s.up)} / −${fM(s.dn)} · ${fH(s.time)}${tm ? ' · arrivée ≈ ' + fT(tm.arr) : ''}</div>${end}${cnt ? `<div class="p">${cnt}</div>` : ''}${state.selStage === k ? stageDetail(s, k) : ''}`;
+    const title = (R.stages.length > 1 ? `Jour ${k + 1}` : 'Itinéraire');
+    const date = tm ? tm.d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) : '';
+    const g = s.waterGap, nW = s.counts.water || 0;
+    let water = '';
+    if (poiState === 'loading') water = '';
+    else if (g && g.h > 3 && R.pois.length) water = `<div class="w warnline">${I('nowater', 'var(--warn)')}${nf1.format(g.km)} km sans eau connue (≈ ${fDur(g.h)}) : remplis tes gourdes</div>`;
+    else if (nW) water = `<div class="w">${I('drop', CAT.water.color)}${nW} point${nW > 1 ? 's' : ''} d'eau sur la journée</div>`;
+    const late = tm && tm.late ? `<div class="w warnline">${I('moon', 'var(--warn)')}Arrivée après le coucher du soleil</div>` : '';
+    let night;
+    if (k < last) {
+      const nt = nightOf(s);
+      const canChange = S.mode !== 'gpx' && !s.pinEnd;
+      night = `<div class="night${nt.warn ? ' miss' : ''}"><span class="ni">${nt.ico}</span><div class="nt"><b>${nt.t}</b><small>${nt.d}</small></div>${canChange ? `<button class="chg" data-chg="${k}">Changer</button>` : s.pinEnd ? `<span class="pinned">${I('pin', 'var(--ok)')}fixée</span>` : ''}</div>`;
+      if (canChange && state.chg === k) {
+        const cur = s.endType || 'any';
+        const opt = [['refuge', I('hut') + 'Refuge'], ['bivouac', I('tent') + 'Bivouac'], ['any', I('moon') + 'Libre']];
+        night += `<div class="sleep"><div class="info"><b>Ce soir-là, tu préfères dormir</b>${s.endOwn ? ' · <a href="#" class="reset" data-k="' + k + '">comme les autres soirs</a>' : ''}</div>
+          <div class="seg">${opt.map(([v, l]) => `<button data-sleep="${v}" data-k="${k}" class="${cur === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+          ${s.endWide ? `<div class="info warnline">Rien dans ta tolérance de ${fTol(S.tol)} : journée ajustée de ${fDur(Math.abs(s.endDelta))}.</div>` : ''}</div>`;
+      }
+    } else night = `<div class="night arr"><span class="ni">${I('flag', 'var(--terra)')}</span><div class="nt"><b>Arrivée${b ? ' à ' + escXml(b) : ''}</b><small>${R.stages.length > 1 ? 'bravo, c\'est la fin du trek' : 'fin de la rando'}</small></div></div>`;
+    li.innerHTML = `<div class="rail"><span class="num" style="background:${COLORS[k % 2]}">${k + 1}</span></div>
+      <div class="body">
+        <div class="t">${title}${date ? ` <span class="date">· ${date}</span>` : ''}${s.pinEnd ? ' ' + I('pin', 'var(--ok)') : ''}</div>
+        ${a || b ? `<div class="where">${escXml(a || '…')} → ${escXml(b || '…')}</div>` : ''}
+        <div class="m">${fKm(s.dist)} · +${fM(s.up)} / −${fM(s.dn)} · ${fH(s.time)} de marche${tm ? ' · arrivée ≈ ' + fT(tm.arr) : ''}</div>
+        ${water}${late}${night}${state.selStage === k ? stageDetail(s, k) : `<div class="open">${I('route')}Voir la journée sur la carte</div>`}
+      </div>`;
     li.onclick = ev => {
       const row = ev.target.closest('.prow');
       if (row) { ev.stopPropagation(); if (row.dataset.poi) focusPOI(row.dataset.poi); else { const i = +row.dataset.i; map.setView([R.lat[i], R.lon[i]], Math.max(map.getZoom(), 14)); } return; }
+      const ch = ev.target.closest('[data-chg]');
+      if (ch) { ev.stopPropagation(); state.chg = state.chg === k ? -1 : k; renderStages(); return; }
       const sl = ev.target.closest('[data-sleep], .reset');
       if (sl) { ev.preventDefault(); ev.stopPropagation(); setStageEnd(k, sl.dataset.sleep || null); return; }
-      if (ev.target.closest('.detail')) return;
+      if (ev.target.closest('.detail, .sleep')) return;
       selectStage(state.selStage === k ? -1 : k);
     };
     ul.appendChild(li);
@@ -1844,9 +1933,15 @@ function openPage(name) {
   document.body.classList.add('paged');
   if (name === 'profile') renderProfile();
   if (name === 'sheet') renderSheet();
+  if (name === 'adjust') renderAdjLive();
 }
 function closePage() { document.querySelectorAll('.page').forEach(p => p.classList.remove('on')); document.body.classList.remove('paged'); }
 document.querySelectorAll('.page .close').forEach(b => b.onclick = closePage);
+function renderAdjLive() {   // dans « Ajuster », on voit tout de suite l'effet des réglages
+  const el = $('#adjLive'); if (!el) return;
+  el.innerHTML = R && R.n > 1 ? `${I('flag')}Avec ces réglages : <b>${R.stages.length} jour${R.stages.length > 1 ? 's' : ''}</b>, ${fKm(R.dist)}, ${fH(R.time)} de marche au total.` : 'Trace un itinéraire pour voir tes journées.';
+}
+$('#bAdjDone').onclick = () => { closePage(); showTab('stages'); };
 $('#bProfile').onclick = () => openPage('profile');
 $('#bSheet').onclick = () => { if (!R || R.n < 2) return toast('Trace ou importe un itinéraire d\'abord', 'warn'); openPage('sheet'); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('paged')) closePage(); });
@@ -1949,7 +2044,7 @@ $('#wDemo').onclick = () => {
 function coach() {
   if (!R || R.n < 2) return;
   if (state.legs.length === 1 && once('orri.tip.route')) toast('Continue à toucher la carte pour prolonger le tracé. Les étapes se calculent toutes seules.');
-  else if (R.stages.length > 1 && once('orri.tip.stages')) setTimeout(() => toast('Ton trek est découpé en étapes : ouvre l\'onglet Étapes pour choisir où dormir.', 'ok'), 1200);
+  else if (R.stages.length > 1 && once('orri.tip.stages')) setTimeout(() => toast('Ton trek est découpé en journées : ouvre l\'onglet Étapes pour les voir jour après jour.', 'ok'), 1200);
 }
 
 /* ================= Tiroir (mobile), onglets, profil ================= */
