@@ -32,6 +32,12 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   sous `orri.treks.v1` (`{v, list:[{id, name, created, updated, data, sum}]}`) et `orri.current` (parcours ouvert).
   `data` = `draftData()` (même format que le brouillon `trekplanner.v0`). Sauvegarde/restauration en fichier JSON
   (`app: 'orri'`, fusion par `id`). Actions sensibles : 2e touche (`confirmTap`), jamais de boîte de dialogue du navigateur.
+- **Mon carnet** (page profil, `renderProfile`) : statistiques (`#cStats` : treks faits, km parcourus, D+, à faire), parcours en cours,
+  liste filtrable (Tous / À faire / Faits) et triable (`carnet`, gardé sous `orri.carnet`) avec mini-carte SVG du tracé (`trackSVG`, `trekPts`).
+  Un trek du carnet porte aussi `status` (`'todo'` | `'done'`), `doneDate` (AAAA-MM-JJ, saisie à la main : pas de suivi GPS), `note`,
+  `photos` (`[{id, lat, lon, date}]`). Page **Souvenirs** (`#page-trek`, `renderTrekPage`) : statut, date, souvenir, photos, renommer /
+  dupliquer / supprimer. Photos dans **IndexedDB** (`photoDB`, base `orri-photos`) réduites à 1600 px + vignette 360 px (`shrink`) ;
+  date et GPS lus dans l'EXIF avant réduction (`exifInfo`). La sauvegarde JSON ne contient pas les images. Visionneuse `#viewer`.
 - **Fiche du trek** (`sheetHTML`) : page HTML autonome (tracé et profil en SVG, étapes, nuits, eau, points), affichée
   dans une iframe, téléchargeable et imprimable ; elle ne dépend d'aucun réseau.
 - **Onglet Étapes** : résumé du trek (`renderSummary` : nom, dates, nuits refuge/bivouac/libres, manque d'eau, « Garder ce trek »

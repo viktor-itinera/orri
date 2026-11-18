@@ -199,6 +199,31 @@ with sync_playwright() as p:
     pg.click("#bProfile"); pg.wait_for_timeout(300)
     pg.click("#trekList .trek .tmain"); pg.wait_for_timeout(1500)
     check(J(pg, "() => R.n > 100 && R.stages.length === 12 && treks.cur === treks.list[0].id"), "parcours rouvert depuis Mes parcours")
+
+    # Mon carnet : marquer fait avec une date, souvenir, photo avec position GPS
+    import io, tempfile
+    from PIL import Image
+    im = Image.new("RGB", (900, 600), (90, 140, 110)); ex = Image.Exif()
+    ex[0x0132] = "2026:08:12 14:30:00"
+    gps = ex.get_ifd(0x8825); gps[1] = "N"; gps[2] = (42.0, 52.0, 30.0); gps[3] = "W"; gps[4] = (0.0, 20.0, 0.0)
+    photo = os.path.join(tempfile.gettempdir(), "orri-test-photo.jpg"); im.save(photo, "JPEG", exif=ex)
+    pg.click("#bProfile"); pg.wait_for_timeout(300)
+    pg.click("#trekList .trek [data-a=memo]"); pg.wait_for_timeout(300)
+    check(pg.is_visible("#page-trek") and "Traversée test" in pg.text_content("#tdName"), "carnet : page souvenirs du trek")
+    pg.click("#tdStatus [data-s=done]"); pg.wait_for_timeout(200)
+    pg.fill("#tdDate", "2026-08-10"); pg.dispatch_event("#tdDate", "change")
+    pg.fill("#tdNote", "Superbe traversée"); pg.wait_for_timeout(700)
+    pg.set_input_files("#photoIn", photo); pg.wait_for_function("(treks.list[0].photos || []).length === 1", timeout=10000); pg.wait_for_timeout(500)
+    ph = J(pg, "() => treks.list[0].photos[0]")
+    check(abs(ph.get("lat", 0) - 42.875) < 1e-3 and abs(ph.get("lon", 0) + 0.3333) < 1e-3 and ph.get("date", "").startswith("2026-08-12"), f"photo : position GPS et date lues ({ph})")
+    check(J(pg, "() => { const t = treks.list[0]; return t.status === 'done' && t.doneDate === '2026-08-10' && t.note === 'Superbe traversée'; }"), "trek marqué fait le 10 août, souvenir gardé")
+    check(J(pg, "() => new Promise(ok => { const im = document.querySelector('#tdBody .ph img'); const w = () => im.naturalWidth ? ok(im.naturalWidth) : setTimeout(w, 100); w(); })") > 0, "vignette affichée (IndexedDB)")
+    pg.click("#tdBody .ph[data-i='0']"); pg.wait_for_timeout(500)
+    check(pg.is_visible("#viewer") and J(pg, "() => $('#vImg').naturalWidth") >= 800, "visionneuse : photo en grand")
+    pg.click("#vClose"); pg.click("#bTrekBack"); pg.wait_for_timeout(300)
+    pg.click("#tFilter [data-f=done]"); pg.wait_for_timeout(200)
+    check(len(pg.query_selector_all("#trekList .trek.done")) == 1 and "1" in pg.text_content("#cStats") and "km parcourus" in pg.text_content("#cStats"), "carnet : filtre « Faits » et statistiques")
+    pg.click("#tFilter [data-f=all]"); pg.click("#page-profile .close")
     pg.click("#bClear"); pg.click("#bClear"); pg.wait_for_timeout(300)
     pg.evaluate("() => { map.setView([42.89, -0.11], 12); }"); pg.wait_for_timeout(300)
     mb = pg.query_selector("#map").bounding_box(); c0 = calls["brouter"]
