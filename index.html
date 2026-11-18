@@ -553,7 +553,7 @@ function compute() {
           const sc = Math.abs(c.t - ideal) + (c.cat === 'water' ? 0.25 : 0);   // une vraie aire de bivouac vaut 15 min de mieux qu'une simple source
           if (sc < bs) { bs = sc; best = c; }
         }
-        return best ? { i: best.idx, poi: best, delta: B.cumT[best.idx] - ideal } : { i: e, miss: true };
+        return best ? { i: best.idx, poi: best, delta: best.t - ideal } : { i: e, miss: true };   // écart détour compris
       };
       if (S.mode === 'days') {
         const alloc = allocDays(B, secs, S.days);
