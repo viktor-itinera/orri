@@ -33,6 +33,9 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   (`app: 'orri'`, fusion par `id`). Actions sensibles : 2e touche (`confirmTap`), jamais de boîte de dialogue du navigateur.
 - **Fiche du trek** (`sheetHTML`) : page HTML autonome (tracé et profil en SVG, étapes, nuits, eau, points), affichée
   dans une iframe, téléchargeable et imprimable ; elle ne dépend d'aucun réseau.
+- **Accueil** (`#page-welcome`) au premier lancement seulement (`orri.welcomed`, et aucun parcours enregistré) : Tracer,
+  Importer un GPX, Voir un exemple (`DEMO` : 4 villages des Pyrénées reliés par BRouter, 3 requêtes). Revoir depuis le profil.
+  Conseils uniques au bon moment (`coach`, clés `orri.tip.*`).
 - Identité : vert forêt `--forest` et tons pierre ; icônes SVG en ligne (`<symbol id="i-…">`) ; cibles tactiles ≥ 44 px.
 
 ## Services externes (tous gratuits, sans clé)

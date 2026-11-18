@@ -179,6 +179,21 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
 .tact{display:flex;border-top:1px solid var(--line)}
 .tact button{flex:1;border:0;border-radius:0;background:transparent;font-size:13.5px;min-height:40px;padding:0 4px}
 .tact button+button{border-left:1px solid var(--line)}
+#page-welcome{background:linear-gradient(180deg,var(--moss),var(--bg) 45%)}
+.wbody{flex:1;overflow-y:auto;padding:32px 20px 24px;max-width:460px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.wlogo{width:84px;height:84px;border-radius:22px;margin:8px auto 0;box-shadow:var(--shadow)}
+.wbody h1{text-align:center;font-size:30px;margin:4px 0 0;color:var(--forest);letter-spacing:.02em}
+.wbody .tag{text-align:center;color:var(--ink);font-size:16px;margin:0 0 10px}
+.wcard{display:flex;align-items:center;gap:14px;justify-content:flex-start;text-align:left;width:100%;min-height:68px;padding:12px 16px;border-radius:16px;background:var(--panel);border:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.wcard .ico{width:26px;height:26px;color:var(--forest)}
+.wcard.primary .ico{color:#fff}
+.wcard b{display:block;font-size:16px}
+.wcard small{display:block;font-weight:400;font-size:13.5px;color:var(--muted);margin-top:2px}
+.wcard.primary small{color:#d6e5dc}
+.wpts{list-style:none;padding:0;margin:10px 0 0}
+.wpts li{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;margin-bottom:10px}
+.wpts .ico{color:var(--forest);margin-top:1px}
+.linkbtn{border:0;background:transparent;color:var(--forest);font-weight:600;padding:0;min-height:44px;margin-top:8px}
 #sheetFrame{flex:1;border:0;width:100%;background:#fffdf9}
 
 /* --- Ordinateur : panneau latéral, profil sous la carte --- */
@@ -377,6 +392,24 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
     </div>
   </aside>
 
+  <!-- ===== Accueil (premier lancement) ===== -->
+  <div class="page" id="page-welcome" role="dialog" aria-label="Bienvenue sur Orri">
+    <div class="wbody">
+      <img src="icons/icon-192.png" alt="" class="wlogo">
+      <h1>Orri</h1>
+      <p class="tag">Prépare ton trek en quelques minutes : étapes, eau, refuges, bivouacs, ravitaillement et gares.</p>
+      <button class="wcard primary" id="wDraw"><svg class="ico"><use href="#i-pen"/></svg><span><b>Tracer mon itinéraire</b><small>Touche la carte : le tracé suit les sentiers</small></span></button>
+      <label class="wcard" for="file" id="wImport"><svg class="ico"><use href="#i-up"/></svg><span><b>Importer un GPX</b><small>Un trek déjà tracé ailleurs</small></span></label>
+      <button class="wcard" id="wDemo"><svg class="ico"><use href="#i-route"/></svg><span><b>Voir un exemple</b><small>Pyrénées : de Gourette à Luz-Saint-Sauveur</small></span></button>
+      <ul class="wpts">
+        <li><svg class="ico"><use href="#i-flag"/></svg>Des étapes à ton rythme, qui finissent au refuge ou au bivouac</li>
+        <li><svg class="ico"><use href="#i-tap"/></svg>L'eau, le ravitaillement et les gares le long du parcours</li>
+        <li><svg class="ico"><use href="#i-doc"/></svg>Une fiche à emporter, lisible sans réseau</li>
+      </ul>
+      <p class="note" style="text-align:center">Gratuit, sans compte. Tes parcours restent sur ton téléphone.</p>
+    </div>
+  </div>
+
   <!-- ===== Profil : Mes parcours ===== -->
   <div class="page" id="page-profile" role="dialog" aria-label="Mon profil">
     <header><button class="close" aria-label="Fermer"><svg class="ico"><use href="#i-x"/></svg></button><h1>Mon profil</h1></header>
@@ -399,6 +432,7 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
         <label class="btn grow" for="restoreFile"><svg class="ico"><use href="#i-up"/></svg>Restaurer</label>
         <input id="restoreFile" type="file" accept=".json,application/json" hidden>
       </div>
+      <button id="bWelcome" class="linkbtn">Revoir la présentation d'Orri</button>
       <p class="note">Tes parcours sont gardés dans ce navigateur, sur cet appareil, sans compte. Ils disparaissent si tu effaces les données du navigateur : garde une sauvegarde dans un fichier (par exemple sur ton drive).</p>
     </div>
   </div>
@@ -1333,7 +1367,7 @@ function restore() {
   } catch (e) { }
   return false;
 }
-function changed() { compute(); render(); save(); schedulePOIs(); }
+function changed() { compute(); render(); save(); schedulePOIs(); if (typeof coach === 'function') coach(); }
 
 /* ================= Points d'intérêt OpenStreetMap (Overpass) ================= */
 // Recherche dans un couloir autour du tracé (around), par morceaux de 20 km, 3 morceaux par requête.
@@ -1806,6 +1840,41 @@ $('#bSheetDl').onclick = () => {
 $('#bSheetPrint').onclick = () => { try { $('#sheetFrame').contentWindow.print(); } catch (e) { toast('Impression indisponible : télécharge la fiche', 'warn'); } };
 treks.load();
 
+/* ================= Accueil au premier lancement et premiers pas ================= */
+const WELCOME_KEY = 'orri.welcomed';
+const once = (k) => { try { if (localStorage.getItem(k)) return false; localStorage.setItem(k, '1'); return true; } catch (e) { return false; } };
+function closeWelcome() { try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) { } closePage(); }
+$('#wDraw').onclick = () => {
+  closeWelcome(); showTab('trace'); sheet.set('peek');
+  state.draw = true; $('#bDraw').classList.add('on');
+  toast('Touche la carte pour poser ton départ, puis chaque point de passage');
+};
+$('#wImport').addEventListener('click', () => closeWelcome());
+$('#bWelcome').onclick = () => openPage('welcome');
+// Exemple : quelques villages des Pyrénées, reliés par BRouter (le tracé suit les sentiers)
+const DEMO = [[42.9573, -0.3346], [42.9612, -0.2093], [42.8880, -0.1138], [42.8722, -0.0040]];
+$('#wDemo').onclick = () => {
+  closeWelcome(); treks.cur = null; treks.store();
+  state.start = null; state.legs = []; state.selStage = -1;
+  S = Object.assign(JSON.parse(JSON.stringify(DEFAULT_S)), { endType: 'both' });
+  const mode = state.mode; state.mode = 'route';
+  map.fitBounds(L.latLngBounds(DEMO), fitPad(40));
+  toast('Calcul de l\'exemple : quelques secondes…');
+  DEMO.forEach(p => enqueue(() => addPoint(p)));
+  enqueue(() => {
+    state.mode = mode;
+    if (R.n > 1) map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), fitPad(20));
+    showTab('stages');
+    toast('Voici l\'exemple : chaque étape finit à un refuge ou un bivouac. Touche une étape pour le détail.', 'ok');
+  });
+};
+// Conseils au bon moment, une seule fois chacun
+function coach() {
+  if (!R || R.n < 2) return;
+  if (state.legs.length === 1 && once('orri.tip.route')) toast('Continue à toucher la carte pour prolonger le tracé. Les étapes se calculent toutes seules.');
+  else if (R.stages.length > 1 && once('orri.tip.stages')) setTimeout(() => toast('Ton trek est découpé en étapes : ouvre l\'onglet Étapes pour choisir où dormir.', 'ok'), 1200);
+}
+
 /* ================= Tiroir (mobile), onglets, profil ================= */
 const desk = matchMedia('(min-width: 900px)');
 const sheet = {
@@ -1875,7 +1944,11 @@ if (restore()) {
   if (R.n > 1) map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), fitPad(20));
   toast('Brouillon restauré', 'ok');
   schedulePOIs();
-} else { compute(); render(); }
+} else {
+  compute(); render();
+  let seen = false; try { seen = !!localStorage.getItem(WELCOME_KEY); } catch (e) { }
+  if (!seen && !treks.list.length) openPage('welcome');
+}
 
 /* Application installable (Android : menu ⋮ > « Installer l'application ») */
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {

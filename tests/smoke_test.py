@@ -68,6 +68,9 @@ with sync_playwright() as p:
     pg.on("pageerror", lambda e: errors.append(str(e)))
     pg.goto(URL); pg.wait_for_timeout(500)
     pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_timeout(500)
+    check(pg.is_visible("#page-welcome"), "accueil affiché au premier lancement")
+    pg.click("#wDraw"); pg.wait_for_timeout(300)
+    check(not pg.is_visible("#page-welcome") and J(pg, "() => state.draw"), "accueil : « Tracer mon itinéraire » ouvre la carte")
 
     pg.set_input_files("#file", GPX)
     pg.wait_for_function("R && R.n > 1 && (poiState === 'ok' || poiState === 'error')", timeout=90000)
@@ -142,10 +145,20 @@ with sync_playwright() as p:
         pg.mouse.click(mb["x"] + mb["width"] * fx, mb["y"] + mb["height"] * fy); pg.wait_for_timeout(500)
     check(J(pg, "() => state.legs.length") == 2 and calls["brouter"] - c0 == 2, "tracé en 3 clics = 2 tronçons calculés")
 
+    # Exemple de l'accueil : 4 villages reliés par BRouter
+    pg.click("#bClear"); pg.click("#bClear"); pg.wait_for_timeout(300)
+    pg.click("#bProfile"); pg.click("#bWelcome"); pg.wait_for_timeout(300); c0 = calls["brouter"]
+    pg.click("#wDemo")
+    pg.wait_for_function("state.legs.length === 3 && R.n > 1", timeout=30000); pg.wait_for_timeout(800)
+    check(calls["brouter"] - c0 == 3 and J(pg, "() => S.endType === 'both' && R.stages.length >= 1"), "accueil : exemple calculé (3 tronçons)")
+    pg.reload(); pg.wait_for_timeout(500)
+    check(not pg.is_visible("#page-welcome"), "accueil pas réaffiché une fois vu")
+
     # Mobile : tiroir à 3 hauteurs, onglets, carte utilisable au-dessus du tiroir
     m = b.new_context(**p.devices["Pixel 7"]); m.route("**/*", handler)
     mp = m.new_page(); mp.on("pageerror", lambda e: errors.append(str(e)))
     mp.goto(URL); mp.wait_for_timeout(500)
+    mp.click("#wDraw"); mp.wait_for_timeout(300)
     snap = lambda: J(mp, "() => sheet.snap")
     check(snap() == "peek", "mobile : tiroir replié au démarrage")
     mp.click("#tabs button[data-tab=prep]"); mp.wait_for_timeout(400)
