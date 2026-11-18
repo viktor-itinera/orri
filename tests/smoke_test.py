@@ -41,6 +41,8 @@ def handler(route):
     if "altimetrie" in u:
         n = len(q["lon"][0].split("|"))
         return route.fulfill(body=json.dumps({"elevations": [1200 + 5 * i for i in range(n)]}), content_type="application/json", headers=JSON_HDR)
+    if "photon.komoot.io/api" in u:
+        return route.fulfill(body=json.dumps({"features": [{"properties": {"name": "Besseggen", "state": "Innlandet", "country": "Norvège"}, "geometry": {"coordinates": [8.73, 61.5]}}]}), content_type="application/json", headers=JSON_HDR)
     if "geocodage/reverse" in u or "photon" in u:
         return route.fulfill(body=json.dumps({"features": [{"properties": {"city": "Lieu", "distance": 100}}]}), content_type="application/json", headers=JSON_HDR)
     if "geocodage/search" in u:
@@ -75,6 +77,7 @@ with sync_playwright() as p:
     check(n > 100, "GPX importé")
     check(pois > 0 and tiles > 0, "points d'intérêt chargés depuis data/poi/ (Overpass en panne)")
 
+    pg.click("#tabs button[data-tab=stages]"); pg.wait_for_timeout(200)
     pg.click("#modeSeg button[data-m=limits]"); pg.wait_for_timeout(800)
     worst = J(pg, "() => Math.max(...R.stages.map(s => s.time))")
     check(worst <= 7.01, f"limite 7 h/jour respectée (max {worst:.2f} h)")
@@ -85,12 +88,32 @@ with sync_playwright() as p:
     check(hits > 0, f"fins d'étape au refuge trouvées ({hits})")
     check(dmax <= J(pg, "() => S.tol") + 1e-6, f"écart dans la tolérance (max {dmax:.2f} h)")
 
+    # Modifier une étape : dormir en bivouac à la fin de l'étape 2 au lieu du refuge
+    pg.locator("#stages li").nth(1).click(); pg.wait_for_timeout(400)
+    pg.click("#stages li.sel [data-sleep=bivouac]"); pg.wait_for_timeout(1200)
+    st = J(pg, "() => ({ t: R.stages[1].endType, c: R.stages[1].endPoi && R.stages[1].endPoi.cat, miss: R.stages[1].endMiss, o: S.over[1], first: R.stages[0].endPoi && R.stages[0].endPoi.cat })")
+    check(st["o"] == "bivouac" and st["t"] == "bivouac" and (st["c"] in ("bivouac", "water") or st["miss"]), f"étape 2 modifiée : fin en bivouac ({st})")
+    check(st["first"] == "hut", "les autres étapes gardent le refuge")
+    pg.click("#stages li.sel .reset"); pg.wait_for_timeout(1000)
+    check(J(pg, "() => !(1 in S.over) && R.stages[1].endType === 'refuge'"), "retour au réglage général")
+
+    # Pastilles : masquer l'eau sur la carte
+    pg.click("#chips .chip[data-k=water]"); pg.wait_for_timeout(500)
+    check(J(pg, "() => !S.show.water && !document.querySelector('#show_water').checked"), "pastille Eau : masque les points d'eau")
+    pg.click("#chips .chip[data-k=water]"); pg.wait_for_timeout(500)
+
+    # Recherche hors de France (Photon)
+    pg.fill("#q", "Besseggen"); pg.press("#q", "Enter"); pg.wait_for_timeout(800)
+    check("Norvège" in (pg.text_content("#results") or ""), "recherche hors de France (Photon)")
+    pg.click("#results li >> nth=0"); pg.wait_for_timeout(300)
+
     pg.click("#modeSeg button[data-m=days]"); pg.fill("#vDays", "12"); pg.dispatch_event("#vDays", "input"); pg.wait_for_timeout(1500)
     check(J(pg, "() => R.stages.length") == 12, "12 jours imposés = 12 étapes")
 
-    pg.query_selector_all("#stages li")[0].click(); pg.wait_for_timeout(500)
+    pg.locator("#stages li").first.click(); pg.wait_for_timeout(500)
     check(pg.query_selector("#stages li.sel .detail") is not None, "feuille d'étape affichée")
 
+    pg.click("#tabs button[data-tab=trace]"); pg.wait_for_timeout(200)
     with pg.expect_download() as dl:
         pg.click("#bExport")
     x = open(dl.value.path(), encoding="utf-8").read()
@@ -102,6 +125,24 @@ with sync_playwright() as p:
     for fx, fy in [(0.3, 0.5), (0.5, 0.4), (0.7, 0.6)]:
         pg.mouse.click(mb["x"] + mb["width"] * fx, mb["y"] + mb["height"] * fy); pg.wait_for_timeout(500)
     check(J(pg, "() => state.legs.length") == 2 and calls["brouter"] - c0 == 2, "tracé en 3 clics = 2 tronçons calculés")
+
+    # Mobile : tiroir à 3 hauteurs, onglets, carte utilisable au-dessus du tiroir
+    m = b.new_context(**p.devices["Pixel 7"]); m.route("**/*", handler)
+    mp = m.new_page(); mp.on("pageerror", lambda e: errors.append(str(e)))
+    mp.goto(URL); mp.wait_for_timeout(500)
+    snap = lambda: J(mp, "() => sheet.snap")
+    check(snap() == "peek", "mobile : tiroir replié au démarrage")
+    mp.click("#tabs button[data-tab=prep]"); mp.wait_for_timeout(400)
+    check(snap() == "mid" and mp.is_visible("#poiRows"), "mobile : un onglet ouvre le tiroir à mi-hauteur")
+    mp.click("#grab"); mp.wait_for_timeout(400)
+    check(snap() == "peek", "mobile : toucher la poignée replie le tiroir")
+    check(J(mp, "() => document.documentElement.scrollWidth <= innerWidth"), "mobile : pas de défilement horizontal")
+    mp.set_input_files("#file", GPX)
+    mp.wait_for_function("R && R.n > 1", timeout=90000); mp.wait_for_timeout(500)
+    check(mp.is_visible("#sDist") and not mp.is_visible("#hint"), "mobile : chiffres clés visibles après import")
+    mp.click("#tabs button[data-tab=stages]"); mp.wait_for_timeout(400)
+    check(mp.is_visible("#profile") and len(mp.query_selector_all("#stages li")) > 1, "mobile : profil et étapes visibles")
+    m.close()
 
     check(not errors, "aucune erreur JavaScript" + (f" ({errors[0][:80]})" if errors else ""))
     b.close()

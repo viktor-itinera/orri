@@ -15,213 +15,331 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{
-  --bg:#f4f3ee; --panel:#ffffff; --ink:#1c2320; --muted:#68716c; --line:#e2e0d8;
+  --forest:#1c3a2e; --forest-2:#2b5442; --moss:#e4ece6;
+  --bg:#f3f0e8; --panel:#fffdf9; --ink:#1f2622; --muted:#6b726c; --line:#e3ded2;
   --a:#c2410c; --b:#1d4ed8; --ok:#15803d; --warn:#b45309; --err:#b91c1c;
+  --r:12px; --shadow:0 6px 24px rgba(28,58,46,.16),0 1px 3px rgba(0,0,0,.08);
+  --peek:132px; --hidden:0px; --side:400px;
 }
-*{box-sizing:border-box}
-html,body{margin:0;height:100%;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
-#app{display:flex;height:100%}
-#panel{width:360px;flex:none;overflow-y:auto;background:var(--panel);border-right:1px solid var(--line);padding:14px 16px 28px}
-main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
-#map{flex:1;min-height:220px}
-#profile{height:170px;flex:none;position:relative;background:var(--panel);border-top:1px solid var(--line)}
-#prof{width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
-#cursor{position:absolute;top:10px;bottom:22px;width:1px;background:var(--ink);opacity:.55;pointer-events:none;display:none}
-#tip{position:absolute;top:6px;padding:3px 7px;font-size:12px;background:var(--ink);color:#fff;border-radius:4px;pointer-events:none;display:none;white-space:nowrap}
-h1{font-size:17px;margin:0 0 2px}
-.sub{color:var(--muted);font-size:12px;margin:0 0 14px}
-h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:18px 0 8px}
-.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-button,.btn,select,input[type=search],input[type=number]{font:inherit;border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 10px;color:var(--ink)}
-input[type=number]{width:74px;padding:4px 6px;text-align:right}
-button,.btn{cursor:pointer}
-button:hover,.btn:hover{border-color:#bdb9ad}
-button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-button.danger{color:var(--err)}
-button:disabled{opacity:.45;cursor:default}
-input[type=search]{width:100%}
-#results{list-style:none;margin:4px 0 0;padding:0;border:1px solid var(--line);border-radius:7px;display:none;max-height:220px;overflow:auto}
-#results li{padding:6px 10px;cursor:pointer;border-top:1px solid var(--line)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+#app{position:relative;height:100%;height:100dvh}
+.ico{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* --- Carte --- */
+#map{position:absolute;left:0;right:0;top:0;bottom:calc(var(--peek) - 18px);background:#e8e4da}
+.leaflet-control-zoom{display:none}
+.leaflet-control-attribution{font-size:10px}
+
+/* --- Barre de recherche flottante --- */
+#top{position:absolute;z-index:1100;top:12px;left:12px;right:12px;display:flex;gap:8px;align-items:flex-start}
+#searchBox{flex:1;position:relative;min-width:0}
+.searchbar{display:flex;align-items:center;gap:8px;height:48px;padding:0 6px 0 6px;background:var(--panel);border-radius:24px;box-shadow:var(--shadow)}
+.searchbar img{width:36px;height:36px;border-radius:50%;flex:none}
+#q{flex:1;min-width:0;height:44px;border:0;background:transparent;font:inherit;font-size:16px;color:var(--ink);outline:none;padding:0 4px}
+#q::placeholder{color:var(--muted)}
+#results{list-style:none;margin:6px 0 0;padding:4px 0;background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);display:none;max-height:50vh;overflow:auto}
+#results li{padding:12px 16px;cursor:pointer;border-top:1px solid var(--line)}
 #results li:first-child{border-top:0}
 #results li:hover{background:var(--bg)}
-.seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
-.seg button{border:0;border-radius:0;flex:1;padding:6px 8px}
-.box{background:var(--bg);border-radius:8px;padding:10px;margin-top:8px}
-.lim{display:flex;align-items:center;gap:8px;margin:4px 0}
-.lim label{flex:1;cursor:pointer}
-.lim .u{width:52px;color:var(--muted);font-size:12px}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.stat{background:var(--bg);border-radius:8px;padding:8px 10px}
-.stat b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
-.stat span{font-size:11px;color:var(--muted)}
-.note{font-size:12px;color:var(--muted);margin:8px 0 0}
-#stages{list-style:none;margin:0;padding:0}
-#stages li{padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;cursor:pointer}
-#stages li.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink) inset}
-#stages .t{font-weight:600}
-#stages .m{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px}
-#status{position:absolute;left:12px;bottom:182px;z-index:1000;display:flex;flex-direction:column;gap:6px;pointer-events:none}
-.toast{background:var(--ink);color:#fff;padding:7px 11px;border-radius:7px;font-size:13px;max-width:360px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.toast.err{background:var(--err)} .toast.warn{background:var(--warn)} .toast.ok{background:var(--ok)}
+#results small{display:block;color:var(--muted);font-size:13px}
+.fab{border:0;padding:0;min-height:0;cursor:pointer}
+.fab.wait .ico{animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.fab{position:relative;width:48px;height:48px;flex:none;border-radius:50%;background:var(--panel);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;color:var(--forest)}
+.fab select{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:16px}
+
+/* --- Pastilles de catégories --- */
+#chips{position:absolute;z-index:1050;top:68px;left:0;right:0;display:none;gap:8px;padding:0 12px 6px;overflow-x:auto;scrollbar-width:none}
+#chips::-webkit-scrollbar{display:none}
+.has-route #chips{display:flex}
+.chip{flex:none;min-height:36px;padding:0 12px;border-radius:18px;border:0;background:var(--panel);box-shadow:0 2px 8px rgba(28,58,46,.18);font-size:14px;font-weight:600;color:var(--muted);gap:6px}
+.chip .sw{width:10px;height:10px;background:transparent;box-shadow:inset 0 0 0 2px var(--c)}
+#chips .chip.on{background:var(--panel);color:var(--ink);border-color:transparent} .chip.on .sw{background:var(--c);box-shadow:none}
+.sheet-full #chips{display:none}
+.chip em{font-style:normal;font-weight:500;color:var(--muted);font-size:12.5px}
+.chip:not(.on){opacity:.85;text-decoration:line-through;text-decoration-color:rgba(0,0,0,.25)}
+#q::-webkit-search-cancel-button{filter:grayscale(1) opacity(.6)}
+
+/* --- Messages --- */
+#status{position:absolute;z-index:1200;top:116px;left:12px;right:12px;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.toast{background:var(--forest);color:#fff;padding:9px 14px;border-radius:20px;font-size:14px;max-width:420px;box-shadow:var(--shadow)}
+.toast.err{background:var(--err)} .toast.warn{background:var(--warn)} .toast.ok{background:var(--forest-2)}
 #busy{display:none}
-.wp{background:#fff;border:3px solid var(--ink);border-radius:50%}
+
+/* --- Tiroir (mobile) / panneau (ordinateur) --- */
+#panel{position:absolute;z-index:1000;left:0;right:0;bottom:0;height:calc(100% - 72px);display:flex;flex-direction:column;
+  background:var(--panel);border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(28,58,46,.18);
+  transform:translateY(var(--hidden));transition:transform .28s cubic-bezier(.2,.8,.2,1);will-change:transform}
+#panel.dragging{transition:none}
+.grab{flex:none;padding:8px 16px 4px;touch-action:none;cursor:grab;user-select:none}
+.handle{width:40px;height:5px;border-radius:3px;background:#cfc9bb;margin:0 auto 8px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center}
+.stat b{display:block;font-size:17px;font-weight:650;font-variant-numeric:tabular-nums;color:var(--forest);white-space:nowrap}
+.stat span{font-size:11.5px;color:var(--muted)}
+#hint{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14.5px;color:var(--ink)}
+#hint .ico{color:var(--forest)}
+.has-route #hint{display:none} body:not(.has-route) .stats{display:none}
+.tabs{flex:none;display:flex;gap:4px;padding:4px 12px 8px;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;height:44px;border:0;border-radius:22px;background:transparent;color:var(--muted);font:inherit;font-weight:600;cursor:pointer}
+.tabs button.on{background:var(--moss);color:var(--forest)}
+#profileSlot{flex:none}
+#profile{height:120px;position:relative;background:var(--panel);border-bottom:1px solid var(--line)}
+body:not(.has-route) #profile{display:none}
+#prof{width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
+#cursor{position:absolute;top:10px;bottom:22px;width:1px;background:var(--ink);opacity:.55;pointer-events:none;display:none}
+#tip{position:absolute;top:6px;padding:3px 8px;font-size:12px;background:var(--forest);color:#fff;border-radius:6px;pointer-events:none;display:none;white-space:nowrap}
+.content{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:4px 16px calc(var(--hidden) + 32px)}
+.tab{display:none} .tab.on{display:block}
+
+/* --- Éléments --- */
+h2{font-size:13px;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:20px 0 10px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,.btn,select,input[type=number],input[type=date],input[type=time]{font:inherit;font-size:15px;border:1px solid var(--line);background:#fff;border-radius:var(--r);padding:0 14px;min-height:44px;color:var(--ink)}
+button,.btn{cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:550}
+button:hover,.btn:hover{border-color:#c9c2b2}
+button.on{background:var(--forest);color:#fff;border-color:var(--forest)}
+button.primary,.btn.primary{background:var(--forest);color:#fff;border-color:var(--forest)}
+button.danger{color:var(--err)}
+button:disabled{opacity:.4;cursor:default}
+select{padding:0 10px;max-width:100%}
+input[type=number]{width:84px;padding:0 10px;text-align:right}
+input[type=date],input[type=time]{padding:0 10px}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--forest);margin:0;flex:none}
+.grow{flex:1}
+.seg{display:flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#fff}
+.seg button{border:0;border-radius:0;flex:1;padding:0 8px;font-weight:550}
+.box{background:var(--bg);border-radius:var(--r);padding:8px 12px;margin-top:10px}
+.lim{display:flex;align-items:center;gap:10px;margin:6px 0;min-height:44px}
+.lim label{flex:1;cursor:pointer}
+.lim .u{width:56px;color:var(--muted);font-size:13px}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0}
+.more{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.more div{background:var(--bg);border-radius:var(--r);padding:8px 12px}
+.more b{display:block;font-variant-numeric:tabular-nums}
+.more span{font-size:12px;color:var(--muted)}
+#stages{list-style:none;margin:0;padding:0}
+#stages li{padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);margin-bottom:8px;cursor:pointer;background:#fff}
+#stages li.sel{border-color:var(--forest);box-shadow:0 0 0 1px var(--forest) inset}
+#stages .t{font-weight:600}
+#stages .m{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:0}
+.wp{background:#fff;border:3px solid var(--forest);border-radius:50%}
 .wp.first{border-color:var(--ok)} .wp.last{border-color:var(--err)}
-.stg{background:var(--ink);color:#fff;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.stg{background:var(--forest);color:#fff;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 .stg.drag{cursor:grab}
 .stg.pin{background:var(--ok)}
 .lowzoom .stg{display:none}
-.poi-row{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:13px}
+.poi-row{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14.5px}
 .poi-row label{flex:1;cursor:pointer}
-.poi-row .c{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px}
+.poi-row .c{color:var(--muted);font-variant-numeric:tabular-nums;font-size:13px}
 .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:2px;box-shadow:0 0 0 1px rgba(0,0,0,.2)}
-#stages .e{font-size:12px;margin-top:3px}
+#stages .e{font-size:13px;margin-top:4px}
 #stages .e.miss{color:var(--warn)}
-#stages .p{font-size:12px;color:var(--muted);margin-top:2px}
-#poiStatus button{padding:2px 8px;font-size:12px;margin-left:4px}
-.detail{margin-top:8px;border-top:1px solid var(--line);padding-top:6px;cursor:default}
-.info{font-size:12.5px;margin:4px 0}
+#stages .p{font-size:13px;color:var(--muted);margin-top:2px}
+#poiStatus button{min-height:36px;padding:0 10px;font-size:13px;margin-left:6px}
+.sleep{margin:6px 0 10px}
+.sleep .seg button{min-height:40px;font-size:14px}
+.sleep .reset{color:var(--forest);font-weight:500}
+.detail{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;cursor:default}
+.info{font-size:13px;margin:4px 0}
 .warnline{color:var(--warn)}
 .plist{margin-top:6px}
-.prow{display:flex;gap:6px;font-size:12.5px;padding:3px 4px;border-radius:5px;cursor:pointer}
+.prow{display:flex;gap:6px;font-size:13px;padding:8px 4px;border-radius:6px;cursor:pointer}
 .prow:hover{background:var(--bg)}
 .prow .km{width:62px;flex:none;color:var(--muted);font-variant-numeric:tabular-nums}
 .prow .k{color:var(--muted)}
 .prow.end{font-weight:600}
-input[type=date],input[type=time]{font:inherit;border:1px solid var(--line);border-radius:7px;padding:4px 6px;background:#fff;color:var(--ink)}
-.help{font-size:12.5px;color:var(--muted);padding-left:18px;margin:6px 0}
-.help li{margin-bottom:3px}
-footer{font-size:11px;color:var(--muted);margin-top:18px;border-top:1px solid var(--line);padding-top:10px}
-@media (max-width:760px){
-  #app{flex-direction:column-reverse}
-  #panel{width:auto;height:48%;border-right:0;border-top:1px solid var(--line)}
-  #profile{height:120px}
-  #status{bottom:132px}
+.tips{list-style:none;padding:0;margin:8px 0 0}
+.tips li{display:flex;gap:10px;font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.tips .ico{width:18px;height:18px;color:var(--forest);margin-top:1px}
+footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+.empty{color:var(--muted);font-size:14px;padding:8px 0}
+
+/* --- Ordinateur : panneau latéral, profil sous la carte --- */
+@media (min-width:900px){
+  #map{left:var(--side);bottom:170px}
+  .leaflet-control-zoom{display:block}
+  #top{left:calc(var(--side) + 16px);right:16px;top:16px}
+  #searchBox{max-width:440px}
+  #top label.fab{margin-left:auto}
+  #status{left:calc(var(--side) + 16px);top:124px}
+  #chips{left:var(--side);top:72px;padding:0 16px 6px}
+  #panel{right:auto;top:0;width:var(--side);height:auto;border-radius:0;transform:none;box-shadow:1px 0 0 var(--line)}
+  .grab{cursor:default;padding-top:16px}
+  .handle{display:none}
+  .content{padding-bottom:32px}
+  #profileMain{position:absolute;left:var(--side);right:0;bottom:0;height:170px}
+  #profileMain #profile{height:170px;border-top:1px solid var(--line);border-bottom:0}
 }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 22V4"/><path d="M4 4h13l-2 4 2 4H4"/></symbol>
+  <symbol id="i-pack" viewBox="0 0 24 24"><path d="M6 8a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2Z"/><path d="M9 4V2h6v2"/><path d="M8 13h8v5H8z"/></symbol>
+  <symbol id="i-tap" viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+</svg>
 <div id="app">
-  <aside id="panel">
-    <h1>Orri</h1>
-    <p class="sub">Planificateur de randos et treks · prototype v0.6</p>
+  <div id="map"></div>
 
-    <input id="q" type="search" placeholder="Aller à… (ex. Cauterets, Pic du Canigou)" autocomplete="off">
-    <ul id="results"></ul>
-
-    <h2>Tracer</h2>
-    <div class="row">
-      <button id="bDraw" class="on" title="Cliquer sur la carte ajoute un point">✏️ Tracer</button>
-      <div class="seg" style="flex:1">
-        <button id="mRoute" class="on" title="Le tracé suit les sentiers">Sentiers</button>
-        <button id="mLine" title="Ligne droite, pour le hors-sentier">Ligne droite</button>
+  <div id="top">
+    <div id="searchBox">
+      <div class="searchbar">
+        <img src="icons/apple-touch-icon.png" alt="Orri">
+        <input id="q" type="search" placeholder="Rechercher un lieu…" autocomplete="off" enterkeyhint="search">
+        <svg class="ico" style="color:var(--muted);margin-right:8px"><use href="#i-search"/></svg>
       </div>
+      <ul id="results"></ul>
     </div>
-    <div class="row" style="margin-top:6px">
-      <button id="bUndo" title="Ctrl+Z">↶ Annuler</button>
-      <button id="bReverse">⇄ Inverser le sens</button>
-      <button id="bClear" class="danger">Effacer</button>
-    </div>
-
-    <h2>Découpage en étapes</h2>
-    <div class="seg" id="modeSeg">
-      <button data-m="limits" title="Des limites par jour, combinables">Limites / jour</button>
-      <button data-m="days" title="Un nombre de jours imposé, étapes d'effort égal">Nb de jours</button>
-      <button data-m="gpx" title="Les étapes contenues dans le fichier GPX importé">Du GPX</button>
-    </div>
-    <div class="box" id="limitsBox">
-      <div class="lim"><input type="checkbox" id="cH"><label for="cH">Marche max</label><input type="number" id="vH" min="1" max="16" step="0.5"><span class="u">h / jour</span></div>
-      <div class="lim"><input type="checkbox" id="cUp"><label for="cUp">D+ max</label><input type="number" id="vUp" min="100" max="6000" step="100"><span class="u">m / jour</span></div>
-      <div class="lim"><input type="checkbox" id="cKm"><label for="cKm">Distance max</label><input type="number" id="vKm" min="1" max="150" step="1"><span class="u">km / jour</span></div>
-      <div class="lim"><input type="checkbox" id="cBal"><label for="cBal">Équilibrer les étapes (pas de petite dernière étape)</label></div>
-    </div>
-    <div class="box" id="daysBox">
-      <div class="lim"><label for="vDays">Nombre de jours</label><input type="number" id="vDays" min="1" max="300" step="1"><span class="u">jours</span></div>
-      <p class="note" style="margin:2px 0 0">Les étapes sont d'effort égal (même temps de marche), pas de distance égale.</p>
-    </div>
-    <div class="box" id="gpxBox">
-      <p class="note" style="margin:0">Étapes telles qu'elles sont dans le fichier GPX importé (une trace = une étape).</p>
-    </div>
-    <div class="box" id="endBox">
-      <div class="lim"><label for="endType">Fin d'étape</label>
-        <select id="endType">
-          <option value="any">N'importe où</option>
-          <option value="refuge">Refuge, cabane ou gîte</option>
-          <option value="bivouac">Bivouac</option>
-          <option value="both">Refuge ou bivouac</option>
-        </select>
-      </div>
-      <div class="lim" id="tolRow"><label for="vTol">Tolérance (± sur l'étape)</label><input type="number" id="vTol" min="0" max="4" step="0.25"><span class="u">h</span></div>
-      <p class="note" id="endNote" style="margin:2px 0 0"></p>
-    </div>
-    <div class="lim" style="margin-top:10px"><label for="pace">Allure</label>
-      <select id="pace">
-        <option value="0.85">Tranquille</option>
-        <option value="1">Standard</option>
-        <option value="1.2">Sportive</option>
-        <option value="1.4">Très sportive</option>
+    <label class="fab" title="Fond de carte">
+      <svg class="ico"><use href="#i-layers"/></svg>
+      <select id="base" aria-label="Fond de carte">
+        <option value="ign">Plan IGN</option>
+        <option value="ortho">Photos aériennes IGN</option>
+        <option value="otm">OpenTopoMap (monde)</option>
+        <option value="no">Norvège topo (Kartverket)</option>
       </select>
+    </label>
+    <button class="fab" id="bLocate" title="Me localiser" aria-label="Me localiser"><svg class="ico"><use href="#i-locate"/></svg></button>
+  </div>
+  <div id="chips" aria-label="Points affichés sur la carte"></div>
+  <div id="status"><div id="busy" class="toast">Calcul de l'itinéraire…</div></div>
+  <div id="profileMain"></div>
+
+  <aside id="panel" data-snap="peek">
+    <div class="grab" id="grab">
+      <div class="handle"></div>
+      <div id="hint"><svg class="ico"><use href="#i-tap"/></svg><span>Touche la carte pour poser ton départ, ou importe un GPX.</span></div>
+      <div class="stats">
+        <div class="stat"><b id="sDist">—</b><span>distance</span></div>
+        <div class="stat"><b id="sUp">—</b><span>D+</span></div>
+        <div class="stat"><b id="sTime">—</b><span>marche</span></div>
+        <div class="stat"><b id="sDays">—</b><span>étapes</span></div>
+      </div>
     </div>
-    <div class="box">
-      <div class="lim"><label for="vDate">Départ le</label><input type="date" id="vDate"></div>
-      <div class="lim"><label for="vTime">Heure de départ chaque jour</label><input type="time" id="vTime" step="900"></div>
-      <div class="lim"><label for="vPause">Pauses par jour</label><input type="number" id="vPause" min="0" max="300" step="15"><span class="u">min</span></div>
-    </div>
-    <p class="note" id="pinNote">📌 Clique sur un numéro d'étape pour fixer cette fin d'étape, ou glisse-le ailleurs sur le tracé. Clique sur un numéro vert pour le libérer. Double-clic sur le profil : nouvelle fin d'étape.</p>
-
-    <h2>Itinéraire</h2>
-    <div class="stats">
-      <div class="stat"><b id="sDist">—</b><span>distance</span></div>
-      <div class="stat"><b id="sTime">—</b><span>temps de marche estimé</span></div>
-      <div class="stat"><b id="sUp">—</b><span>dénivelé positif</span></div>
-      <div class="stat"><b id="sDown">—</b><span>dénivelé négatif</span></div>
-      <div class="stat"><b id="sMax">—</b><span>altitude max</span></div>
-      <div class="stat"><b id="sDays">—</b><span>étapes</span></div>
-    </div>
-    <p class="note">Temps : méthode DIN 33466 (4 km/h à plat, 300 m/h en montée, 500 m/h en descente) ajustée selon l'allure, sans les pauses. Dénivelé lissé sur 200 m.</p>
-
-    <h2>Sur le parcours</h2>
-    <div id="poiRows"></div>
-    <p class="note" id="poiStatus"></p>
-
-    <h2 id="hStages">Étapes</h2>
-    <ul id="stages"></ul>
-
-    <h2>Fichiers GPX</h2>
-    <div class="row">
-      <label class="btn" for="file">📂 Importer un GPX</label>
-      <input id="file" type="file" accept=".gpx,application/gpx+xml" hidden>
-      <button id="bExport">💾 Exporter le GPX</button>
+    <nav class="tabs" id="tabs">
+      <button data-tab="trace" class="on"><svg class="ico"><use href="#i-route"/></svg>Tracer</button>
+      <button data-tab="stages"><svg class="ico"><use href="#i-flag"/></svg>Étapes</button>
+      <button data-tab="prep"><svg class="ico"><use href="#i-pack"/></svg>Préparer</button>
+    </nav>
+    <div id="profileSlot">
+      <div id="profile">
+        <canvas id="prof"></canvas>
+        <div id="cursor"></div>
+        <div id="tip"></div>
+      </div>
     </div>
 
-    <h2>Fond de carte</h2>
-    <select id="base">
-      <option value="ign">Plan IGN</option>
-      <option value="ortho">Photos aériennes IGN</option>
-      <option value="otm">OpenTopoMap (monde)</option>
-      <option value="no">Norvège topo (Kartverket)</option>
-    </select>
+    <div class="content" id="content">
+      <!-- ===== Tracer ===== -->
+      <section class="tab on" id="tab-trace">
+        <div class="row" style="margin-top:12px">
+          <button id="bDraw" class="on" title="Toucher la carte ajoute un point"><svg class="ico"><use href="#i-pen"/></svg>Tracer</button>
+          <div class="seg grow">
+            <button id="mRoute" class="on" title="Le tracé suit les sentiers">Sentiers</button>
+            <button id="mLine" title="Ligne droite, pour le hors-sentier">Ligne droite</button>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="bUndo" class="grow" title="Ctrl+Z"><svg class="ico"><use href="#i-undo"/></svg>Annuler</button>
+          <button id="bReverse" class="grow"><svg class="ico"><use href="#i-swap"/></svg>Inverser</button>
+          <button id="bClear" class="danger grow"><svg class="ico"><use href="#i-trash"/></svg><span>Effacer</span></button>
+        </div>
 
-    <h2>Mode d'emploi</h2>
-    <ul class="help">
-      <li>Clique sur la carte pour poser le départ, puis les points suivants : le tracé suit les sentiers et les étapes se recalculent à chaque clic.</li>
-      <li>Glisse un point blanc pour déplacer le tracé.</li>
-      <li>« Ligne droite » sert pour les passages hors sentier.</li>
-      <li>Survole le profil pour voir où tu es sur la carte.</li>
-      <li>L'export GPX contient une trace par étape et un point à chaque fin d'étape.</li>
-    </ul>
-    <footer>Itinéraires : BRouter (serveur public communautaire, usage modéré) sur données © contributeurs OpenStreetMap. Cartes, altitudes et noms de lieux : © IGN. Eau, refuges, bivouacs, commerces et gares : © contributeurs OpenStreetMap (ODbL), extraits chaque mois pour la France, l'Espagne, l'Andorre, la Norvège, la Suisse et l'Italie. Brouillon gardé dans ce navigateur.</footer>
+        <h2>Fichier GPX</h2>
+        <div class="row">
+          <label class="btn grow" for="file"><svg class="ico"><use href="#i-up"/></svg>Importer</label>
+          <input id="file" type="file" accept=".gpx,application/gpx+xml" hidden>
+          <button id="bExport" class="primary grow"><svg class="ico"><use href="#i-down"/></svg>Exporter</button>
+        </div>
+
+        <ul class="tips">
+          <li><svg class="ico"><use href="#i-tap"/></svg><span>Touche la carte pour poser le départ puis chaque point : le tracé suit les sentiers et les étapes se recalculent.</span></li>
+          <li><svg class="ico"><use href="#i-pen"/></svg><span>Glisse un point blanc pour modifier le tracé. « Ligne droite » sert pour le hors-sentier.</span></li>
+          <li><svg class="ico"><use href="#i-down"/></svg><span>L'export GPX contient une trace par étape et un point à chaque fin d'étape.</span></li>
+        </ul>
+      </section>
+
+      <!-- ===== Étapes ===== -->
+      <section class="tab" id="tab-stages">
+        <h2>Découpage</h2>
+        <div class="seg" id="modeSeg">
+          <button data-m="limits" title="Des limites par jour, combinables">Limites / jour</button>
+          <button data-m="days" title="Un nombre de jours imposé, étapes d'effort égal">Nb de jours</button>
+          <button data-m="gpx" title="Les étapes contenues dans le fichier GPX importé">Du GPX</button>
+        </div>
+        <div class="box" id="limitsBox">
+          <div class="lim"><input type="checkbox" id="cH"><label for="cH">Marche max</label><input type="number" id="vH" min="1" max="16" step="0.5" inputmode="decimal"><span class="u">h / jour</span></div>
+          <div class="lim"><input type="checkbox" id="cUp"><label for="cUp">D+ max</label><input type="number" id="vUp" min="100" max="6000" step="100" inputmode="numeric"><span class="u">m / jour</span></div>
+          <div class="lim"><input type="checkbox" id="cKm"><label for="cKm">Distance max</label><input type="number" id="vKm" min="1" max="150" step="1" inputmode="numeric"><span class="u">km / jour</span></div>
+          <div class="lim"><input type="checkbox" id="cBal"><label for="cBal">Équilibrer (pas de petite dernière étape)</label></div>
+        </div>
+        <div class="box" id="daysBox">
+          <div class="lim"><label for="vDays">Nombre de jours</label><input type="number" id="vDays" min="1" max="300" step="1" inputmode="numeric"><span class="u">jours</span></div>
+          <p class="note" style="margin:0 0 6px">Étapes d'effort égal (même temps de marche), pas de distance égale.</p>
+        </div>
+        <div class="box" id="gpxBox">
+          <p class="note" style="margin:6px 0">Étapes telles qu'elles sont dans le fichier GPX importé (une trace = une étape).</p>
+        </div>
+        <div class="box" id="endBox">
+          <div class="lim"><label for="endType">Fin d'étape</label>
+            <select id="endType">
+              <option value="any">N'importe où</option>
+              <option value="refuge">Refuge, cabane ou gîte</option>
+              <option value="bivouac">Bivouac</option>
+              <option value="both">Refuge ou bivouac</option>
+            </select>
+          </div>
+          <div class="lim" id="tolRow"><label for="vTol">Tolérance (±)</label><input type="number" id="vTol" min="0" max="4" step="0.25" inputmode="decimal"><span class="u">h</span></div>
+          <p class="note" id="endNote" style="margin:0 0 6px"></p>
+        </div>
+        <div class="lim" style="margin-top:8px"><label for="pace">Allure</label>
+          <select id="pace">
+            <option value="0.85">Tranquille</option>
+            <option value="1">Standard</option>
+            <option value="1.2">Sportive</option>
+            <option value="1.4">Très sportive</option>
+          </select>
+        </div>
+        <p class="note" id="pinNote">Touche un numéro d'étape sur la carte pour fixer cette fin d'étape, ou glisse-le ailleurs sur le tracé. Touche un numéro vert pour le libérer. Double-clic sur le profil : nouvelle fin d'étape.</p>
+
+        <h2 id="hStages">Étapes</h2>
+        <ul id="stages"></ul>
+        <div class="more">
+          <div><b id="sDown">—</b><span>dénivelé négatif</span></div>
+          <div><b id="sMax">—</b><span>altitude max</span></div>
+        </div>
+        <p class="note">Temps : méthode DIN 33466 (4 km/h à plat, 300 m/h en montée, 500 m/h en descente) ajustée selon l'allure, sans les pauses. Dénivelé lissé sur 200 m.</p>
+      </section>
+
+      <!-- ===== Préparer ===== -->
+      <section class="tab" id="tab-prep">
+        <h2>Calendrier</h2>
+        <div class="box">
+          <div class="lim"><label for="vDate">Départ le</label><input type="date" id="vDate"></div>
+          <div class="lim"><label for="vTime">Départ chaque matin</label><input type="time" id="vTime" step="900"></div>
+          <div class="lim"><label for="vPause">Pauses par jour</label><input type="number" id="vPause" min="0" max="300" step="15" inputmode="numeric"><span class="u">min</span></div>
+        </div>
+
+        <h2>Sur le parcours</h2>
+        <div id="poiRows"></div>
+        <p class="note" id="poiStatus"></p>
+
+        <footer>Itinéraires : BRouter (serveur public communautaire, usage modéré) sur données © contributeurs OpenStreetMap. Cartes, altitudes et noms de lieux : © IGN. Eau, refuges, bivouacs, commerces et gares : © contributeurs OpenStreetMap (ODbL), extraits chaque mois pour la France, l'Espagne, l'Andorre, la Norvège, la Suisse et l'Italie. Ton brouillon est gardé dans ce navigateur.</footer>
+      </section>
+    </div>
   </aside>
-
-  <main>
-    <div id="map"></div>
-    <div id="status"><div id="busy" class="toast">Calcul de l'itinéraire…</div></div>
-    <div id="profile">
-      <canvas id="prof"></canvas>
-      <div id="cursor"></div>
-      <div id="tip"></div>
-    </div>
-  </main>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -236,7 +354,8 @@ const CFG = {
 };
 const DEFAULT_S = { mode: 'limits', useH: true, h: 7, useUp: false, up: 1500, useKm: false, km: 30, balance: true, days: 10, pace: 1, pins: [],
   endType: 'any', tol: 1, show: { water: true, hut: true, bivouac: true, shop: true, train: true },
-  startDate: '', startTime: '08:00', pause: 60 };
+  startDate: '', startTime: '08:00', pause: 60,
+  over: {} };   // over : fin d'étape choisie pour une étape précise { n° d'étape (0 = 1re) : 'refuge' | 'bivouac' | 'any' }
 const COLORS = ['#c2410c', '#1d4ed8'];
 // Catégories de points d'intérêt (OpenStreetMap) ; maxD = distance max au tracé
 const CAT = {
@@ -540,11 +659,13 @@ function compute() {
       pinIdx = mapPins(B);
       const secs = []; let a = 0; for (const p of pinIdx) { secs.push([a, p]); a = p; } secs.push([a, n - 1]);
       // candidats de fin d'étape (refuge / bivouac), triés par temps d'arrivée (détour compris)
-      const cats = END_CATS[S.endType];
-      const cands = cats ? B.pois.filter(p => cats.includes(p.cat)).map(p => Object.assign({}, p, { t: B.cumT[p.idx] + p.d / 4000 / S.pace })).sort((x, y) => x.t - y.t) : null;
-      const snap = (e, s, b, ideal) => {
-        if (!cands) return { i: e };
-        const lo = ideal - S.tol, hi = ideal + S.tol, minT = B.cumT[s] + 0.25;
+      const candsOf = {}, candFor = type => {
+        const cats = END_CATS[type]; if (!cats) return null;
+        return candsOf[type] || (candsOf[type] = B.pois.filter(p => cats.includes(p.cat)).map(p => Object.assign({}, p, { t: B.cumT[p.idx] + p.d / 4000 / S.pace })).sort((x, y) => x.t - y.t));
+      };
+      const cands = candFor(S.endType);
+      const findIn = (cands, s, b, ideal, tol) => {
+        const lo = ideal - tol, hi = ideal + tol, minT = B.cumT[s] + 0.25;
         let k = 0, k1 = cands.length;
         while (k < k1) { const m = (k + k1) >> 1; if (cands[m].t < lo) k = m + 1; else k1 = m; }
         let best = null, bs = Infinity;
@@ -553,7 +674,15 @@ function compute() {
           const sc = Math.abs(c.t - ideal) + (c.cat === 'water' ? 0.25 : 0);   // une vraie aire de bivouac vaut 15 min de mieux qu'une simple source
           if (sc < bs) { bs = sc; best = c; }
         }
-        return best ? { i: best.idx, poi: best, delta: best.t - ideal } : { i: e, miss: true };   // écart détour compris
+        return best;
+      };
+      // ends.length = numéro de l'étape qu'on est en train de terminer
+      const snap = (e, s, b, ideal) => {
+        const k = ends.length, own = S.over && S.over[k], type = own || S.endType, cs = candFor(type);
+        if (!cs) return { i: e, type: 'any', own: !!own };
+        let best = findIn(cs, s, b, ideal, S.tol), wide = false;
+        if (!best && own && S.tol < 2) { best = findIn(cs, s, b, ideal, 2); wide = !!best; }   // choix pour cette étape : on cherche jusqu'à ±2 h
+        return best ? { i: best.idx, poi: best, delta: best.t - ideal, type, own: !!own, wide } : { i: e, miss: true, type, own: !!own };   // écart détour compris
       };
       if (S.mode === 'days') {
         const alloc = allocDays(B, secs, S.days);
@@ -570,7 +699,8 @@ function compute() {
     const gl = zs ? gainLoss(zs, i0, i1, CFG.gainThreshold) : { up: 0, dn: 0 };
     const r = s + 2 < bounds.length ? info.get(i1) : null;
     stages.push({ i0, i1, dist: cum[i1] - cum[i0], up: gl.up, dn: gl.dn, time: B.cumT[i1] - B.cumT[i0], pinEnd: pinIdx.includes(i1),
-      endPoi: r && r.poi || null, endDelta: r && r.poi ? r.delta : 0, endMiss: !!(r && r.miss), counts: {} });
+      endPoi: r && r.poi || null, endDelta: r && r.poi ? r.delta : 0, endMiss: !!(r && r.miss), counts: {},
+      endType: r ? r.type || 'any' : null, endOwn: !!(r && r.own), endWide: !!(r && r.wide) });
   }
   // nombre de points d'intérêt par étape
   let si = 0;
@@ -618,7 +748,8 @@ const BASES = {
   no: L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png', { maxZoom: 18, attribution: '© <a href="https://www.kartverket.no">Kartverket</a> (CC BY 4.0)' }),
   otm: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, subdomains: 'abc', attribution: '© contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, SRTM, © <a href="https://opentopomap.org">OpenTopoMap</a>' })
 };
-const map = L.map('map', { zoomControl: true }).setView([42.85, 0.6], 8);
+const map = L.map('map', { zoomControl: false }).setView([42.85, 0.6], 8);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
 let base = BASES.ign.addTo(map);
 map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
 const routeLayer = L.layerGroup().addTo(map);
@@ -727,7 +858,10 @@ function syncUI() {
   $('#endNote').textContent = S.endType === 'any' ? '' :
     `Chaque étape peut être rallongée ou raccourcie de ${fTol(S.tol)} au maximum pour finir ${S.endType === 'refuge' ? 'à un refuge' : S.endType === 'bivouac' ? 'à un bivouac' : 'à un refuge ou un bivouac'}. L'écart est indiqué sous chaque étape.` +
     (S.endType !== 'refuge' ? ' Bivouac = aire de bivouac, camping ou point d\'eau ; vérifie la réglementation locale (parcs nationaux, réserves).' : '');
-  Object.keys(CAT).forEach(k => { const c = $('#show_' + k); if (c) c.checked = !!S.show[k]; });
+  Object.keys(CAT).forEach(k => {
+    const c = $('#show_' + k); if (c) c.checked = !!S.show[k];
+    const b = document.querySelector(`#chips .chip[data-k=${k}]`); if (b) b.classList.toggle('on', !!S.show[k]);
+  });
   const setNum = (id, v) => { const el = $(id); if (document.activeElement !== el) el.value = v; };
   setNum('#vTol', S.tol); setNum('#vDate', S.startDate); setNum('#vTime', S.startTime); setNum('#vPause', S.pause);
   $('#cH').checked = S.useH; $('#cUp').checked = S.useUp; $('#cKm').checked = S.useKm; $('#cBal').checked = S.balance;
@@ -736,6 +870,10 @@ function syncUI() {
 }
 function renderStats() {
   const has = R && R.n > 1;
+  if (document.body.classList.contains('has-route') !== !!has) {
+    document.body.classList.toggle('has-route', !!has);
+    requestAnimationFrame(() => { sheet.layout(); drawProfile(); });
+  }
   $('#sDist').textContent = has ? fKm(R.dist) : '—';
   $('#sUp').textContent = has && R.zs ? fM(R.up) : '—';
   $('#sDown').textContent = has && R.zs ? fM(R.dn) : '—';
@@ -750,7 +888,15 @@ function renderStats() {
 function buildPoiRows() {
   $('#poiRows').innerHTML = Object.entries(CAT).map(([k, c]) =>
     `<div class="poi-row"><input type="checkbox" id="show_${k}"><label for="show_${k}"><span class="sw" style="background:${c.color}"></span> ${c.emoji} ${c.label}</label><span class="c" id="cnt_${k}">—</span></div>`).join('');
-  Object.keys(CAT).forEach(k => $('#show_' + k).addEventListener('change', e => { S.show[k] = e.target.checked; renderPOIs(); save(); }));
+  Object.keys(CAT).forEach(k => $('#show_' + k).addEventListener('change', e => setShow(k, e.target.checked)));
+  const SHORT = { water: 'Eau', hut: 'Refuges', bivouac: 'Bivouac', shop: 'Ravito', train: 'Gares' };
+  $('#chips').innerHTML = Object.entries(CAT).map(([k, c]) =>
+    `<button class="chip" data-k="${k}" style="--c:${c.color}"><span class="sw"></span>${SHORT[k]}<em id="chc_${k}"></em></button>`).join('');
+  document.querySelectorAll('#chips .chip').forEach(b => b.onclick = () => setShow(b.dataset.k, !S.show[b.dataset.k]));
+}
+// Afficher / masquer une catégorie de points (pastilles sur la carte et cases de l'onglet Préparer)
+function setShow(k, on) {
+  S.show[k] = on; syncUI(); render(); save();
 }
 function renderPoiStatus() {
   const el = $('#poiStatus'), has = R && R.n > 1, n = has && R.pois ? R.pois.length : 0;
@@ -760,7 +906,11 @@ function renderPoiStatus() {
     : `⏳ Recherche dans OpenStreetMap (hors pays couverts)…${prog}${poiProgress.server > 1 ? ` (serveur de secours ${poiProgress.server - 1}/${OVERPASS.length - 1})` : ''}. ${n ? nf0.format(n) + ' points déjà trouvés.' : ''}`;
   else if (poiState === 'error') { el.innerHTML = `⚠️ ${n ? nf0.format(n) + ' points trouvés, mais une partie du tracé n\'a pas pu être analysée' : 'Points indisponibles'} : ${poiIndex ? 'hors des pays couverts par Orri, ' : ''}les serveurs publics OpenStreetMap ne répondent pas. Réessaie dans quelques minutes.<button id="poiRetry">Réessayer</button>`; $('#poiRetry').onclick = () => fetchPOIs(); }
   else el.textContent = has ? `${nf0.format(n)} points à moins de 1 km du tracé (1,5 km pour les commerces, 3 km pour les gares). Clique sur une étape pour voir le détail.${poiIndex ? ' Données OpenStreetMap du ' + new Date(poiIndex.generated + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) + '.' : ''}` : 'Trace un itinéraire pour voir l\'eau, les refuges et les commerces.';
-  Object.keys(CAT).forEach(k => { const c = $('#cnt_' + k); if (c) c.textContent = has && R.pois ? nf0.format(R.pois.filter(p => p.cat === k).length) : '—'; });
+  Object.keys(CAT).forEach(k => {
+    const n = has && R.pois ? nf0.format(R.pois.filter(p => p.cat === k).length) : '—';
+    const c = $('#cnt_' + k); if (c) c.textContent = n;
+    const e = $('#chc_' + k); if (e) e.textContent = n === '—' ? '' : n;
+  });
 }
 function placeName(i) { return placeCache[R.lat[i].toFixed(3) + ',' + R.lon[i].toFixed(3)] || null; }
 function stageDate(k) { if (!S.startDate) return null; const d = new Date(S.startDate + 'T12:00:00'); if (isNaN(d)) return null; d.setDate(d.getDate() + k); return d; }
@@ -783,6 +933,13 @@ function stageDetail(s, k) {
     if (tm.late) h += `<div class="info warnline">⚠️ Arrivée après le coucher du soleil : pars plus tôt ou raccourcis l'étape.</div>`;
     if (tm.early) h += `<div class="info warnline">🔦 Départ avant le lever du soleil : prévois la frontale.</div>`;
   } else h += `<div class="info" style="color:var(--muted)">📅 Indique une date de départ (réglages ci-dessus) pour voir la date, les horaires et le coucher du soleil.</div>`;
+  if (S.mode !== 'gpx' && k < R.stages.length - 1 && !s.pinEnd) {     // choisir où dormir pour cette étape seulement
+    const cur = s.endType || 'any';
+    const opt = [['refuge', '🏠 Refuge'], ['bivouac', '⛺ Bivouac'], ['any', 'Libre']];
+    h += `<div class="sleep"><div class="info"><b>Dormir à la fin de l'étape</b>${s.endOwn ? ' · <a href="#" class="reset" data-k="' + k + '">revenir au réglage général</a>' : ''}</div>
+      <div class="seg">${opt.map(([v, l]) => `<button data-sleep="${v}" data-k="${k}" class="${cur === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+      ${s.endWide ? `<div class="info warnline">Rien dans ta tolérance de ${fTol(S.tol)} : étape ajustée de ${fDur(Math.abs(s.endDelta))}.</div>` : ''}</div>`;
+  }
   const g = s.waterGap;
   if (poiState !== 'loading' && R.pois.length && g && g.km > 0.5)
     h += `<div class="info${g.h > 3 ? ' warnline' : ''}">${g.h > 3 ? '⚠️' : '💧'} Plus long tronçon sans eau connue : <b>${nf1.format(g.km)} km</b> (≈ ${fDur(g.h)}), du km ${kmS(g.a)} au km ${kmS(g.b)}</div>`;
@@ -812,7 +969,7 @@ function renderStages() {
       const p = s.endPoi;
       end = `<div class="e">${CAT[p.cat].emoji} Fin : ${escXml(p.name || p.kind)}${p.name ? ' (' + escXml(p.kind.toLowerCase()) + ')' : ''}${p.d >= 50 ? ', à ' + fM(p.d) + ' du tracé' : ''} · ${fDelta(s.endDelta)}</div>`;
     } else if (s.endMiss) {
-      end = `<div class="e miss">⚠️ ${poiState === 'loading' ? 'Recherche des refuges et bivouacs en cours…' : poiState === 'error' ? 'Refuges et bivouacs indisponibles (serveur OpenStreetMap)' : `Aucun ${END_LABEL[S.endType]} à ${fTol(S.tol)} : fin d'étape libre`}</div>`;
+      end = `<div class="e miss">⚠️ ${poiState === 'loading' ? 'Recherche des refuges et bivouacs en cours…' : poiState === 'error' ? 'Refuges et bivouacs indisponibles (serveur OpenStreetMap)' : `Aucun ${END_LABEL[s.endType] || END_LABEL[S.endType]} à ${fTol(s.endOwn ? Math.max(2, S.tol) : S.tol)} : fin d'étape libre`}</div>`;
     }
     const cnt = Object.keys(CAT).filter(c => s.counts[c]).map(c => CAT[c].emoji + ' ' + s.counts[c]).join(' · ');
     const flags = (tm && tm.late ? ' 🌙' : '') + (s.waterGap && s.waterGap.h > 3 && R.pois.length && poiState !== 'loading' ? ' 🚱' : '');
@@ -821,12 +978,23 @@ function renderStages() {
     li.onclick = ev => {
       const row = ev.target.closest('.prow');
       if (row) { ev.stopPropagation(); if (row.dataset.poi) focusPOI(row.dataset.poi); else { const i = +row.dataset.i; map.setView([R.lat[i], R.lon[i]], Math.max(map.getZoom(), 14)); } return; }
+      const sl = ev.target.closest('[data-sleep], .reset');
+      if (sl) { ev.preventDefault(); ev.stopPropagation(); setStageEnd(k, sl.dataset.sleep || null); return; }
       if (ev.target.closest('.detail')) return;
       selectStage(state.selStage === k ? -1 : k);
     };
     ul.appendChild(li);
   });
   queueNames();
+}
+// Change la fin d'une étape (refuge / bivouac / libre) sans toucher aux autres réglages
+function setStageEnd(k, type) {
+  S.over = S.over || {};
+  if (!type || type === S.endType) delete S.over[k]; else S.over[k] = type;
+  state.selStage = k; changed();
+  const s = R.stages[k]; if (!s) return;
+  if (s.endPoi) toast(`Étape ${k + 1} : fin à ${s.endPoi.name || s.endPoi.kind}`, 'ok');
+  else if (s.endMiss) toast(`Aucun ${END_LABEL[s.endType]} trouvé près de la fin de l'étape ${k + 1}`, 'warn');
 }
 function selectStage(k) {
   state.selStage = k;
@@ -835,7 +1003,7 @@ function selectStage(k) {
     const s = R.stages[k], pts = [];
     for (let i = s.i0; i <= s.i1; i += Math.max(1, Math.floor((s.i1 - s.i0) / 300))) pts.push([R.lat[i], R.lon[i]]);
     pts.push([R.lat[s.i1], R.lon[s.i1]]);
-    map.fitBounds(L.latLngBounds(pts), { padding: [30, 30] });
+    map.fitBounds(L.latLngBounds(pts), fitPad(30));
   }
 }
 
@@ -1033,9 +1201,9 @@ function reverse() {
 }
 let clearArmed = null;
 function clearAll() {
-  if (!clearArmed) { $('#bClear').textContent = 'Confirmer ?'; clearArmed = setTimeout(() => { clearArmed = null; $('#bClear').textContent = 'Effacer'; }, 3000); return; }
-  clearTimeout(clearArmed); clearArmed = null; $('#bClear').textContent = 'Effacer';
-  state.start = null; state.legs = []; state.selStage = -1; S.pins = []; changed();
+  if (!clearArmed) { $('#bClear span').textContent = 'Confirmer ?'; clearArmed = setTimeout(() => { clearArmed = null; $('#bClear span').textContent = 'Effacer'; }, 3000); return; }
+  clearTimeout(clearArmed); clearArmed = null; $('#bClear span').textContent = 'Effacer';
+  state.start = null; state.legs = []; state.selStage = -1; S.pins = []; S.over = {}; changed();
 }
 function importTracks(tracks) {
   const names = new Set(tracks.map(t => t.name));
@@ -1045,7 +1213,7 @@ function importTracks(tracks) {
   state.selStage = -1; S.pins = [];
   if (tracks.length > 1) S.mode = 'gpx';
   changed();
-  map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), { padding: [20, 20] });
+  map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), fitPad(20));
   toast(`GPX importé : ${tracks.length} trace${tracks.length > 1 ? 's' : ''}, ${fKm(R.dist)}`, 'ok');
 }
 function toGPX() {
@@ -1281,33 +1449,135 @@ function readDates() {      // dates et horaires : ne changent pas le découpage
 ['#cH', '#cUp', '#cKm', '#cBal', '#pace', '#endType'].forEach(id => $(id).addEventListener('change', readSettings));
 ['#vH', '#vUp', '#vKm', '#vDays', '#vTol'].forEach(id => $(id).addEventListener('input', () => { clearTimeout(settingsTimer); settingsTimer = setTimeout(readSettings, 300); }));
 
-/* Recherche de lieux (géocodage IGN) */
+/* Recherche de lieux : IGN (France, très précis) + Photon (OpenStreetMap, monde entier) */
+let searchSeq = 0, searchTimer = null, userPos = null;
+const inFrance = (la, lo) => la > 41.2 && la < 51.2 && lo > -5.3 && lo < 9.7;
 async function search(q) {
-  const ul = $('#results'); ul.innerHTML = ''; ul.style.display = 'none';
-  if (!q.trim()) return;
-  const urls = ['poi', 'address'].map(ix => `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(q)}&index=${ix}&limit=5`);
-  const res = await Promise.all(urls.map(u => fetch(u).then(r => r.json()).catch(() => null)));
-  const feats = []; res.forEach(j => j && j.features && feats.push(...j.features));
-  if (!feats.length) { ul.innerHTML = '<li style="cursor:default">Aucun résultat</li>'; ul.style.display = 'block'; return; }
-  feats.slice(0, 8).forEach(f => {
-    const p = f.properties || {}, c = f.geometry.coordinates;
-    const label = p.label || (Array.isArray(p.toponym) ? p.toponym[0] : p.toponym) || p.name || (p.names && p.names[0]) || 'Résultat';
-    const extra = Array.isArray(p.city) ? p.city[0] : (p.city && p.city !== label ? p.city : '');
-    const li = document.createElement('li'); li.textContent = label + (extra && !String(label).includes(extra) ? ' — ' + extra : '');
-    li.onclick = () => { map.setView([c[1], c[0]], 14); ul.style.display = 'none'; };
+  const ul = $('#results'), seq = ++searchSeq;
+  if (!q.trim()) { ul.innerHTML = ''; ul.style.display = 'none'; return; }
+  const c = userPos || map.getCenter(), la = c.lat, lo = c.lng;
+  const getJ = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
+  const ign = Promise.all(['poi', 'address'].map(ix => getJ(`https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(q)}&index=${ix}&limit=5`)))
+    .then(res => res.flatMap(j => (j && j.features) || []).map(f => {
+      const p = f.properties || {}, g = f.geometry.coordinates;
+      const label = p.label || (Array.isArray(p.toponym) ? p.toponym[0] : p.toponym) || p.name || (p.names && p.names[0]) || 'Résultat';
+      const extra = Array.isArray(p.city) ? p.city[0] : (p.city && p.city !== label ? p.city : '');
+      return { name: String(label), sub: extra && !String(label).includes(extra) ? extra : 'France', lat: g[1], lon: g[0] };
+    }));
+  const photon = getJ(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=8&lang=fr&lat=${la.toFixed(3)}&lon=${lo.toFixed(3)}`)
+    .then(j => ((j && j.features) || []).map(f => {
+      const p = f.properties || {}, g = f.geometry.coordinates;
+      const sub = [p.city && p.city !== p.name ? p.city : '', p.state, p.country].filter(Boolean).join(', ');
+      return { name: p.name || p.street || 'Résultat', sub, lat: g[1], lon: g[0] };
+    }));
+  const [a, b] = await Promise.all([ign, photon]);
+  if (seq !== searchSeq) return;          // une recherche plus récente est partie entre-temps
+  const all = [], seen = new Set();
+  for (const r of (inFrance(la, lo) ? [...a, ...b] : [...b, ...a])) {
+    const k = r.name.toLowerCase() + '|' + r.lat.toFixed(2) + ',' + r.lon.toFixed(2);
+    if (!seen.has(k)) { seen.add(k); all.push(r); }
+  }
+  ul.innerHTML = '';
+  if (!all.length) { ul.innerHTML = '<li style="cursor:default">Aucun résultat</li>'; ul.style.display = 'block'; return; }
+  all.slice(0, 8).forEach(r => {
+    const li = document.createElement('li');
+    li.innerHTML = `<b>${escXml(r.name)}</b>${r.sub ? `<small>${escXml(r.sub)}</small>` : ''}`;
+    li.onclick = () => { map.setView([r.lat, r.lon], 14); ul.style.display = 'none'; $('#q').blur(); };
     ul.appendChild(li);
   });
   ul.style.display = 'block';
 }
-$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); search(e.target.value); } });
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); clearTimeout(searchTimer); search(e.target.value); } });
+$('#q').addEventListener('input', e => {     // suggestions pendant la frappe (3 lettres min., usage modéré des serveurs)
+  clearTimeout(searchTimer); const v = e.target.value;
+  if (v.trim().length < 3) { searchSeq++; $('#results').style.display = 'none'; return; }
+  searchTimer = setTimeout(() => search(v), 450);
+});
+map.on('click', () => { $('#results').style.display = 'none'; });
 
-window.addEventListener('resize', () => { map.invalidateSize(); drawProfile(); });
+/* Me localiser : la position n'est demandée que si l'utilisateur touche le bouton */
+const meMk = L.circleMarker([0, 0], { radius: 8, color: '#fff', weight: 3, fillColor: '#2563eb', fillOpacity: 1, interactive: false });
+$('#bLocate').onclick = () => {
+  if (!navigator.geolocation) return toast('Localisation non disponible sur cet appareil', 'warn');
+  $('#bLocate').classList.add('wait');
+  navigator.geolocation.getCurrentPosition(p => {
+    $('#bLocate').classList.remove('wait');
+    userPos = L.latLng(p.coords.latitude, p.coords.longitude);
+    meMk.setLatLng(userPos).addTo(map);
+    map.setView(userPos, Math.max(map.getZoom(), 13));
+  }, err => {
+    $('#bLocate').classList.remove('wait');
+    toast(err.code === 1 ? 'Localisation refusée : autorise-la dans les réglages du navigateur' : 'Position introuvable pour le moment', 'warn');
+  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+};
+
+/* ================= Tiroir (mobile), onglets, profil ================= */
+const desk = matchMedia('(min-width: 900px)');
+const sheet = {
+  el: $('#panel'), snap: 'peek', y: 0,
+  peekH() { return $('#grab').offsetHeight + $('#tabs').offsetHeight; },
+  pos(snap) {               // décalage vers le bas (px) pour chaque hauteur
+    const H = this.el.offsetHeight, vh = window.innerHeight;
+    if (snap === 'full') return 0;
+    if (snap === 'mid') return Math.max(0, H - Math.round(vh * 0.55));
+    return Math.max(0, H - this.peekH());
+  },
+  set(snap) { this.snap = snap; this.el.dataset.snap = snap; document.body.classList.toggle('sheet-full', snap === 'full'); this.layout(); },
+  layout() {
+    const root = document.documentElement.style;
+    if (desk.matches) { root.setProperty('--hidden', '0px'); return; }
+    root.setProperty('--peek', this.peekH() + 'px');
+    this.y = this.pos(this.snap); root.setProperty('--hidden', this.y + 'px');
+    map.invalidateSize();
+  },
+  visible() { return desk.matches ? 0 : this.el.offsetHeight - this.y; }
+};
+// Marges pour que le tracé ne passe ni sous la barre de recherche ni sous le tiroir
+function fitPad(p) { return { paddingTopLeft: [p, 70], paddingBottomRight: [p, desk.matches ? p : Math.max(p, sheet.visible() - sheet.peekH() + 18 + p)] }; }
+(() => {
+  const g = $('#grab'); let y0 = null, start = 0, moved = false, t0 = 0;
+  g.addEventListener('pointerdown', e => { if (desk.matches) return; y0 = e.clientY; start = sheet.y; moved = false; t0 = Date.now(); sheet.el.classList.add('dragging'); g.setPointerCapture(e.pointerId); });
+  g.addEventListener('pointermove', e => {
+    if (y0 == null) return;
+    const dy = e.clientY - y0; if (Math.abs(dy) > 6) moved = true;
+    sheet.y = Math.min(sheet.pos('peek'), Math.max(0, start + dy));
+    document.documentElement.style.setProperty('--hidden', sheet.y + 'px');
+  });
+  const end = e => {
+    if (y0 == null) return;
+    const dy = e.clientY - y0, fast = Math.abs(dy) / Math.max(1, Date.now() - t0) > 0.5;
+    y0 = null; sheet.el.classList.remove('dragging');
+    const order = ['full', 'mid', 'peek'];
+    if (!moved) { sheet.set(sheet.snap === 'peek' ? 'mid' : 'peek'); return; }
+    let i = order.indexOf(sheet.snap);
+    if (fast) i = Math.max(0, Math.min(2, i + (dy > 0 ? 1 : -1)));
+    else i = order.map(s => Math.abs(sheet.pos(s) - sheet.y)).reduce((b, d, k, a) => d < a[b] ? k : b, 0);
+    sheet.set(order[i]);
+  };
+  g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
+})();
+function showTab(name) {
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.id === 'tab-' + name));
+  $('#content').scrollTop = 0;
+  if (sheet.snap === 'peek') sheet.set('mid');
+}
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+function placeProfile() {   // ordinateur : sous la carte ; mobile : dans le tiroir
+  (desk.matches ? $('#profileMain') : $('#profileSlot')).appendChild($('#profile'));
+  sheet.layout(); map.invalidateSize(); drawProfile();
+}
+desk.addEventListener('change', placeProfile);
+$('#q').addEventListener('focus', () => { if (!desk.matches && sheet.snap !== 'peek') sheet.set('peek'); });
+
+window.addEventListener('resize', () => { sheet.layout(); map.invalidateSize(); drawProfile(); });
 
 /* ================= Démarrage ================= */
+placeProfile();
 buildPoiRows();
 if (restore()) {
   compute(); render();
-  if (R.n > 1) map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), { padding: [20, 20] });
+  if (R.n > 1) map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), fitPad(20));
   toast('Brouillon restauré', 'ok');
   schedulePOIs();
 } else { compute(); render(); }

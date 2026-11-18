@@ -19,6 +19,16 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 | `.github/workflows/poi-data.yml` | Robot mensuel qui lance l'extraction et publie les données. |
 | `tests/` | Test de fumée Playwright avec services réseau simulés. |
 
+## Interface
+
+- Mobile d'abord : carte plein écran, barre de recherche flottante, **tiroir** (`sheet` : `peek` / `mid` / `full`) avec
+  3 onglets **Tracer / Étapes / Préparer**. Le profil est dans le tiroir sur mobile, sous la carte à partir de 900 px
+  (panneau latéral, `placeProfile`). Recentrer la carte avec `fitPad(p)` pour ne pas cacher le tracé sous le tiroir.
+- Pastilles de catégories sur la carte (`#chips`, `setShow`) synchronisées avec les cases de l'onglet Préparer (`S.show`).
+- Recherche : IGN + Photon en parallèle (IGN d'abord si la carte est en France), suggestions dès 3 lettres ;
+  bouton « me localiser » (la position n'est demandée qu'au toucher).
+- Identité : vert forêt `--forest` et tons pierre ; icônes SVG en ligne (`<symbol id="i-…">`) ; cibles tactiles ≥ 44 px.
+
 ## Services externes (tous gratuits, sans clé)
 
 - **BRouter** `brouter.de` (profil `hiking-mountain`, GeoJSON) : tracé qui suit les sentiers. Serveur communautaire : usage modéré.
@@ -53,6 +63,8 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 - Temps : DIN 33466 (4 km/h, 300 m/h en montée, 500 m/h en descente, max + min/2) par tronçons d'1 km, divisé par l'allure.
 - Étapes : `nextEnd` (la plus longue étape sous les limites h / D+ / km), `findScale` (équilibrage : même nombre d'étapes,
   limites resserrées), `splitDays` (N jours d'effort égal), fins d'étape fixées à la main (`S.pins`, coordonnées).
+- Fin d'étape choisie pour une étape précise : `S.over[k]` (k = n° d'étape, 0 = 1re), via `setStageEnd`. Dans `snap`,
+  `ends.length` donne le n° de l'étape en cours ; si rien dans la tolérance, recherche élargie à ±2 h pour cette étape.
 - Fin d'étape refuge/bivouac : `snap` cherche un candidat dans ±`S.tol` h (détour compris) ; une vraie aire de bivouac
   vaut 15 min de mieux qu'un point d'eau ; micro-étape finale fusionnée ou rééquilibrée.
 - Points le long du tracé : projection sur une grille de 0,01° ; distances max 1 km (1,5 km commerces, 3 km gares).
