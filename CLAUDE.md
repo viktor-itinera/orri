@@ -36,7 +36,11 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 - **Accueil** (`#page-welcome`) au premier lancement seulement (`orri.welcomed`, et aucun parcours enregistré) : Tracer,
   Importer un GPX, Voir un exemple (`DEMO` : 4 villages des Pyrénées reliés par BRouter, 3 requêtes). Revoir depuis le profil.
   Conseils uniques au bon moment (`coach`, clés `orri.tip.*`).
-- Identité : vert forêt `--forest` et tons pierre ; icônes SVG en ligne (`<symbol id="i-…">`) ; cibles tactiles ≥ 44 px.
+- Identité chaleureuse : crème `--bg`, vert forêt `--forest`, terracotta `--terra` (actions principales, tracé) ;
+  polices **Fraunces** (titres) et **Figtree** (texte) auto-hébergées dans `fonts/` (OFL, en cache hors ligne) ;
+  icônes SVG du sprite `#sprite` (`<symbol id="i-…">`), jamais d'emoji : `I('drop')`, `CI(cat)` (icône de catégorie en couleur) ;
+  textes au tutoiement, simples ; le technique va dans un `<details class="why">`. Animations courtes, coupées si
+  `prefers-reduced-motion`. Cibles tactiles ≥ 44 px.
 
 ## Services externes (tous gratuits, sans clé)
 

@@ -129,7 +129,7 @@ with sync_playwright() as p:
     check(J(pg, "() => JSON.parse(localStorage.getItem('orri.treks.v1')).list.length") == 1, "parcours gardé dans le navigateur")
     pg.click("#page-profile .close"); pg.click("#tabs button[data-tab=prep]"); pg.click("#bSheet"); pg.wait_for_timeout(800)
     fiche = pg.frame_locator("#sheetFrame").locator("body").inner_text()
-    check("Traversée test" in fiche and "Étape 12" in fiche and "Nuit" in fiche, "fiche du trek générée (12 étapes)")
+    check("Traversée test" in fiche and "Jour 12" in fiche and "Nuit" in fiche, "fiche du trek générée (12 étapes)")
     with pg.expect_download() as dl2:
         pg.click("#bSheetDl")
     check("<svg" in open(dl2.value.path(), encoding="utf-8").read(), "fiche téléchargeable (HTML autonome)")
