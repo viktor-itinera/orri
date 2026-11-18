@@ -104,7 +104,7 @@ footer{font-size:11px;color:var(--muted);margin-top:18px;border-top:1px solid va
 <div id="app">
   <aside id="panel">
     <h1>Itinera</h1>
-    <p class="sub">Planificateur de treks au long cours · prototype v0.5.1</p>
+    <p class="sub">Planificateur de treks au long cours · prototype v0.6</p>
 
     <input id="q" type="search" placeholder="Aller à… (ex. Cauterets, Pic du Canigou)" autocomplete="off">
     <ul id="results"></ul>
@@ -210,7 +210,7 @@ footer{font-size:11px;color:var(--muted);margin-top:18px;border-top:1px solid va
       <li>Survole le profil pour voir où tu es sur la carte.</li>
       <li>L'export GPX contient une trace par étape et un point à chaque fin d'étape.</li>
     </ul>
-    <footer>Itinéraires : BRouter (serveur public communautaire, usage modéré) sur données © contributeurs OpenStreetMap. Cartes, altitudes et noms de lieux : © IGN. Brouillon gardé dans ce navigateur.</footer>
+    <footer>Itinéraires : BRouter (serveur public communautaire, usage modéré) sur données © contributeurs OpenStreetMap. Cartes, altitudes et noms de lieux : © IGN. Eau, refuges, bivouacs, commerces et gares : © contributeurs OpenStreetMap (ODbL), extraits chaque mois pour la France, l'Espagne, l'Andorre, la Norvège, la Suisse et l'Italie. Brouillon gardé dans ce navigateur.</footer>
   </aside>
 
   <main>
@@ -754,10 +754,12 @@ function buildPoiRows() {
 }
 function renderPoiStatus() {
   const el = $('#poiStatus'), has = R && R.n > 1, n = has && R.pois ? R.pois.length : 0;
-  const prog = poiProgress.total ? ` ${nf0.format(Math.min(poiProgress.done, poiProgress.total))} / ${nf0.format(poiProgress.total)} km analysés` : '';
-  if (poiState === 'loading') el.textContent = `⏳ Recherche dans OpenStreetMap…${prog}${poiProgress.server > 1 ? ` (serveur de secours ${poiProgress.server - 1}/${OVERPASS.length - 1})` : ''}. ${n ? nf0.format(n) + ' points déjà trouvés.' : ''}`;
-  else if (poiState === 'error') { el.innerHTML = `⚠️ Aucun des ${OVERPASS.length} serveurs OpenStreetMap (Overpass) n'a répondu (${prog.trim() || 'aucune donnée'}). Ils sont parfois saturés : réessaie dans quelques minutes.<button id="poiRetry">Réessayer</button>`; $('#poiRetry').onclick = () => fetchPOIs(); }
-  else el.textContent = has ? `${nf0.format(n)} points à moins de 1 km du tracé (1,5 km pour les commerces, 3 km pour les gares). Clique sur une étape pour voir le détail.` : 'Trace un itinéraire pour voir l\'eau, les refuges et les commerces.';
+  const prog = poiProgress.total && !poiProgress.local ? ` ${nf0.format(Math.min(poiProgress.done, poiProgress.total))} / ${nf0.format(poiProgress.total)} km analysés` : '';
+  if (poiState === 'loading') el.textContent = poiProgress.local
+    ? `⏳ Chargement des points (${poiProgress.done} / ${poiProgress.total} zones)…`
+    : `⏳ Recherche dans OpenStreetMap (hors pays couverts)…${prog}${poiProgress.server > 1 ? ` (serveur de secours ${poiProgress.server - 1}/${OVERPASS.length - 1})` : ''}. ${n ? nf0.format(n) + ' points déjà trouvés.' : ''}`;
+  else if (poiState === 'error') { el.innerHTML = `⚠️ ${n ? nf0.format(n) + ' points trouvés, mais une partie du tracé n\'a pas pu être analysée' : 'Points indisponibles'} : ${poiIndex ? 'hors des pays couverts par Itinera, ' : ''}les serveurs publics OpenStreetMap ne répondent pas. Réessaie dans quelques minutes.<button id="poiRetry">Réessayer</button>`; $('#poiRetry').onclick = () => fetchPOIs(); }
+  else el.textContent = has ? `${nf0.format(n)} points à moins de 1 km du tracé (1,5 km pour les commerces, 3 km pour les gares). Clique sur une étape pour voir le détail.${poiIndex ? ' Données OpenStreetMap du ' + new Date(poiIndex.generated + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) + '.' : ''}` : 'Trace un itinéraire pour voir l\'eau, les refuges et les commerces.';
   Object.keys(CAT).forEach(k => { const c = $('#cnt_' + k); if (c) c.textContent = has && R.pois ? nf0.format(R.pois.filter(p => p.cat === k).length) : '—'; });
 }
 function placeName(i) { return placeCache[R.lat[i].toFixed(3) + ',' + R.lon[i].toFixed(3)] || null; }
@@ -1136,7 +1138,7 @@ async function overpass(q) {
   for (let k = 0; k < OVERPASS.length; k++) {
     const idx = (poiServer + k) % OVERPASS.length, url = OVERPASS[idx];
     poiProgress.server = k + 1; renderPoiStatus();
-    const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 40000);   // 40 s max par serveur
+    const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 25000);   // 25 s max par serveur
     try {
       const r = await fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal: ctrl.signal });
       if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -1149,31 +1151,89 @@ async function overpass(q) {
   }
   throw lastErr;
 }
+/* Données propres à Itinera : tuiles de 0,25° extraites d'OpenStreetMap chaque mois (data/poi/) */
+const POI_BASE = 'data/poi/';
+let poiIndex = null, poiIndexAt = 0;
+const tileLoaded = new Set();
+async function loadPoiIndex() {
+  if (poiIndex || Date.now() - poiIndexAt < 60000) return poiIndex;
+  poiIndexAt = Date.now();
+  try {
+    const r = await fetch(POI_BASE + 'index.json', { cache: 'no-cache' });
+    if (r.ok) { const j = await r.json(); poiIndex = { ts: j.ts, kinds: j.kinds, generated: j.generated, cov: new Set(j.cov), tiles: new Set(j.tiles) }; }
+  } catch (e) { console.warn('index POI', e); }
+  return poiIndex;
+}
+const tKey = (la, lo, ts) => Math.floor(la / ts) + '_' + Math.floor(lo / ts);
+function localTilesNeeded(ix) {
+  const need = new Set(); if (!R || R.n < 2) return [];
+  const pad = 0.035; let last = -Infinity;
+  for (let i = 0; i < R.n; i++) {
+    if (R.cum[i] - last < 300 && i !== R.n - 1) continue; last = R.cum[i];
+    const la = R.lat[i], lo = R.lon[i], pl = pad / Math.cos(la * Math.PI / 180);
+    for (const dy of [-pad, 0, pad]) for (const dx of [-pl, 0, pl]) {
+      const k = tKey(la + dy, lo + dx, ix.ts);
+      if (ix.tiles.has(k) && !tileLoaded.has(k)) need.add(k);
+    }
+  }
+  return [...need];
+}
+async function loadTile(ix, key) {
+  const r = await fetch(POI_BASE + 't/' + key + '.json');
+  if (!r.ok) throw new Error('tuile ' + key + ' : HTTP ' + r.status);
+  for (const [lat, lon, k, name, id] of await r.json()) {
+    const kd = ix.kinds[k]; if (!kd) continue;
+    poiCache.set(id, { id, lat, lon, cat: kd[0], kind: kd[1], name: name || '' });
+  }
+  tileLoaded.add(key);
+}
+const chunkCovered = (ix, c) => !!ix && c.pts.every(p => ix.cov.has(tKey(p[0], p[1], ix.ts)));
+
 async function fetchPOIs() {
   if (poiRunning) { poiAgain = true; return; }
-  const chunks = routeChunks(), todo = chunks.filter(c => !chunkDone.has(c.key));
-  const totalKm = chunks.reduce((a, c) => a + c.km, 0);
-  if (!todo.length) { if (poiState !== 'ok' && chunks.length) { poiState = 'ok'; renderPoiStatus(); renderStages(); } return; }
-  poiRunning = true; poiState = 'loading';
-  poiProgress = { done: totalKm - todo.reduce((a, c) => a + c.km, 0), total: totalKm };
-  renderPoiStatus(); renderStages();
+  poiRunning = true;
+  let failed = false;
   try {
-    for (let k = 0; k < todo.length; k += BATCH) {
-      const batch = todo.slice(k, k + BATCH);
-      const data = await overpass(buildQuery(batch));
-      for (const el of data.elements || []) {
-        const t = el.tags || {}, c = classify(t); if (!c) continue;
-        const lat = el.lat != null ? el.lat : el.center && el.center.lat, lon = el.lon != null ? el.lon : el.center && el.center.lon;
-        if (lat == null || lon == null) continue;
-        poiCache.set(el.type + el.id, { id: el.type + el.id, lat, lon, cat: c.cat, kind: c.kind, name: (t.name || '').trim() });
+    const ix = await loadPoiIndex();
+    // 1. Pays couverts : données Itinera (rapide, fiable)
+    if (ix) {
+      const need = localTilesNeeded(ix);
+      if (need.length) {
+        poiState = 'loading'; poiProgress = { local: true, done: 0, total: need.length };
+        renderPoiStatus(); renderStages();
+        for (let k = 0; k < need.length; k += 6) {
+          const res = await Promise.allSettled(need.slice(k, k + 6).map(key => loadTile(ix, key)));
+          if (res.some(r => r.status === 'rejected')) failed = true;
+          poiProgress.done = Math.min(need.length, k + 6);
+          compute(); render();
+        }
       }
-      batch.forEach(c => chunkDone.add(c.key));
-      poiProgress.done += batch.reduce((a, c) => a + c.km, 0);
-      compute(); render();                       // résultats partiels visibles tout de suite
     }
-    poiState = 'ok';
-  } catch (e) { poiState = 'error'; }
-  finally { poiRunning = false; }
+    // 2. Ailleurs : serveurs publics Overpass
+    const chunks = routeChunks().filter(c => !chunkCovered(ix, c)), todo = chunks.filter(c => !chunkDone.has(c.key));
+    if (todo.length) {
+      const totalKm = chunks.reduce((a, c) => a + c.km, 0);
+      poiState = 'loading';
+      poiProgress = { done: totalKm - todo.reduce((a, c) => a + c.km, 0), total: totalKm };
+      renderPoiStatus(); renderStages();
+      try {
+        for (let k = 0; k < todo.length; k += BATCH) {
+          const batch = todo.slice(k, k + BATCH);
+          const data = await overpass(buildQuery(batch));
+          for (const el of data.elements || []) {
+            const t = el.tags || {}, c = classify(t); if (!c) continue;
+            const lat = el.lat != null ? el.lat : el.center && el.center.lat, lon = el.lon != null ? el.lon : el.center && el.center.lon;
+            if (lat == null || lon == null) continue;
+            poiCache.set(el.type + el.id, { id: el.type + el.id, lat, lon, cat: c.cat, kind: c.kind, name: (t.name || '').trim() });
+          }
+          batch.forEach(c => chunkDone.add(c.key));
+          poiProgress.done += batch.reduce((a, c) => a + c.km, 0);
+          compute(); render();
+        }
+      } catch (e) { failed = true; }
+    }
+    poiState = failed ? 'error' : 'ok';
+  } finally { poiRunning = false; }
   compute(); render();
   if (poiAgain) { poiAgain = false; fetchPOIs(); }
 }

@@ -1,0 +1,63 @@
+name: Données des points d'intérêt (OpenStreetMap)
+
+# Extrait chaque mois l'eau, les refuges, les bivouacs, les commerces et les gares
+# d'OpenStreetMap pour les pays couverts, et les publie dans data/poi/ (servi par GitHub Pages).
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 2 * *"          # le 2 de chaque mois à 03:17 UTC
+  push:
+    branches: [main]
+    paths: ["tools/build_pois.py", ".github/workflows/poi-data.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: poi-data
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      COUNTRIES: "europe/france europe/spain europe/andorra europe/norway europe/switzerland europe/italy"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer osmium
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
+
+      - name: Télécharger et filtrer les pays
+        run: |
+          set -euo pipefail
+          mkdir -p work
+          PAIRS=""
+          for c in $COUNTRIES; do
+            n=$(basename "$c")
+            echo "::group::$n"
+            curl -fsSL --retry 3 -o "work/$n.poly" "https://download.geofabrik.de/$c.poly"
+            curl -fsSL --retry 3 -o "work/$n.osm.pbf" "https://download.geofabrik.de/$c-latest.osm.pbf"
+            osmium tags-filter "work/$n.osm.pbf" \
+              nwr/tourism=alpine_hut,wilderness_hut,hostel,guest_house,camp_site,camp_pitch \
+              nwr/amenity=shelter,drinking_water,water_point \
+              nwr/natural=spring nwr/man_made=water_tap \
+              nwr/shop=supermarket,convenience,general,bakery \
+              nwr/railway=station,halt \
+              -o "work/$n.f.osm.pbf" --overwrite
+            rm "work/$n.osm.pbf"
+            osmium export "work/$n.f.osm.pbf" -f geojsonseq -a type,id -o "work/$n.geojsonseq" --overwrite
+            PAIRS="$PAIRS work/$n.geojsonseq:work/$n.poly"
+            echo "::endgroup::"
+          done
+          python3 tools/build_pois.py data/poi $PAIRS
+
+      - name: Publier si les données ont changé
+        run: |
+          git config user.name "itinera-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/poi
+          if git diff --cached --quiet; then echo "Aucun changement"; exit 0; fi
+          git commit -m "Données OpenStreetMap du $(date -u +%Y-%m-%d)"
+          git push
