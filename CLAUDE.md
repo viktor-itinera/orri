@@ -19,6 +19,13 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 | `.github/workflows/poi-data.yml` | Robot mensuel qui lance l'extraction et publie les données. |
 | `tests/` | Test de fumée Playwright avec services réseau simulés. |
 
+## Interface
+
+- Mobile d'abord : carte plein écran, barre de recherche flottante, **tiroir** (`sheet` : `peek` / `mid` / `full`) avec
+  3 onglets **Tracer / Étapes / Préparer**. Le profil est dans le tiroir sur mobile, sous la carte à partir de 900 px
+  (panneau latéral, `placeProfile`). Recentrer la carte avec `fitPad(p)` pour ne pas cacher le tracé sous le tiroir.
+- Identité : vert forêt `--forest` et tons pierre ; icônes SVG en ligne (`<symbol id="i-…">`) ; cibles tactiles ≥ 44 px.
+
 ## Services externes (tous gratuits, sans clé)
 
 - **BRouter** `brouter.de` (profil `hiking-mountain`, GeoJSON) : tracé qui suit les sentiers. Serveur communautaire : usage modéré.

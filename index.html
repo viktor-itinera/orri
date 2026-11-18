@@ -15,213 +15,308 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{
-  --bg:#f4f3ee; --panel:#ffffff; --ink:#1c2320; --muted:#68716c; --line:#e2e0d8;
+  --forest:#1c3a2e; --forest-2:#2b5442; --moss:#e4ece6;
+  --bg:#f3f0e8; --panel:#fffdf9; --ink:#1f2622; --muted:#6b726c; --line:#e3ded2;
   --a:#c2410c; --b:#1d4ed8; --ok:#15803d; --warn:#b45309; --err:#b91c1c;
+  --r:12px; --shadow:0 6px 24px rgba(28,58,46,.16),0 1px 3px rgba(0,0,0,.08);
+  --peek:132px; --hidden:0px; --side:400px;
 }
-*{box-sizing:border-box}
-html,body{margin:0;height:100%;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
-#app{display:flex;height:100%}
-#panel{width:360px;flex:none;overflow-y:auto;background:var(--panel);border-right:1px solid var(--line);padding:14px 16px 28px}
-main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
-#map{flex:1;min-height:220px}
-#profile{height:170px;flex:none;position:relative;background:var(--panel);border-top:1px solid var(--line)}
-#prof{width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
-#cursor{position:absolute;top:10px;bottom:22px;width:1px;background:var(--ink);opacity:.55;pointer-events:none;display:none}
-#tip{position:absolute;top:6px;padding:3px 7px;font-size:12px;background:var(--ink);color:#fff;border-radius:4px;pointer-events:none;display:none;white-space:nowrap}
-h1{font-size:17px;margin:0 0 2px}
-.sub{color:var(--muted);font-size:12px;margin:0 0 14px}
-h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:18px 0 8px}
-.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-button,.btn,select,input[type=search],input[type=number]{font:inherit;border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 10px;color:var(--ink)}
-input[type=number]{width:74px;padding:4px 6px;text-align:right}
-button,.btn{cursor:pointer}
-button:hover,.btn:hover{border-color:#bdb9ad}
-button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-button.danger{color:var(--err)}
-button:disabled{opacity:.45;cursor:default}
-input[type=search]{width:100%}
-#results{list-style:none;margin:4px 0 0;padding:0;border:1px solid var(--line);border-radius:7px;display:none;max-height:220px;overflow:auto}
-#results li{padding:6px 10px;cursor:pointer;border-top:1px solid var(--line)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+#app{position:relative;height:100%;height:100dvh}
+.ico{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* --- Carte --- */
+#map{position:absolute;left:0;right:0;top:0;bottom:calc(var(--peek) - 18px);background:#e8e4da}
+.leaflet-control-zoom{display:none}
+.leaflet-control-attribution{font-size:10px}
+
+/* --- Barre de recherche flottante --- */
+#top{position:absolute;z-index:1100;top:12px;left:12px;right:12px;display:flex;gap:8px;align-items:flex-start}
+#searchBox{flex:1;position:relative;min-width:0}
+.searchbar{display:flex;align-items:center;gap:8px;height:48px;padding:0 6px 0 6px;background:var(--panel);border-radius:24px;box-shadow:var(--shadow)}
+.searchbar img{width:36px;height:36px;border-radius:50%;flex:none}
+#q{flex:1;min-width:0;height:44px;border:0;background:transparent;font:inherit;font-size:16px;color:var(--ink);outline:none;padding:0 4px}
+#q::placeholder{color:var(--muted)}
+#results{list-style:none;margin:6px 0 0;padding:4px 0;background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);display:none;max-height:50vh;overflow:auto}
+#results li{padding:12px 16px;cursor:pointer;border-top:1px solid var(--line)}
 #results li:first-child{border-top:0}
 #results li:hover{background:var(--bg)}
-.seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
-.seg button{border:0;border-radius:0;flex:1;padding:6px 8px}
-.box{background:var(--bg);border-radius:8px;padding:10px;margin-top:8px}
-.lim{display:flex;align-items:center;gap:8px;margin:4px 0}
-.lim label{flex:1;cursor:pointer}
-.lim .u{width:52px;color:var(--muted);font-size:12px}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.stat{background:var(--bg);border-radius:8px;padding:8px 10px}
-.stat b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
-.stat span{font-size:11px;color:var(--muted)}
-.note{font-size:12px;color:var(--muted);margin:8px 0 0}
-#stages{list-style:none;margin:0;padding:0}
-#stages li{padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;cursor:pointer}
-#stages li.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink) inset}
-#stages .t{font-weight:600}
-#stages .m{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px}
-#status{position:absolute;left:12px;bottom:182px;z-index:1000;display:flex;flex-direction:column;gap:6px;pointer-events:none}
-.toast{background:var(--ink);color:#fff;padding:7px 11px;border-radius:7px;font-size:13px;max-width:360px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.toast.err{background:var(--err)} .toast.warn{background:var(--warn)} .toast.ok{background:var(--ok)}
+.fab{position:relative;width:48px;height:48px;flex:none;border-radius:50%;background:var(--panel);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;color:var(--forest)}
+.fab select{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:16px}
+
+/* --- Messages --- */
+#status{position:absolute;z-index:1200;top:70px;left:12px;right:12px;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.toast{background:var(--forest);color:#fff;padding:9px 14px;border-radius:20px;font-size:14px;max-width:420px;box-shadow:var(--shadow)}
+.toast.err{background:var(--err)} .toast.warn{background:var(--warn)} .toast.ok{background:var(--forest-2)}
 #busy{display:none}
-.wp{background:#fff;border:3px solid var(--ink);border-radius:50%}
+
+/* --- Tiroir (mobile) / panneau (ordinateur) --- */
+#panel{position:absolute;z-index:1000;left:0;right:0;bottom:0;height:calc(100% - 72px);display:flex;flex-direction:column;
+  background:var(--panel);border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(28,58,46,.18);
+  transform:translateY(var(--hidden));transition:transform .28s cubic-bezier(.2,.8,.2,1);will-change:transform}
+#panel.dragging{transition:none}
+.grab{flex:none;padding:8px 16px 4px;touch-action:none;cursor:grab;user-select:none}
+.handle{width:40px;height:5px;border-radius:3px;background:#cfc9bb;margin:0 auto 8px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center}
+.stat b{display:block;font-size:17px;font-weight:650;font-variant-numeric:tabular-nums;color:var(--forest);white-space:nowrap}
+.stat span{font-size:11.5px;color:var(--muted)}
+#hint{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14.5px;color:var(--ink)}
+#hint .ico{color:var(--forest)}
+.has-route #hint{display:none} body:not(.has-route) .stats{display:none}
+.tabs{flex:none;display:flex;gap:4px;padding:4px 12px 8px;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;height:44px;border:0;border-radius:22px;background:transparent;color:var(--muted);font:inherit;font-weight:600;cursor:pointer}
+.tabs button.on{background:var(--moss);color:var(--forest)}
+#profileSlot{flex:none}
+#profile{height:120px;position:relative;background:var(--panel);border-bottom:1px solid var(--line)}
+body:not(.has-route) #profile{display:none}
+#prof{width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
+#cursor{position:absolute;top:10px;bottom:22px;width:1px;background:var(--ink);opacity:.55;pointer-events:none;display:none}
+#tip{position:absolute;top:6px;padding:3px 8px;font-size:12px;background:var(--forest);color:#fff;border-radius:6px;pointer-events:none;display:none;white-space:nowrap}
+.content{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:4px 16px calc(var(--hidden) + 32px)}
+.tab{display:none} .tab.on{display:block}
+
+/* --- Éléments --- */
+h2{font-size:13px;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:20px 0 10px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,.btn,select,input[type=number],input[type=date],input[type=time]{font:inherit;font-size:15px;border:1px solid var(--line);background:#fff;border-radius:var(--r);padding:0 14px;min-height:44px;color:var(--ink)}
+button,.btn{cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:550}
+button:hover,.btn:hover{border-color:#c9c2b2}
+button.on{background:var(--forest);color:#fff;border-color:var(--forest)}
+button.primary,.btn.primary{background:var(--forest);color:#fff;border-color:var(--forest)}
+button.danger{color:var(--err)}
+button:disabled{opacity:.4;cursor:default}
+select{padding:0 10px;max-width:100%}
+input[type=number]{width:84px;padding:0 10px;text-align:right}
+input[type=date],input[type=time]{padding:0 10px}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--forest);margin:0;flex:none}
+.grow{flex:1}
+.seg{display:flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#fff}
+.seg button{border:0;border-radius:0;flex:1;padding:0 8px;font-weight:550}
+.box{background:var(--bg);border-radius:var(--r);padding:8px 12px;margin-top:10px}
+.lim{display:flex;align-items:center;gap:10px;margin:6px 0;min-height:44px}
+.lim label{flex:1;cursor:pointer}
+.lim .u{width:56px;color:var(--muted);font-size:13px}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0}
+.more{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.more div{background:var(--bg);border-radius:var(--r);padding:8px 12px}
+.more b{display:block;font-variant-numeric:tabular-nums}
+.more span{font-size:12px;color:var(--muted)}
+#stages{list-style:none;margin:0;padding:0}
+#stages li{padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);margin-bottom:8px;cursor:pointer;background:#fff}
+#stages li.sel{border-color:var(--forest);box-shadow:0 0 0 1px var(--forest) inset}
+#stages .t{font-weight:600}
+#stages .m{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:0}
+.wp{background:#fff;border:3px solid var(--forest);border-radius:50%}
 .wp.first{border-color:var(--ok)} .wp.last{border-color:var(--err)}
-.stg{background:var(--ink);color:#fff;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.stg{background:var(--forest);color:#fff;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 .stg.drag{cursor:grab}
 .stg.pin{background:var(--ok)}
 .lowzoom .stg{display:none}
-.poi-row{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:13px}
+.poi-row{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14.5px}
 .poi-row label{flex:1;cursor:pointer}
-.poi-row .c{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px}
+.poi-row .c{color:var(--muted);font-variant-numeric:tabular-nums;font-size:13px}
 .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:2px;box-shadow:0 0 0 1px rgba(0,0,0,.2)}
-#stages .e{font-size:12px;margin-top:3px}
+#stages .e{font-size:13px;margin-top:4px}
 #stages .e.miss{color:var(--warn)}
-#stages .p{font-size:12px;color:var(--muted);margin-top:2px}
-#poiStatus button{padding:2px 8px;font-size:12px;margin-left:4px}
-.detail{margin-top:8px;border-top:1px solid var(--line);padding-top:6px;cursor:default}
-.info{font-size:12.5px;margin:4px 0}
+#stages .p{font-size:13px;color:var(--muted);margin-top:2px}
+#poiStatus button{min-height:36px;padding:0 10px;font-size:13px;margin-left:6px}
+.detail{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;cursor:default}
+.info{font-size:13px;margin:4px 0}
 .warnline{color:var(--warn)}
 .plist{margin-top:6px}
-.prow{display:flex;gap:6px;font-size:12.5px;padding:3px 4px;border-radius:5px;cursor:pointer}
+.prow{display:flex;gap:6px;font-size:13px;padding:8px 4px;border-radius:6px;cursor:pointer}
 .prow:hover{background:var(--bg)}
 .prow .km{width:62px;flex:none;color:var(--muted);font-variant-numeric:tabular-nums}
 .prow .k{color:var(--muted)}
 .prow.end{font-weight:600}
-input[type=date],input[type=time]{font:inherit;border:1px solid var(--line);border-radius:7px;padding:4px 6px;background:#fff;color:var(--ink)}
-.help{font-size:12.5px;color:var(--muted);padding-left:18px;margin:6px 0}
-.help li{margin-bottom:3px}
-footer{font-size:11px;color:var(--muted);margin-top:18px;border-top:1px solid var(--line);padding-top:10px}
-@media (max-width:760px){
-  #app{flex-direction:column-reverse}
-  #panel{width:auto;height:48%;border-right:0;border-top:1px solid var(--line)}
-  #profile{height:120px}
-  #status{bottom:132px}
+.tips{list-style:none;padding:0;margin:8px 0 0}
+.tips li{display:flex;gap:10px;font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.tips .ico{width:18px;height:18px;color:var(--forest);margin-top:1px}
+footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+.empty{color:var(--muted);font-size:14px;padding:8px 0}
+
+/* --- Ordinateur : panneau latéral, profil sous la carte --- */
+@media (min-width:900px){
+  #map{left:var(--side);bottom:170px}
+  .leaflet-control-zoom{display:block}
+  #top{left:calc(var(--side) + 16px);right:16px;top:16px}
+  #searchBox{max-width:440px}
+  #top .fab{margin-left:auto}
+  #status{left:calc(var(--side) + 16px);top:76px}
+  #panel{right:auto;top:0;width:var(--side);height:auto;border-radius:0;transform:none;box-shadow:1px 0 0 var(--line)}
+  .grab{cursor:default;padding-top:16px}
+  .handle{display:none}
+  .content{padding-bottom:32px}
+  #profileMain{position:absolute;left:var(--side);right:0;bottom:0;height:170px}
+  #profileMain #profile{height:170px;border-top:1px solid var(--line);border-bottom:0}
 }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 22V4"/><path d="M4 4h13l-2 4 2 4H4"/></symbol>
+  <symbol id="i-pack" viewBox="0 0 24 24"><path d="M6 8a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2Z"/><path d="M9 4V2h6v2"/><path d="M8 13h8v5H8z"/></symbol>
+  <symbol id="i-tap" viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+</svg>
 <div id="app">
-  <aside id="panel">
-    <h1>Orri</h1>
-    <p class="sub">Planificateur de randos et treks · prototype v0.6</p>
+  <div id="map"></div>
 
-    <input id="q" type="search" placeholder="Aller à… (ex. Cauterets, Pic du Canigou)" autocomplete="off">
-    <ul id="results"></ul>
-
-    <h2>Tracer</h2>
-    <div class="row">
-      <button id="bDraw" class="on" title="Cliquer sur la carte ajoute un point">✏️ Tracer</button>
-      <div class="seg" style="flex:1">
-        <button id="mRoute" class="on" title="Le tracé suit les sentiers">Sentiers</button>
-        <button id="mLine" title="Ligne droite, pour le hors-sentier">Ligne droite</button>
+  <div id="top">
+    <div id="searchBox">
+      <div class="searchbar">
+        <img src="icons/apple-touch-icon.png" alt="Orri">
+        <input id="q" type="search" placeholder="Rechercher un lieu…" autocomplete="off" enterkeyhint="search">
+        <svg class="ico" style="color:var(--muted);margin-right:8px"><use href="#i-search"/></svg>
       </div>
+      <ul id="results"></ul>
     </div>
-    <div class="row" style="margin-top:6px">
-      <button id="bUndo" title="Ctrl+Z">↶ Annuler</button>
-      <button id="bReverse">⇄ Inverser le sens</button>
-      <button id="bClear" class="danger">Effacer</button>
-    </div>
-
-    <h2>Découpage en étapes</h2>
-    <div class="seg" id="modeSeg">
-      <button data-m="limits" title="Des limites par jour, combinables">Limites / jour</button>
-      <button data-m="days" title="Un nombre de jours imposé, étapes d'effort égal">Nb de jours</button>
-      <button data-m="gpx" title="Les étapes contenues dans le fichier GPX importé">Du GPX</button>
-    </div>
-    <div class="box" id="limitsBox">
-      <div class="lim"><input type="checkbox" id="cH"><label for="cH">Marche max</label><input type="number" id="vH" min="1" max="16" step="0.5"><span class="u">h / jour</span></div>
-      <div class="lim"><input type="checkbox" id="cUp"><label for="cUp">D+ max</label><input type="number" id="vUp" min="100" max="6000" step="100"><span class="u">m / jour</span></div>
-      <div class="lim"><input type="checkbox" id="cKm"><label for="cKm">Distance max</label><input type="number" id="vKm" min="1" max="150" step="1"><span class="u">km / jour</span></div>
-      <div class="lim"><input type="checkbox" id="cBal"><label for="cBal">Équilibrer les étapes (pas de petite dernière étape)</label></div>
-    </div>
-    <div class="box" id="daysBox">
-      <div class="lim"><label for="vDays">Nombre de jours</label><input type="number" id="vDays" min="1" max="300" step="1"><span class="u">jours</span></div>
-      <p class="note" style="margin:2px 0 0">Les étapes sont d'effort égal (même temps de marche), pas de distance égale.</p>
-    </div>
-    <div class="box" id="gpxBox">
-      <p class="note" style="margin:0">Étapes telles qu'elles sont dans le fichier GPX importé (une trace = une étape).</p>
-    </div>
-    <div class="box" id="endBox">
-      <div class="lim"><label for="endType">Fin d'étape</label>
-        <select id="endType">
-          <option value="any">N'importe où</option>
-          <option value="refuge">Refuge, cabane ou gîte</option>
-          <option value="bivouac">Bivouac</option>
-          <option value="both">Refuge ou bivouac</option>
-        </select>
-      </div>
-      <div class="lim" id="tolRow"><label for="vTol">Tolérance (± sur l'étape)</label><input type="number" id="vTol" min="0" max="4" step="0.25"><span class="u">h</span></div>
-      <p class="note" id="endNote" style="margin:2px 0 0"></p>
-    </div>
-    <div class="lim" style="margin-top:10px"><label for="pace">Allure</label>
-      <select id="pace">
-        <option value="0.85">Tranquille</option>
-        <option value="1">Standard</option>
-        <option value="1.2">Sportive</option>
-        <option value="1.4">Très sportive</option>
+    <label class="fab" title="Fond de carte">
+      <svg class="ico"><use href="#i-layers"/></svg>
+      <select id="base" aria-label="Fond de carte">
+        <option value="ign">Plan IGN</option>
+        <option value="ortho">Photos aériennes IGN</option>
+        <option value="otm">OpenTopoMap (monde)</option>
+        <option value="no">Norvège topo (Kartverket)</option>
       </select>
+    </label>
+  </div>
+  <div id="status"><div id="busy" class="toast">Calcul de l'itinéraire…</div></div>
+  <div id="profileMain"></div>
+
+  <aside id="panel" data-snap="peek">
+    <div class="grab" id="grab">
+      <div class="handle"></div>
+      <div id="hint"><svg class="ico"><use href="#i-tap"/></svg><span>Touche la carte pour poser ton départ, ou importe un GPX.</span></div>
+      <div class="stats">
+        <div class="stat"><b id="sDist">—</b><span>distance</span></div>
+        <div class="stat"><b id="sUp">—</b><span>D+</span></div>
+        <div class="stat"><b id="sTime">—</b><span>marche</span></div>
+        <div class="stat"><b id="sDays">—</b><span>étapes</span></div>
+      </div>
     </div>
-    <div class="box">
-      <div class="lim"><label for="vDate">Départ le</label><input type="date" id="vDate"></div>
-      <div class="lim"><label for="vTime">Heure de départ chaque jour</label><input type="time" id="vTime" step="900"></div>
-      <div class="lim"><label for="vPause">Pauses par jour</label><input type="number" id="vPause" min="0" max="300" step="15"><span class="u">min</span></div>
-    </div>
-    <p class="note" id="pinNote">📌 Clique sur un numéro d'étape pour fixer cette fin d'étape, ou glisse-le ailleurs sur le tracé. Clique sur un numéro vert pour le libérer. Double-clic sur le profil : nouvelle fin d'étape.</p>
-
-    <h2>Itinéraire</h2>
-    <div class="stats">
-      <div class="stat"><b id="sDist">—</b><span>distance</span></div>
-      <div class="stat"><b id="sTime">—</b><span>temps de marche estimé</span></div>
-      <div class="stat"><b id="sUp">—</b><span>dénivelé positif</span></div>
-      <div class="stat"><b id="sDown">—</b><span>dénivelé négatif</span></div>
-      <div class="stat"><b id="sMax">—</b><span>altitude max</span></div>
-      <div class="stat"><b id="sDays">—</b><span>étapes</span></div>
-    </div>
-    <p class="note">Temps : méthode DIN 33466 (4 km/h à plat, 300 m/h en montée, 500 m/h en descente) ajustée selon l'allure, sans les pauses. Dénivelé lissé sur 200 m.</p>
-
-    <h2>Sur le parcours</h2>
-    <div id="poiRows"></div>
-    <p class="note" id="poiStatus"></p>
-
-    <h2 id="hStages">Étapes</h2>
-    <ul id="stages"></ul>
-
-    <h2>Fichiers GPX</h2>
-    <div class="row">
-      <label class="btn" for="file">📂 Importer un GPX</label>
-      <input id="file" type="file" accept=".gpx,application/gpx+xml" hidden>
-      <button id="bExport">💾 Exporter le GPX</button>
+    <nav class="tabs" id="tabs">
+      <button data-tab="trace" class="on"><svg class="ico"><use href="#i-route"/></svg>Tracer</button>
+      <button data-tab="stages"><svg class="ico"><use href="#i-flag"/></svg>Étapes</button>
+      <button data-tab="prep"><svg class="ico"><use href="#i-pack"/></svg>Préparer</button>
+    </nav>
+    <div id="profileSlot">
+      <div id="profile">
+        <canvas id="prof"></canvas>
+        <div id="cursor"></div>
+        <div id="tip"></div>
+      </div>
     </div>
 
-    <h2>Fond de carte</h2>
-    <select id="base">
-      <option value="ign">Plan IGN</option>
-      <option value="ortho">Photos aériennes IGN</option>
-      <option value="otm">OpenTopoMap (monde)</option>
-      <option value="no">Norvège topo (Kartverket)</option>
-    </select>
+    <div class="content" id="content">
+      <!-- ===== Tracer ===== -->
+      <section class="tab on" id="tab-trace">
+        <div class="row" style="margin-top:12px">
+          <button id="bDraw" class="on" title="Toucher la carte ajoute un point"><svg class="ico"><use href="#i-pen"/></svg>Tracer</button>
+          <div class="seg grow">
+            <button id="mRoute" class="on" title="Le tracé suit les sentiers">Sentiers</button>
+            <button id="mLine" title="Ligne droite, pour le hors-sentier">Ligne droite</button>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="bUndo" class="grow" title="Ctrl+Z"><svg class="ico"><use href="#i-undo"/></svg>Annuler</button>
+          <button id="bReverse" class="grow"><svg class="ico"><use href="#i-swap"/></svg>Inverser</button>
+          <button id="bClear" class="danger grow"><svg class="ico"><use href="#i-trash"/></svg><span>Effacer</span></button>
+        </div>
 
-    <h2>Mode d'emploi</h2>
-    <ul class="help">
-      <li>Clique sur la carte pour poser le départ, puis les points suivants : le tracé suit les sentiers et les étapes se recalculent à chaque clic.</li>
-      <li>Glisse un point blanc pour déplacer le tracé.</li>
-      <li>« Ligne droite » sert pour les passages hors sentier.</li>
-      <li>Survole le profil pour voir où tu es sur la carte.</li>
-      <li>L'export GPX contient une trace par étape et un point à chaque fin d'étape.</li>
-    </ul>
-    <footer>Itinéraires : BRouter (serveur public communautaire, usage modéré) sur données © contributeurs OpenStreetMap. Cartes, altitudes et noms de lieux : © IGN. Eau, refuges, bivouacs, commerces et gares : © contributeurs OpenStreetMap (ODbL), extraits chaque mois pour la France, l'Espagne, l'Andorre, la Norvège, la Suisse et l'Italie. Brouillon gardé dans ce navigateur.</footer>
+        <h2>Fichier GPX</h2>
+        <div class="row">
+          <label class="btn grow" for="file"><svg class="ico"><use href="#i-up"/></svg>Importer</label>
+          <input id="file" type="file" accept=".gpx,application/gpx+xml" hidden>
+          <button id="bExport" class="primary grow"><svg class="ico"><use href="#i-down"/></svg>Exporter</button>
+        </div>
+
+        <ul class="tips">
+          <li><svg class="ico"><use href="#i-tap"/></svg><span>Touche la carte pour poser le départ puis chaque point : le tracé suit les sentiers et les étapes se recalculent.</span></li>
+          <li><svg class="ico"><use href="#i-pen"/></svg><span>Glisse un point blanc pour modifier le tracé. « Ligne droite » sert pour le hors-sentier.</span></li>
+          <li><svg class="ico"><use href="#i-down"/></svg><span>L'export GPX contient une trace par étape et un point à chaque fin d'étape.</span></li>
+        </ul>
+      </section>
+
+      <!-- ===== Étapes ===== -->
+      <section class="tab" id="tab-stages">
+        <h2>Découpage</h2>
+        <div class="seg" id="modeSeg">
+          <button data-m="limits" title="Des limites par jour, combinables">Limites / jour</button>
+          <button data-m="days" title="Un nombre de jours imposé, étapes d'effort égal">Nb de jours</button>
+          <button data-m="gpx" title="Les étapes contenues dans le fichier GPX importé">Du GPX</button>
+        </div>
+        <div class="box" id="limitsBox">
+          <div class="lim"><input type="checkbox" id="cH"><label for="cH">Marche max</label><input type="number" id="vH" min="1" max="16" step="0.5" inputmode="decimal"><span class="u">h / jour</span></div>
+          <div class="lim"><input type="checkbox" id="cUp"><label for="cUp">D+ max</label><input type="number" id="vUp" min="100" max="6000" step="100" inputmode="numeric"><span class="u">m / jour</span></div>
+          <div class="lim"><input type="checkbox" id="cKm"><label for="cKm">Distance max</label><input type="number" id="vKm" min="1" max="150" step="1" inputmode="numeric"><span class="u">km / jour</span></div>
+          <div class="lim"><input type="checkbox" id="cBal"><label for="cBal">Équilibrer (pas de petite dernière étape)</label></div>
+        </div>
+        <div class="box" id="daysBox">
+          <div class="lim"><label for="vDays">Nombre de jours</label><input type="number" id="vDays" min="1" max="300" step="1" inputmode="numeric"><span class="u">jours</span></div>
+          <p class="note" style="margin:0 0 6px">Étapes d'effort égal (même temps de marche), pas de distance égale.</p>
+        </div>
+        <div class="box" id="gpxBox">
+          <p class="note" style="margin:6px 0">Étapes telles qu'elles sont dans le fichier GPX importé (une trace = une étape).</p>
+        </div>
+        <div class="box" id="endBox">
+          <div class="lim"><label for="endType">Fin d'étape</label>
+            <select id="endType">
+              <option value="any">N'importe où</option>
+              <option value="refuge">Refuge, cabane ou gîte</option>
+              <option value="bivouac">Bivouac</option>
+              <option value="both">Refuge ou bivouac</option>
+            </select>
+          </div>
+          <div class="lim" id="tolRow"><label for="vTol">Tolérance (±)</label><input type="number" id="vTol" min="0" max="4" step="0.25" inputmode="decimal"><span class="u">h</span></div>
+          <p class="note" id="endNote" style="margin:0 0 6px"></p>
+        </div>
+        <div class="lim" style="margin-top:8px"><label for="pace">Allure</label>
+          <select id="pace">
+            <option value="0.85">Tranquille</option>
+            <option value="1">Standard</option>
+            <option value="1.2">Sportive</option>
+            <option value="1.4">Très sportive</option>
+          </select>
+        </div>
+        <p class="note" id="pinNote">Touche un numéro d'étape sur la carte pour fixer cette fin d'étape, ou glisse-le ailleurs sur le tracé. Touche un numéro vert pour le libérer. Double-clic sur le profil : nouvelle fin d'étape.</p>
+
+        <h2 id="hStages">Étapes</h2>
+        <ul id="stages"></ul>
+        <div class="more">
+          <div><b id="sDown">—</b><span>dénivelé négatif</span></div>
+          <div><b id="sMax">—</b><span>altitude max</span></div>
+        </div>
+        <p class="note">Temps : méthode DIN 33466 (4 km/h à plat, 300 m/h en montée, 500 m/h en descente) ajustée selon l'allure, sans les pauses. Dénivelé lissé sur 200 m.</p>
+      </section>
+
+      <!-- ===== Préparer ===== -->
+      <section class="tab" id="tab-prep">
+        <h2>Calendrier</h2>
+        <div class="box">
+          <div class="lim"><label for="vDate">Départ le</label><input type="date" id="vDate"></div>
+          <div class="lim"><label for="vTime">Départ chaque matin</label><input type="time" id="vTime" step="900"></div>
+          <div class="lim"><label for="vPause">Pauses par jour</label><input type="number" id="vPause" min="0" max="300" step="15" inputmode="numeric"><span class="u">min</span></div>
+        </div>
+
+        <h2>Sur le parcours</h2>
+        <div id="poiRows"></div>
+        <p class="note" id="poiStatus"></p>
+
+        <footer>Itinéraires : BRouter (serveur public communautaire, usage modéré) sur données © contributeurs OpenStreetMap. Cartes, altitudes et noms de lieux : © IGN. Eau, refuges, bivouacs, commerces et gares : © contributeurs OpenStreetMap (ODbL), extraits chaque mois pour la France, l'Espagne, l'Andorre, la Norvège, la Suisse et l'Italie. Ton brouillon est gardé dans ce navigateur.</footer>
+      </section>
+    </div>
   </aside>
-
-  <main>
-    <div id="map"></div>
-    <div id="status"><div id="busy" class="toast">Calcul de l'itinéraire…</div></div>
-    <div id="profile">
-      <canvas id="prof"></canvas>
-      <div id="cursor"></div>
-      <div id="tip"></div>
-    </div>
-  </main>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -618,7 +713,8 @@ const BASES = {
   no: L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png', { maxZoom: 18, attribution: '© <a href="https://www.kartverket.no">Kartverket</a> (CC BY 4.0)' }),
   otm: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, subdomains: 'abc', attribution: '© contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, SRTM, © <a href="https://opentopomap.org">OpenTopoMap</a>' })
 };
-const map = L.map('map', { zoomControl: true }).setView([42.85, 0.6], 8);
+const map = L.map('map', { zoomControl: false }).setView([42.85, 0.6], 8);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
 let base = BASES.ign.addTo(map);
 map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
 const routeLayer = L.layerGroup().addTo(map);
@@ -736,6 +832,10 @@ function syncUI() {
 }
 function renderStats() {
   const has = R && R.n > 1;
+  if (document.body.classList.contains('has-route') !== !!has) {
+    document.body.classList.toggle('has-route', !!has);
+    requestAnimationFrame(() => { sheet.layout(); drawProfile(); });
+  }
   $('#sDist').textContent = has ? fKm(R.dist) : '—';
   $('#sUp').textContent = has && R.zs ? fM(R.up) : '—';
   $('#sDown').textContent = has && R.zs ? fM(R.dn) : '—';
@@ -835,7 +935,7 @@ function selectStage(k) {
     const s = R.stages[k], pts = [];
     for (let i = s.i0; i <= s.i1; i += Math.max(1, Math.floor((s.i1 - s.i0) / 300))) pts.push([R.lat[i], R.lon[i]]);
     pts.push([R.lat[s.i1], R.lon[s.i1]]);
-    map.fitBounds(L.latLngBounds(pts), { padding: [30, 30] });
+    map.fitBounds(L.latLngBounds(pts), fitPad(30));
   }
 }
 
@@ -1033,8 +1133,8 @@ function reverse() {
 }
 let clearArmed = null;
 function clearAll() {
-  if (!clearArmed) { $('#bClear').textContent = 'Confirmer ?'; clearArmed = setTimeout(() => { clearArmed = null; $('#bClear').textContent = 'Effacer'; }, 3000); return; }
-  clearTimeout(clearArmed); clearArmed = null; $('#bClear').textContent = 'Effacer';
+  if (!clearArmed) { $('#bClear span').textContent = 'Confirmer ?'; clearArmed = setTimeout(() => { clearArmed = null; $('#bClear span').textContent = 'Effacer'; }, 3000); return; }
+  clearTimeout(clearArmed); clearArmed = null; $('#bClear span').textContent = 'Effacer';
   state.start = null; state.legs = []; state.selStage = -1; S.pins = []; changed();
 }
 function importTracks(tracks) {
@@ -1045,7 +1145,7 @@ function importTracks(tracks) {
   state.selStage = -1; S.pins = [];
   if (tracks.length > 1) S.mode = 'gpx';
   changed();
-  map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), { padding: [20, 20] });
+  map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), fitPad(20));
   toast(`GPX importé : ${tracks.length} trace${tracks.length > 1 ? 's' : ''}, ${fKm(R.dist)}`, 'ok');
 }
 function toGPX() {
@@ -1301,13 +1401,73 @@ async function search(q) {
 }
 $('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); search(e.target.value); } });
 
-window.addEventListener('resize', () => { map.invalidateSize(); drawProfile(); });
+/* ================= Tiroir (mobile), onglets, profil ================= */
+const desk = matchMedia('(min-width: 900px)');
+const sheet = {
+  el: $('#panel'), snap: 'peek', y: 0,
+  peekH() { return $('#grab').offsetHeight + $('#tabs').offsetHeight; },
+  pos(snap) {               // décalage vers le bas (px) pour chaque hauteur
+    const H = this.el.offsetHeight, vh = window.innerHeight;
+    if (snap === 'full') return 0;
+    if (snap === 'mid') return Math.max(0, H - Math.round(vh * 0.55));
+    return Math.max(0, H - this.peekH());
+  },
+  set(snap) { this.snap = snap; this.el.dataset.snap = snap; this.layout(); },
+  layout() {
+    const root = document.documentElement.style;
+    if (desk.matches) { root.setProperty('--hidden', '0px'); return; }
+    root.setProperty('--peek', this.peekH() + 'px');
+    this.y = this.pos(this.snap); root.setProperty('--hidden', this.y + 'px');
+    map.invalidateSize();
+  },
+  visible() { return desk.matches ? 0 : this.el.offsetHeight - this.y; }
+};
+// Marges pour que le tracé ne passe ni sous la barre de recherche ni sous le tiroir
+function fitPad(p) { return { paddingTopLeft: [p, 70], paddingBottomRight: [p, desk.matches ? p : Math.max(p, sheet.visible() - sheet.peekH() + 18 + p)] }; }
+(() => {
+  const g = $('#grab'); let y0 = null, start = 0, moved = false, t0 = 0;
+  g.addEventListener('pointerdown', e => { if (desk.matches) return; y0 = e.clientY; start = sheet.y; moved = false; t0 = Date.now(); sheet.el.classList.add('dragging'); g.setPointerCapture(e.pointerId); });
+  g.addEventListener('pointermove', e => {
+    if (y0 == null) return;
+    const dy = e.clientY - y0; if (Math.abs(dy) > 6) moved = true;
+    sheet.y = Math.min(sheet.pos('peek'), Math.max(0, start + dy));
+    document.documentElement.style.setProperty('--hidden', sheet.y + 'px');
+  });
+  const end = e => {
+    if (y0 == null) return;
+    const dy = e.clientY - y0, fast = Math.abs(dy) / Math.max(1, Date.now() - t0) > 0.5;
+    y0 = null; sheet.el.classList.remove('dragging');
+    const order = ['full', 'mid', 'peek'];
+    if (!moved) { sheet.set(sheet.snap === 'peek' ? 'mid' : 'peek'); return; }
+    let i = order.indexOf(sheet.snap);
+    if (fast) i = Math.max(0, Math.min(2, i + (dy > 0 ? 1 : -1)));
+    else i = order.map(s => Math.abs(sheet.pos(s) - sheet.y)).reduce((b, d, k, a) => d < a[b] ? k : b, 0);
+    sheet.set(order[i]);
+  };
+  g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
+})();
+function showTab(name) {
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.id === 'tab-' + name));
+  $('#content').scrollTop = 0;
+  if (sheet.snap === 'peek') sheet.set('mid');
+}
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+function placeProfile() {   // ordinateur : sous la carte ; mobile : dans le tiroir
+  (desk.matches ? $('#profileMain') : $('#profileSlot')).appendChild($('#profile'));
+  sheet.layout(); map.invalidateSize(); drawProfile();
+}
+desk.addEventListener('change', placeProfile);
+$('#q').addEventListener('focus', () => { if (!desk.matches && sheet.snap !== 'peek') sheet.set('peek'); });
+
+window.addEventListener('resize', () => { sheet.layout(); map.invalidateSize(); drawProfile(); });
 
 /* ================= Démarrage ================= */
+placeProfile();
 buildPoiRows();
 if (restore()) {
   compute(); render();
-  if (R.n > 1) map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), { padding: [20, 20] });
+  if (R.n > 1) map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), fitPad(20));
   toast('Brouillon restauré', 'ok');
   schedulePOIs();
 } else { compute(); render(); }

@@ -75,6 +75,7 @@ with sync_playwright() as p:
     check(n > 100, "GPX importé")
     check(pois > 0 and tiles > 0, "points d'intérêt chargés depuis data/poi/ (Overpass en panne)")
 
+    pg.click("#tabs button[data-tab=stages]"); pg.wait_for_timeout(200)
     pg.click("#modeSeg button[data-m=limits]"); pg.wait_for_timeout(800)
     worst = J(pg, "() => Math.max(...R.stages.map(s => s.time))")
     check(worst <= 7.01, f"limite 7 h/jour respectée (max {worst:.2f} h)")
@@ -88,9 +89,10 @@ with sync_playwright() as p:
     pg.click("#modeSeg button[data-m=days]"); pg.fill("#vDays", "12"); pg.dispatch_event("#vDays", "input"); pg.wait_for_timeout(1500)
     check(J(pg, "() => R.stages.length") == 12, "12 jours imposés = 12 étapes")
 
-    pg.query_selector_all("#stages li")[0].click(); pg.wait_for_timeout(500)
+    pg.locator("#stages li").first.click(); pg.wait_for_timeout(500)
     check(pg.query_selector("#stages li.sel .detail") is not None, "feuille d'étape affichée")
 
+    pg.click("#tabs button[data-tab=trace]"); pg.wait_for_timeout(200)
     with pg.expect_download() as dl:
         pg.click("#bExport")
     x = open(dl.value.path(), encoding="utf-8").read()
@@ -102,6 +104,24 @@ with sync_playwright() as p:
     for fx, fy in [(0.3, 0.5), (0.5, 0.4), (0.7, 0.6)]:
         pg.mouse.click(mb["x"] + mb["width"] * fx, mb["y"] + mb["height"] * fy); pg.wait_for_timeout(500)
     check(J(pg, "() => state.legs.length") == 2 and calls["brouter"] - c0 == 2, "tracé en 3 clics = 2 tronçons calculés")
+
+    # Mobile : tiroir à 3 hauteurs, onglets, carte utilisable au-dessus du tiroir
+    m = b.new_context(**p.devices["Pixel 7"]); m.route("**/*", handler)
+    mp = m.new_page(); mp.on("pageerror", lambda e: errors.append(str(e)))
+    mp.goto(URL); mp.wait_for_timeout(500)
+    snap = lambda: J(mp, "() => sheet.snap")
+    check(snap() == "peek", "mobile : tiroir replié au démarrage")
+    mp.click("#tabs button[data-tab=prep]"); mp.wait_for_timeout(400)
+    check(snap() == "mid" and mp.is_visible("#poiRows"), "mobile : un onglet ouvre le tiroir à mi-hauteur")
+    mp.click("#grab"); mp.wait_for_timeout(400)
+    check(snap() == "peek", "mobile : toucher la poignée replie le tiroir")
+    check(J(mp, "() => document.documentElement.scrollWidth <= innerWidth"), "mobile : pas de défilement horizontal")
+    mp.set_input_files("#file", GPX)
+    mp.wait_for_function("R && R.n > 1", timeout=90000); mp.wait_for_timeout(500)
+    check(mp.is_visible("#sDist") and not mp.is_visible("#hint"), "mobile : chiffres clés visibles après import")
+    mp.click("#tabs button[data-tab=stages]"); mp.wait_for_timeout(400)
+    check(mp.is_visible("#profile") and len(mp.query_selector_all("#stages li")) > 1, "mobile : profil et étapes visibles")
+    m.close()
 
     check(not errors, "aucune erreur JavaScript" + (f" ({errors[0][:80]})" if errors else ""))
     b.close()
