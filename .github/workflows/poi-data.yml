@@ -56,7 +56,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
-      max-parallel: 8
+      max-parallel: 4
       matrix:
         region: ${{ fromJSON(needs.plan.outputs.regions) }}
     steps:
@@ -95,6 +95,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main                 # toujours la dernière version (aussi lors d'une relance)
       - uses: actions/download-artifact@v4
         with:
           pattern: poi-*
@@ -114,5 +116,8 @@ jobs:
           git add data/poi
           if git diff --cached --quiet; then echo "Aucun changement"; exit 0; fi
           git commit -m "Données OpenStreetMap du $(date -u +%Y-%m-%d)"
-          git pull --rebase --autostash origin main
-          git push
+          for i in 1 2 3; do
+            git pull --rebase -X theirs origin main && git push && exit 0
+            echo "Nouvel essai ($i)…"; sleep 5
+          done
+          exit 1
