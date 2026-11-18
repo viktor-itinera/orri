@@ -38,6 +38,13 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   = `saveTrek`, « Ajuster ») puis frise **Jour après jour** (`renderStages`, `li.day`) : une carte par jour avec sa nuit
   (`nightOf`) et un bouton « Changer » (`state.chg`) qui propose Refuge / Bivouac / Libre pour ce soir-là (`setStageEnd`).
   Les réglages du découpage (rythme, nuits, tolérance, allure) sont dans la page **Ajuster** (`#page-adjust`, `#adjLive`).
+- **Choisir ses nuits** (libre arbitre) : « Changer » ouvre `sleepPanel` : − / + 30 min (`adjustDay`), la liste de tous les refuges,
+  abris, bivouacs et sources atteignables ce jour-là (`nightOptions`, ±3 h, filtres `FLT`), « Laisser Orri choisir » (ancien choix
+  Refuge / Bivouac / Libre, `S.over`) et le jour de repos (`S.rest`, décale les dates). Choisir un lieu (`chooseNight`) : fige les
+  journées d'avant (`freezeBefore`), fait passer le tracé par le lieu si `S.via` (`viaPoint` : détour local BRouter de ±max(400 m, 2×écart)
+  autour du point le plus proche, le tronçon est coupé en deux, le reste du tracé ne bouge pas) et pose une épingle
+  `[lat, lon, {one: 1, poi}]`. Sur la carte, la bulle d'un point propose « Dormir ici » (`nightFor`) et « Passer par ici » (`passBy`).
+  Chaque modification passe par `remember()` : le message propose « Annuler » (`undoLast`). « Rendre toutes les nuits à Orri » dans Ajuster.
 - **Accueil** (`#page-welcome`) à **chaque ouverture** (demande de Viktor) : `renderWelcome` met en premier « Reprendre » le parcours
   en cours (`#wGo`) et « Mes parcours » (`#wTreks`) ; puis Nouveau parcours / Tracer (`#wDraw`, 2e touche si non enregistré),
   Importer un GPX, Voir un exemple (`DEMO` : 4 villages des Pyrénées reliés par BRouter, 3 requêtes). Lien depuis le profil.
@@ -86,6 +93,9 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 - Temps : DIN 33466 (4 km/h, 300 m/h en montée, 500 m/h en descente, max + min/2) par tronçons d'1 km, divisé par l'allure.
 - Étapes : `nextEnd` (la plus longue étape sous les limites h / D+ / km), `findScale` (équilibrage : même nombre d'étapes,
   limites resserrées), `splitDays` (N jours d'effort égal), fins d'étape fixées à la main (`S.pins`, coordonnées).
+- Épingles `S.pins` : `[lat, lon, meta?]`, `meta.one` = la section qui finit là fait exactement une journée (pas de redécoupage ;
+  en mode « Nb de jours », `allocDays` lui donne 1 jour), `meta.poi` = la nuit choisie (affichée même sans les points chargés),
+  `meta.auto` = journée figée telle qu'Orri l'avait calculée. `flatten` donne `legOf` / `posOf` (tronçon et rang de chaque point).
 - Fin d'étape choisie pour une étape précise : `S.over[k]` (k = n° d'étape, 0 = 1re), via `setStageEnd`. Dans `snap`,
   `ends.length` donne le n° de l'étape en cours ; si rien dans la tolérance, recherche élargie à ±2 h pour cette étape.
 - Fin d'étape refuge/bivouac : `snap` cherche un candidat dans ±`S.tol` h (détour compris) ; une vraie aire de bivouac
