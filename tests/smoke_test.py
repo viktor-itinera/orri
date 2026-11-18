@@ -167,8 +167,16 @@ with sync_playwright() as p:
     pg.click("#wDemo")
     pg.wait_for_function("state.legs.length === 3 && R.n > 1", timeout=30000); pg.wait_for_timeout(800)
     check(calls["brouter"] - c0 == 3 and J(pg, "() => S.endType === 'both' && R.stages.length >= 1"), "accueil : exemple calculé (3 tronçons)")
-    pg.reload(); pg.wait_for_timeout(500)
-    check(not pg.is_visible("#page-welcome"), "accueil pas réaffiché une fois vu")
+    pg.reload(); pg.wait_for_timeout(800)
+    check(pg.is_visible("#page-welcome") and pg.is_visible("#wGo") and pg.is_visible("#wTreks"), "accueil à chaque ouverture, avec « Reprendre » et « Mes parcours »")
+    n0 = J(pg, "() => R.n")
+    pg.click("#wGo"); pg.wait_for_timeout(300)
+    check(not pg.is_visible("#page-welcome") and J(pg, "() => R.n") == n0 and n0 > 1, "« Reprendre » rouvre le parcours en cours")
+    pg.click("#bProfile"); pg.click("#bWelcome"); pg.wait_for_timeout(300)
+    pg.click("#wDraw"); pg.wait_for_timeout(200)
+    check(pg.is_visible("#page-welcome") and "touche encore" in (pg.text_content("#wDraw") or ""), "« Nouveau parcours » demande confirmation si non enregistré")
+    pg.click("#wDraw"); pg.wait_for_timeout(500)
+    check(not pg.is_visible("#page-welcome") and J(pg, "() => !state.start && state.draw"), "« Nouveau parcours » repart d'une carte vide")
 
     # Mobile : tiroir à 3 hauteurs, onglets, carte utilisable au-dessus du tiroir
     m = b.new_context(**p.devices["Pixel 7"]); m.route("**/*", handler)

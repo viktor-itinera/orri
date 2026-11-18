@@ -192,7 +192,7 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
 .wbody h1{text-align:center;font-size:30px;margin:4px 0 0;color:var(--forest);letter-spacing:.02em}
 .wbody .tag{text-align:center;color:var(--ink);font-size:16px;margin:0 0 10px}
 .wcard{display:flex;align-items:center;gap:14px;justify-content:flex-start;text-align:left;width:100%;min-height:68px;padding:12px 16px;border-radius:16px;background:var(--panel);border:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.wcard .ico{width:26px;height:26px;color:var(--forest)}
+.wcard .ico{width:26px;height:26px;color:var(--forest);margin:0;flex:none}
 .wcard.primary .ico{color:#fff}
 .wcard b{display:block;font-size:16px}
 .wcard small{display:block;font-weight:400;font-size:13.5px;color:var(--muted);margin-top:2px}
@@ -445,6 +445,7 @@ details.why summary::-webkit-details-marker{display:none}
       <img src="icons/icon-192.png" alt="" class="wlogo">
       <h1>Orri</h1>
       <p class="tag">Prépare ton trek en quelques minutes : étapes, eau, refuges, bivouacs, ravitaillement et gares.</p>
+      <div id="wResume" style="display:contents"></div>
       <button class="wcard primary" id="wDraw"><svg class="ico"><use href="#i-pen"/></svg><span><b>Tracer mon itinéraire</b><small>Touche la carte : le tracé suit les sentiers</small></span></button>
       <label class="wcard" for="file" id="wImport"><svg class="ico"><use href="#i-up"/></svg><span><b>Importer un GPX</b><small>Un trek déjà tracé ailleurs</small></span></label>
       <button class="wcard" id="wDemo"><svg class="ico"><use href="#i-route"/></svg><span><b>Voir un exemple</b><small>Pyrénées : de Gourette à Luz-Saint-Sauveur</small></span></button>
@@ -479,7 +480,7 @@ details.why summary::-webkit-details-marker{display:none}
         <label class="btn grow" for="restoreFile"><svg class="ico"><use href="#i-up"/></svg>Restaurer</label>
         <input id="restoreFile" type="file" accept=".json,application/json" hidden>
       </div>
-      <button id="bWelcome" class="linkbtn">Revoir la présentation d'Orri</button>
+      <button id="bWelcome" class="linkbtn">Revenir à l'accueil</button>
       <p class="note">Tes parcours sont gardés dans ce navigateur, sur cet appareil, sans compte. Ils disparaissent si tu effaces les données du navigateur : garde une sauvegarde dans un fichier (par exemple sur ton drive).</p>
     </div>
   </div>
@@ -1934,6 +1935,7 @@ function openPage(name) {
   if (name === 'profile') renderProfile();
   if (name === 'sheet') renderSheet();
   if (name === 'adjust') renderAdjLive();
+  if (name === 'welcome') renderWelcome();
 }
 function closePage() { document.querySelectorAll('.page').forEach(p => p.classList.remove('on')); document.body.classList.remove('paged'); }
 document.querySelectorAll('.page .close').forEach(b => b.onclick = closePage);
@@ -2012,14 +2014,32 @@ $('#bSheetDl').onclick = () => {
 $('#bSheetPrint').onclick = () => { try { $('#sheetFrame').contentWindow.print(); } catch (e) { toast('Impression indisponible : télécharge la fiche', 'warn'); } };
 treks.load();
 
-/* ================= Accueil au premier lancement et premiers pas ================= */
+/* ================= Accueil (à chaque ouverture) et premiers pas ================= */
 const WELCOME_KEY = 'orri.welcomed';
 const once = (k) => { try { if (localStorage.getItem(k)) return false; localStorage.setItem(k, '1'); return true; } catch (e) { return false; } };
 function closeWelcome() { try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) { } closePage(); }
-$('#wDraw').onclick = () => {
+// Accueil : pour les habitués, « Reprendre » le parcours en cours et « Mes parcours » passent en premier
+function renderWelcome() {
+  const box = $('#wResume'), has = !!(state.start && R && R.n > 1);
+  let t = null; try { t = treks.cur && treks.get(treks.cur); } catch (e) { }
+  let h = '';
+  if (has) h += `<button class="wcard primary" id="wGo">${I('route')}<span><b>Reprendre ${t ? '« ' + escXml(t.name) + ' »' : 'mon parcours en cours'}</b><small>${fKm(R.dist)} · ${R.stages.length > 1 ? R.stages.length + ' jours' : '1 journée'}${t && !treks.dirty() ? '' : ' · pas encore enregistré'}</small></span></button>`;
+  if (treks.list.length) h += `<button class="wcard" id="wTreks">${I('user')}<span><b>Mes parcours</b><small>${treks.list.length} parcours enregistré${treks.list.length > 1 ? 's' : ''} sur ce téléphone</small></span></button>`;
+  box.innerHTML = h;
+  $('#wDraw').classList.toggle('primary', !has);
+  $('#wDraw b').textContent = has ? 'Nouveau parcours' : 'Tracer mon itinéraire';
+  if (has) $('#wGo').onclick = () => { closeWelcome(); showTab('stages'); };
+  if (treks.list.length) $('#wTreks').onclick = () => openPage('profile');
+}
+function startDrawing() {
+  if (state.start) { treks.cur = null; treks.store(); state.start = null; state.legs = []; state.selStage = -1; S.pins = []; S.over = {}; changed(); }
   closeWelcome(); showTab('trace'); sheet.set('peek');
   state.draw = true; $('#bDraw').classList.add('on');
   toast('Touche la carte pour poser ton départ, puis chaque point de passage');
+}
+$('#wDraw').onclick = () => {
+  if (state.start && treks.dirty()) return confirmTap($('#wDraw'), 'Ton parcours en cours n\'est pas enregistré : touche encore pour en commencer un nouveau', startDrawing);
+  startDrawing();
 };
 $('#wImport').addEventListener('click', () => closeWelcome());
 $('#bWelcome').onclick = () => openPage('welcome');
@@ -2115,13 +2135,9 @@ buildPoiRows();
 if (restore()) {
   compute(); render();
   if (R.n > 1) map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), fitPad(20));
-  toast('Brouillon restauré', 'ok');
   schedulePOIs();
-} else {
-  compute(); render();
-  let seen = false; try { seen = !!localStorage.getItem(WELCOME_KEY); } catch (e) { }
-  if (!seen && !treks.list.length) openPage('welcome');
-}
+} else { compute(); render(); }
+openPage('welcome');     // l'accueil s'affiche à chaque ouverture (Reprendre / Mes parcours pour les habitués)
 
 /* Application installable (Android : menu ⋮ > « Installer l'application ») */
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {

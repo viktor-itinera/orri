@@ -38,8 +38,9 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   = `saveTrek`, « Ajuster ») puis frise **Jour après jour** (`renderStages`, `li.day`) : une carte par jour avec sa nuit
   (`nightOf`) et un bouton « Changer » (`state.chg`) qui propose Refuge / Bivouac / Libre pour ce soir-là (`setStageEnd`).
   Les réglages du découpage (rythme, nuits, tolérance, allure) sont dans la page **Ajuster** (`#page-adjust`, `#adjLive`).
-- **Accueil** (`#page-welcome`) au premier lancement seulement (`orri.welcomed`, et aucun parcours enregistré) : Tracer,
-  Importer un GPX, Voir un exemple (`DEMO` : 4 villages des Pyrénées reliés par BRouter, 3 requêtes). Revoir depuis le profil.
+- **Accueil** (`#page-welcome`) à **chaque ouverture** (demande de Viktor) : `renderWelcome` met en premier « Reprendre » le parcours
+  en cours (`#wGo`) et « Mes parcours » (`#wTreks`) ; puis Nouveau parcours / Tracer (`#wDraw`, 2e touche si non enregistré),
+  Importer un GPX, Voir un exemple (`DEMO` : 4 villages des Pyrénées reliés par BRouter, 3 requêtes). Lien depuis le profil.
   Conseils uniques au bon moment (`coach`, clés `orri.tip.*`).
 - Identité chaleureuse : crème `--bg`, vert forêt `--forest`, terracotta `--terra` (actions principales, tracé) ;
   polices **Fraunces** (titres) et **Figtree** (texte) auto-hébergées dans `fonts/` (OFL, en cache hors ligne) ;
