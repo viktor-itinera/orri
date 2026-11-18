@@ -23,6 +23,7 @@ def png(w, h, rgb):
 
 
 TILE = png(256, 256, (232, 236, 226))
+TERRAIN = png(256, 256, (128, 200, 0))   # terrarium : 1 200 m partout
 calls = {"brouter": 0, "overpass": 0}
 JSON_HDR = {"Access-Control-Allow-Origin": "*"}
 
@@ -32,6 +33,11 @@ def handler(route):
     q = urllib.parse.parse_qs(urllib.parse.urlparse(u).query)
     if u.startswith(URL): return route.continue_()
     if "unpkg.com/maplibre-gl@" in u: return route.fulfill(path=NM + "maplibre-gl/dist/maplibre-gl" + (".css" if u.endswith(".css") else ".js"), content_type="text/css" if u.endswith(".css") else "application/javascript")
+    if "elevation-tiles-prod" in u:
+        if os.environ.get("ORRI_REAL_TERRAIN"):
+            from urllib.request import urlopen
+            return route.fulfill(body=urlopen(u, timeout=30).read(), content_type="image/png", headers=JSON_HDR)
+        return route.fulfill(body=TERRAIN, content_type="image/png", headers=JSON_HDR)
     if "unpkg.com/d3-" in u:
         nm = u.split("unpkg.com/")[1].split("@")[0]
         return route.fulfill(path=NM + nm + "/dist/" + nm + ".min.js", content_type="application/javascript")
@@ -156,6 +162,24 @@ with sync_playwright() as p:
     J(pg, "() => toggleRest(0)"); pg.wait_for_timeout(300)
     check(pg.query_selector("#stages li.restday") is not None and "de repos" in (pg.text_content("#trekSum") or ""), "jour de repos ajouté dans la frise")
     J(pg, "() => toggleRest(0)")
+    # Appui long sur la carte : dormir ici
+    pt = J(pg, "() => { const s = R.stages[4], i = Math.round((s.i0 + s.i1) / 2); return [R.lat[i] + 0.002, R.lon[i]]; }")
+    J(pg, f"() => map.fire('contextmenu', {{ latlng: L.latLng({pt[0]}, {pt[1]}) }})"); pg.wait_for_timeout(300)
+    pg.click(".leaflet-popup [data-ua=sleep]"); pg.wait_for_timeout(1500)
+    check(J(pg, "() => R.stages.some(s => s.endChosen && s.endPoi.kind === 'Lieu choisi sur la carte' && nearestIdx(R, s.endPoi.lat, s.endPoi.lon).m < 60)"), "appui long : nuit posée là où on a touché, le tracé y passe")
+    # Variante d'une journée
+    c0 = calls["brouter"]
+    J(pg, "() => startVariant(1)"); pg.wait_for_timeout(200)
+    vp = J(pg, "() => { const s = R.stages[1], i = Math.round((s.i0 + s.i1) / 2); return [R.lat[i] + 0.02, R.lon[i]]; }")
+    J(pg, f"() => map.fire('click', {{ latlng: L.latLng({vp[0]}, {vp[1]}) }})"); pg.wait_for_timeout(200)
+    pg.click("#varBar [data-v=cmp]"); pg.wait_for_timeout(1500)
+    check(pg.is_visible("#varBar .vtab") and calls["brouter"] - c0 == 2, "variante : comparaison affichée (2 tronçons calculés)")
+    end1 = J(pg, "() => [R.lat[R.stages[1].i1], R.lon[R.stages[1].i1], R.stages[0].i1 ? R.lat[R.stages[0].i1] : 0]")
+    pg.click("#varBar [data-v=keep]"); pg.wait_for_timeout(1000)
+    after = J(pg, f"() => {{ const s = R.stages[1]; return {{ end: hav([R.lat[s.i1], R.lon[s.i1]], [{end1[0]}, {end1[1]}]), d0: Math.abs(R.lat[R.stages[0].i1] - {end1[2]}), via: nearestIdx(R, {vp[0]}, {vp[1]}).m, bar: !$('#varBar').hidden }}; }}")
+    check(after["end"] < 60 and after["d0"] < 1e-4 and after["via"] < 60 and not after["bar"], f"variante gardée : le jour 2 passe par le point, mêmes départ et arrivée ({after})")
+    # Tracé animé
+    check(J(pg, "() => { animateRoute(); return routeLines.length > 0 && routeLines.some(l => l._path && l._path.style.strokeDasharray); }"), "tracé animé : le tracé se dessine")
     # Tout rendre à Orri
     pg.click("#bAdjust"); pg.wait_for_timeout(200)
     pg.click("#bFreeAll"); pg.click("#bFreeAll"); pg.wait_for_timeout(800)
@@ -223,7 +247,10 @@ with sync_playwright() as p:
     check(J(pg, "() => new Promise(ok => { const im = document.querySelector('#tdBody .ph img'); const w = () => im.naturalWidth ? ok(im.naturalWidth) : setTimeout(w, 100); w(); })") > 0, "vignette affichée (IndexedDB)")
     pg.click("#tdBody .ph[data-i='0']"); pg.wait_for_timeout(500)
     check(pg.is_visible("#viewer") and J(pg, "() => $('#vImg').naturalWidth") >= 800, "visionneuse : photo en grand")
-    pg.click("#vClose"); pg.click("#bTrekBack"); pg.wait_for_timeout(300)
+    pg.click("#vClose")
+    pg.click("#tdCard"); pg.wait_for_function("!$('#pcard').hidden && $('#pcImg').naturalWidth > 0", timeout=10000)
+    check(J(pg, "() => [$('#pcImg').naturalWidth, $('#pcImg').naturalHeight]") == [1080, 1350], "carte postale du trek (1080 × 1350)")
+    pg.click("#pcClose"); pg.click("#bTrekBack"); pg.wait_for_timeout(300)
     pg.click("#tFilter [data-f=done]"); pg.wait_for_timeout(200)
     check(len(pg.query_selector_all("#trekList .trek.done")) == 1 and "1" in pg.text_content("#cStats") and "km parcourus" in pg.text_content("#cStats"), "carnet : filtre « Faits » et statistiques")
     pg.click("#tFilter [data-f=all]")
@@ -233,6 +260,8 @@ with sync_playwright() as p:
     check(gp["n"] == 1 and gp["done"] == 1 and gp["ph"] == 1, f"globe du carnet : le trek fait et sa photo ({gp})")
     J(pg, "() => { const G = globes.profile; G.select(G.data[0]); G.focus(G.data[0]); }"); pg.wait_for_timeout(1500)
     check(pg.is_visible("#globeSlotProfile .gcard") and J(pg, "() => globes.profile.zoom") > 5, "globe : toucher un trek zoome dessus et affiche sa carte")
+    pg.wait_for_function("globes.profile.region", timeout=10000)
+    check(J(pg, "() => !!globes.profile.tex && globes.profile.region.W > 0"), "globe : relief mondial et relief détaillé de près")
     pg.click("#page-profile .close"); pg.click("#bProfile"); pg.click("#bWelcome"); pg.wait_for_function("globes.welcome && globes.welcome.w > 0", timeout=10000)
     check(pg.is_visible("#globeSlotWelcome canvas") and pg.is_visible("#wDraw"), "globe sur l'accueil, boutons de préparation visibles")
     J(pg, "() => { $('#gPlace').value = 'profile'; $('#gPlace').onchange({ target: $('#gPlace') }); }"); pg.wait_for_timeout(300)
