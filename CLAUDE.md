@@ -13,6 +13,7 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 | --- | --- |
 | `index.html` | Toute l'appli : HTML, CSS et JS dans un seul fichier, sans étape de build. Leaflet 1.9.4 depuis cdnjs ; MapLibre GL 4.7.1 + maplibre-gl-leaflet 0.1.4 depuis unpkg. |
 | `carte/orri-style.json` | Style MapLibre de la **carte Orri** (fond par défaut). |
+| `carte/monde.json` | Terres et frontières du **globe souvenir** (Natural Earth 1:110m, domaine public), généré par `tools/build_globe.mjs`. |
 | `sw.js` | Service worker : l'appli s'ouvre hors ligne (réseau d'abord, cache ensuite pour les fichiers du site). **Incrémenter `VERSION` à chaque publication.** |
 | `manifest.webmanifest`, `icons/` | Appli installable (Android : Chrome → ⋮ → Installer l'application). Icône = un orri (cabane de berger en pierre sèche). |
 | `data/poi/` | Points d'intérêt générés par le robot — **ne pas éditer à la main**. |
@@ -38,6 +39,12 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   `photos` (`[{id, lat, lon, date}]`). Page **Souvenirs** (`#page-trek`, `renderTrekPage`) : statut, date, souvenir, photos, renommer /
   dupliquer / supprimer. Photos dans **IndexedDB** (`photoDB`, base `orri-photos`) réduites à 1600 px + vignette 360 px (`shrink`) ;
   date et GPS lus dans l'EXIF avant réduction (`exifInfo`). La sauvegarde JSON ne contient pas les images. Visionneuse `#viewer`.
+- **Globe souvenir** (`class Globe`, `mountGlobe`) : la Terre en projection orthographique (d3-geo 3.1.1 + d3-array 3.2.4 depuis unpkg,
+  chargés à la demande par `loadGlobeLibs`), terres et frontières de `carte/monde.json` (Natural Earth 1:110m, généré par
+  `tools/build_globe.mjs`), océan vert forêt, terres crème. Treks du carnet (`globeTreks`) : faits en terracotta, à faire en pointillés,
+  parcours en cours en jaune ; photos géolocalisées en vignettes à partir du zoom 6. Glisser / pincer / molette, toucher un trek =
+  vol jusqu'à lui (`fly`, `focus`) + carte `.gcard` (Souvenirs, Préparer). Rotation lente au repos (coupée si mouvement réduit).
+  Placement réglable dans le carnet (`#gPlace`, `orri.globe`, ou `?globe=both|welcome|profile|off` dans l'URL) : accueil et carnet par défaut.
 - **Fiche du trek** (`sheetHTML`) : page HTML autonome (tracé et profil en SVG, étapes, nuits, eau, points), affichée
   dans une iframe, téléchargeable et imprimable ; elle ne dépend d'aucun réseau.
 - **Onglet Étapes** : résumé du trek (`renderSummary` : nom, dates, nuits refuge/bivouac/libres, manque d'eau, « Garder ce trek »
@@ -124,7 +131,7 @@ Overpass en panne, tuiles) et utilise les vraies données `data/poi/` servies en
 
 ```bash
 python3 -m http.server 8765            # à la racine du dépôt, dans un autre terminal
-cd tests && npm install leaflet@1.9.4 maplibre-gl@4.7.1 @maplibre/maplibre-gl-leaflet@0.1.4 && pip install playwright
+cd tests && npm install leaflet@1.9.4 maplibre-gl@4.7.1 @maplibre/maplibre-gl-leaflet@0.1.4 d3-array@3.2.4 d3-geo@3.1.1 && pip install playwright pillow
 ORRI_GPX=/chemin/vers/un/trek.gpx python3 smoke_test.py
 ```
 
