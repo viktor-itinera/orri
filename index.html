@@ -15,14 +15,17 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{
-  --forest:#1c3a2e; --forest-2:#2b5442; --moss:#e4ece6;
-  --bg:#f3f0e8; --panel:#fffdf9; --ink:#1f2622; --muted:#6b726c; --line:#e3ded2;
-  --a:#c2410c; --b:#1d4ed8; --ok:#15803d; --warn:#b45309; --err:#b91c1c;
-  --r:12px; --shadow:0 6px 24px rgba(28,58,46,.16),0 1px 3px rgba(0,0,0,.08);
+  --forest:#1f4636; --forest-2:#2f6650; --moss:#e2ece4; --terra:#cf6a3c; --terra-2:#b8572b; --sand:#efe7d8;
+  --bg:#faf6ee; --panel:#fffdf8; --ink:#23302a; --muted:#6f776f; --line:#e8e0d0;
+  --a:#cf6a3c; --b:#2f6650; --ok:#2f8a4f; --warn:#b5651d; --err:#b9382c;
+  --r:14px; --shadow:0 6px 22px rgba(31,70,54,.14),0 1px 3px rgba(0,0,0,.06);
+  --ease:cubic-bezier(.2,.9,.25,1.15);
   --peek:132px; --hidden:0px; --side:400px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;overflow:hidden;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+@font-face{font-family:Figtree;src:url(fonts/figtree.woff2) format('woff2');font-weight:300 900;font-display:swap}
+@font-face{font-family:Fraunces;src:url(fonts/fraunces.woff2) format('woff2');font-weight:600 700;font-display:swap}
+html,body{margin:0;height:100%;overflow:hidden;font:15.5px/1.45 Figtree,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
 #app{position:relative;height:100%;height:100dvh;overflow:hidden}
 .ico{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
@@ -53,12 +56,14 @@ html,body{margin:0;height:100%;overflow:hidden;font:15px/1.45 system-ui,-apple-s
 #chips{position:absolute;z-index:1050;top:68px;left:0;right:0;display:none;gap:8px;padding:0 12px 6px;overflow-x:auto;scrollbar-width:none}
 #chips::-webkit-scrollbar{display:none}
 .has-route #chips{display:flex}
-.chip{flex:none;min-height:36px;padding:0 12px;border-radius:18px;border:0;background:var(--panel);box-shadow:0 2px 8px rgba(28,58,46,.18);font-size:14px;font-weight:600;color:var(--muted);gap:6px}
+.chip{flex:none;min-height:40px;padding:0 14px 0 12px;border-radius:20px;border:0;background:var(--panel);box-shadow:0 2px 8px rgba(28,58,46,.18);font-size:14px;font-weight:600;color:var(--muted);gap:6px}
 .chip .sw{width:10px;height:10px;background:transparent;box-shadow:inset 0 0 0 2px var(--c)}
-#chips .chip.on{background:var(--panel);color:var(--ink);border-color:transparent} .chip.on .sw{background:var(--c);box-shadow:none}
+#chips .chip.on{background:var(--panel);color:var(--ink);border-color:transparent} .chip .cb{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#d9d4c8;color:#fff;margin-left:-6px;transition:background-color .2s}
+.chip.on .cb{background:var(--c)}
+.chip .cb .ii{margin:0;width:15px;height:15px}
 .sheet-full #chips{display:none}
 .chip em{font-style:normal;font-weight:500;color:var(--muted);font-size:12.5px}
-.chip:not(.on){opacity:.85;text-decoration:line-through;text-decoration-color:rgba(0,0,0,.25)}
+.chip:not(.on){color:var(--muted)}
 #q::-webkit-search-cancel-button{filter:grayscale(1) opacity(.6)}
 
 /* --- Messages --- */
@@ -160,7 +165,8 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
 .avatar{width:36px;height:36px;min-height:0;padding:0;border-radius:50%;border:0;background:var(--moss);color:var(--forest);flex:none}
 .page{position:fixed;inset:0;z-index:2000;background:var(--bg);display:none;flex-direction:column}
 .page.on{display:flex}
-.paged #status{top:70px}
+.paged #status{top:70px;bottom:auto}
+@media (max-width:899px){body:not(.paged) #status{top:auto;bottom:min(calc(var(--sheetv,140px) + 12px),calc(100% - 150px))}}
 .paged #chips{display:none}
 .page header{flex:none;display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--panel);box-shadow:0 1px 0 var(--line)}
 .page header h1{flex:1;font-size:18px;margin:0}
@@ -196,6 +202,39 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
 .linkbtn{border:0;background:transparent;color:var(--forest);font-weight:600;padding:0;min-height:44px;margin-top:8px}
 #sheetFrame{flex:1;border:0;width:100%;background:#fffdf9}
 
+/* --- Chaleur : titres, boutons, animations --- */
+h2,.page header h1,.wbody h1,#hStages{font-family:Fraunces,Georgia,serif;font-weight:700;letter-spacing:-.005em}
+h2{font-size:19px;text-transform:none;color:var(--forest);margin:22px 0 10px}
+.page header h1{font-size:21px;color:var(--forest)}
+.wbody h1{font-size:34px}
+button.primary,.btn.primary,.wcard.primary{background:var(--terra);border-color:var(--terra);color:#fff;box-shadow:0 6px 16px rgba(207,106,60,.28)}
+button.primary:hover,.btn.primary:hover{background:var(--terra-2);border-color:var(--terra-2)}
+.wcard.primary small{color:#fbe3d6}
+button,.btn,.chip,.wcard,.tmain,#stages li,.fab{transition:transform .15s var(--ease),background-color .2s,border-color .2s,box-shadow .2s}
+button:active:not(:disabled),.btn:active,.chip:active,.wcard:active,.fab:active,#stages li:active{transform:scale(.97)}
+.tabs button.on{background:var(--moss);color:var(--forest)}
+.tab.on{animation:fadeUp .25s ease both}
+.page.on{animation:slideUp .3s var(--ease) both}
+.toast{border-radius:22px;padding:10px 16px;font-weight:500;animation:toastIn .3s var(--ease) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translateY(-10px) scale(.96)}to{opacity:1;transform:none}}
+.leaflet-interactive.route-in{animation:routeIn .5s ease both}
+@keyframes routeIn{from{opacity:0}to{opacity:1}}
+.ii{width:17px;height:17px;vertical-align:-3.5px;margin-right:3px;stroke-width:2.2}
+.stat b{font-size:18px;font-weight:700}
+#stages li{border:0;box-shadow:0 1px 0 var(--line),0 2px 8px rgba(31,70,54,.06);border-radius:16px}
+#stages li.sel{box-shadow:0 0 0 2px var(--forest)}
+.box{background:var(--sand);border-radius:16px}
+.more div{background:var(--sand)}
+.stg{border-radius:12px;font-size:12px}
+.toast{background:var(--forest)}
+details.why{margin-top:10px;font-size:13px;color:var(--muted)}
+details.why summary{cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:36px;color:var(--forest-2);font-weight:600;list-style:none}
+details.why summary::-webkit-details-marker{display:none}
+.empty-ill{display:block;margin:6px auto 10px;width:120px;height:70px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
 /* --- Ordinateur : panneau latéral, profil sous la carte --- */
 @media (min-width:900px){
   #map{left:var(--side);bottom:170px}
@@ -215,7 +254,7 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<svg id="sprite" width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
   <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
   <symbol id="i-swap" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></symbol>
@@ -234,6 +273,20 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></symbol>
+  <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 2.5s6.5 7.2 6.5 12a6.5 6.5 0 0 1-13 0c0-4.8 6.5-12 6.5-12Z"/></symbol>
+  <symbol id="i-hut" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></symbol>
+  <symbol id="i-tent" viewBox="0 0 24 24"><path d="M3 20 12 5l9 15Z"/><path d="M12 20l-3-6h6l-3 6"/></symbol>
+  <symbol id="i-bread" viewBox="0 0 24 24"><path d="M5 11a4 4 0 0 1 2-7h10a4 4 0 0 1 2 7v8H5Z"/></symbol>
+  <symbol id="i-train" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M8 21l2-4M16 21l-2-4"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="13" r="4"/><path d="M12 3v2M4.9 6l1.4 1.4M19.1 6l-1.4 1.4M2 17h20M5 21h14"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M9 4h6l-1 6 3 3H7l3-3Z"/><path d="M12 13v8"/></symbol>
+  <symbol id="i-nowater" viewBox="0 0 24 24"><path d="M12 2.5s6.5 7.2 6.5 12a6.5 6.5 0 0 1-13 0c0-4.8 6.5-12 6.5-12Z"/><path d="M4 4l16 16"/></symbol>
+  <symbol id="i-start" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
 </svg>
 <div id="app">
@@ -243,7 +296,7 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
     <div id="searchBox">
       <div class="searchbar">
         <img src="icons/apple-touch-icon.png" alt="Orri">
-        <input id="q" type="search" placeholder="Rechercher un lieu…" autocomplete="off" enterkeyhint="search">
+        <input id="q" type="search" placeholder="Où veux-tu marcher ?" autocomplete="off" enterkeyhint="search">
         <button id="bProfile" class="avatar" title="Mon profil et mes parcours" aria-label="Mon profil"><svg class="ico"><use href="#i-user"/></svg></button>
       </div>
       <ul id="results"></ul>
@@ -266,12 +319,12 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
   <aside id="panel" data-snap="peek">
     <div class="grab" id="grab">
       <div class="handle"></div>
-      <div id="hint"><svg class="ico"><use href="#i-tap"/></svg><span>Touche la carte pour poser ton départ, ou importe un GPX.</span></div>
+      <div id="hint"><svg class="ico"><use href="#i-tap"/></svg><span>Touche la carte pour poser ton point de départ.</span></div>
       <div class="stats">
         <div class="stat"><b id="sDist">—</b><span>distance</span></div>
-        <div class="stat"><b id="sUp">—</b><span>D+</span></div>
+        <div class="stat"><b id="sUp">—</b><span>de montée</span></div>
         <div class="stat"><b id="sTime">—</b><span>marche</span></div>
-        <div class="stat"><b id="sDays">—</b><span>étapes</span></div>
+        <div class="stat"><b id="sDays">—</b><span>jours</span></div>
       </div>
     </div>
     <nav class="tabs" id="tabs">
@@ -303,7 +356,7 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
           <button id="bClear" class="danger grow"><svg class="ico"><use href="#i-trash"/></svg><span>Effacer</span></button>
         </div>
 
-        <h2>Fichier GPX</h2>
+        <h2>Tes fichiers GPX</h2>
         <div class="row">
           <label class="btn grow" for="file"><svg class="ico"><use href="#i-up"/></svg>Importer</label>
           <input id="file" type="file" accept=".gpx,application/gpx+xml" hidden>
@@ -320,17 +373,17 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
 
       <!-- ===== Étapes ===== -->
       <section class="tab" id="tab-stages">
-        <h2>Découpage</h2>
+        <h2>Ton rythme</h2>
         <div class="seg" id="modeSeg">
           <button data-m="limits" title="Des limites par jour, combinables">Limites / jour</button>
           <button data-m="days" title="Un nombre de jours imposé, étapes d'effort égal">Nb de jours</button>
           <button data-m="gpx" title="Les étapes contenues dans le fichier GPX importé">Du GPX</button>
         </div>
         <div class="box" id="limitsBox">
-          <div class="lim"><input type="checkbox" id="cH"><label for="cH">Marche max</label><input type="number" id="vH" min="1" max="16" step="0.5" inputmode="decimal"><span class="u">h / jour</span></div>
-          <div class="lim"><input type="checkbox" id="cUp"><label for="cUp">D+ max</label><input type="number" id="vUp" min="100" max="6000" step="100" inputmode="numeric"><span class="u">m / jour</span></div>
-          <div class="lim"><input type="checkbox" id="cKm"><label for="cKm">Distance max</label><input type="number" id="vKm" min="1" max="150" step="1" inputmode="numeric"><span class="u">km / jour</span></div>
-          <div class="lim"><input type="checkbox" id="cBal"><label for="cBal">Équilibrer (pas de petite dernière étape)</label></div>
+          <div class="lim"><input type="checkbox" id="cH"><label for="cH">Marcher au plus</label><input type="number" id="vH" min="1" max="16" step="0.5" inputmode="decimal"><span class="u">h / jour</span></div>
+          <div class="lim"><input type="checkbox" id="cUp"><label for="cUp">Monter au plus</label><input type="number" id="vUp" min="100" max="6000" step="100" inputmode="numeric"><span class="u">m / jour</span></div>
+          <div class="lim"><input type="checkbox" id="cKm"><label for="cKm">Parcourir au plus</label><input type="number" id="vKm" min="1" max="150" step="1" inputmode="numeric"><span class="u">km / jour</span></div>
+          <div class="lim"><input type="checkbox" id="cBal"><label for="cBal">Des journées équilibrées (pas de mini-étape à la fin)</label></div>
         </div>
         <div class="box" id="daysBox">
           <div class="lim"><label for="vDays">Nombre de jours</label><input type="number" id="vDays" min="1" max="300" step="1" inputmode="numeric"><span class="u">jours</span></div>
@@ -340,18 +393,18 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
           <p class="note" style="margin:6px 0">Étapes telles qu'elles sont dans le fichier GPX importé (une trace = une étape).</p>
         </div>
         <div class="box" id="endBox">
-          <div class="lim"><label for="endType">Fin d'étape</label>
+          <div class="lim"><label for="endType">Le soir, dormir</label>
             <select id="endType">
-              <option value="any">N'importe où</option>
-              <option value="refuge">Refuge, cabane ou gîte</option>
-              <option value="bivouac">Bivouac</option>
-              <option value="both">Refuge ou bivouac</option>
+              <option value="any">où ça tombe</option>
+              <option value="refuge">en refuge, cabane ou gîte</option>
+              <option value="bivouac">en bivouac</option>
+              <option value="both">en refuge ou en bivouac</option>
             </select>
           </div>
-          <div class="lim" id="tolRow"><label for="vTol">Tolérance (±)</label><input type="number" id="vTol" min="0" max="4" step="0.25" inputmode="decimal"><span class="u">h</span></div>
+          <div class="lim" id="tolRow"><label for="vTol">Journée plus longue ou plus courte de</label><input type="number" id="vTol" min="0" max="4" step="0.25" inputmode="decimal"><span class="u">h</span></div>
           <p class="note" id="endNote" style="margin:0 0 6px"></p>
         </div>
-        <div class="lim" style="margin-top:8px"><label for="pace">Allure</label>
+        <div class="lim" style="margin-top:8px"><label for="pace">Ton allure</label>
           <select id="pace">
             <option value="0.85">Tranquille</option>
             <option value="1">Standard</option>
@@ -359,7 +412,8 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
             <option value="1.4">Très sportive</option>
           </select>
         </div>
-        <p class="note" id="pinNote">Touche un numéro d'étape sur la carte pour fixer cette fin d'étape, ou glisse-le ailleurs sur le tracé. Touche un numéro vert pour le libérer. Double-clic sur le profil : nouvelle fin d'étape.</p>
+        <details class="why" id="pinNote"><summary><svg class="ico ii"><use href="#i-info"/></svg>Déplacer une fin de journée</summary>
+          <p>Touche une étiquette « J » sur la carte pour fixer la fin de cette journée, ou glisse-la ailleurs sur le tracé. Touche une étiquette verte pour la libérer. Double-clic sur le profil : nouvelle fin de journée.</p></details>
 
         <h2 id="hStages">Étapes</h2>
         <ul id="stages"></ul>
@@ -367,23 +421,24 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
           <div><b id="sDown">—</b><span>dénivelé négatif</span></div>
           <div><b id="sMax">—</b><span>altitude max</span></div>
         </div>
-        <p class="note">Temps : méthode DIN 33466 (4 km/h à plat, 300 m/h en montée, 500 m/h en descente) ajustée selon l'allure, sans les pauses. Dénivelé lissé sur 200 m.</p>
+        <details class="why"><summary><svg class="ico ii"><use href="#i-info"/></svg>Comment on calcule les temps ?</summary>
+          <p>Méthode DIN 33466 : 4 km/h à plat, 300 m/h en montée, 500 m/h en descente, ajustée selon ton allure, sans les pauses. Dénivelé lissé sur 200 m.</p></details>
       </section>
 
       <!-- ===== Préparer ===== -->
       <section class="tab" id="tab-prep">
-        <h2>Calendrier</h2>
+        <h2>Quand pars-tu ?</h2>
         <div class="box">
           <div class="lim"><label for="vDate">Départ le</label><input type="date" id="vDate"></div>
-          <div class="lim"><label for="vTime">Départ chaque matin</label><input type="time" id="vTime" step="900"></div>
-          <div class="lim"><label for="vPause">Pauses par jour</label><input type="number" id="vPause" min="0" max="300" step="15" inputmode="numeric"><span class="u">min</span></div>
+          <div class="lim"><label for="vTime">Tu pars chaque matin à</label><input type="time" id="vTime" step="900"></div>
+          <div class="lim"><label for="vPause">Pauses dans la journée</label><input type="number" id="vPause" min="0" max="300" step="15" inputmode="numeric"><span class="u">min</span></div>
         </div>
 
-        <h2>Fiche du trek</h2>
+        <h2>À emporter</h2>
         <button id="bSheet" class="primary" style="width:100%"><svg class="ico"><use href="#i-doc"/></svg>Voir la fiche (hors ligne, à imprimer)</button>
         <p class="note">Toutes les étapes sur une page : horaires, nuits, eau, points utiles. Télécharge-la pour l'avoir sans réseau sur le sentier.</p>
 
-        <h2>Sur le parcours</h2>
+        <h2>Sur ton chemin</h2>
         <div id="poiRows"></div>
         <p class="note" id="poiStatus"></p>
 
@@ -460,14 +515,17 @@ const DEFAULT_S = { mode: 'limits', useH: true, h: 7, useUp: false, up: 1500, us
   endType: 'any', tol: 1, show: { water: true, hut: true, bivouac: true, shop: true, train: true },
   startDate: '', startTime: '08:00', pause: 60,
   over: {} };   // over : fin d'étape choisie pour une étape précise { n° d'étape (0 = 1re) : 'refuge' | 'bivouac' | 'any' }
-const COLORS = ['#c2410c', '#1d4ed8'];
+const COLORS = ['#cf6a3c', '#2f6650'];
+// Icônes dessinées (sprite SVG de la page) : I('drop'), CI('water') = icône de catégorie dans sa couleur
+const I = (n, c) => `<svg class="ico ii"${c ? ` style="color:${c}"` : ''}><use href="#i-${n}"/></svg>`;
+const CI = k => I(CAT[k].ico, CAT[k].color);
 // Catégories de points d'intérêt (OpenStreetMap) ; maxD = distance max au tracé
 const CAT = {
-  water:   { label: 'Eau',                     emoji: '💧', color: '#0284c7', maxD: 1000, sym: 'Drinking Water' },
-  hut:     { label: 'Refuges, cabanes, gîtes', emoji: '🏠', color: '#9333ea', maxD: 1000, sym: 'Lodge' },
-  bivouac: { label: 'Bivouac, camping',        emoji: '⛺', color: '#15803d', maxD: 1000, sym: 'Campground' },
-  shop:    { label: 'Ravitaillement',          emoji: '🛒', color: '#ca8a04', maxD: 1500, sym: 'Shopping Center' },
-  train:   { label: 'Gares',                   emoji: '🚉', color: '#475569', maxD: 3000, sym: 'Ground Transportation' }
+  water:   { label: 'Eau',                     ico: 'drop',  color: '#2b8fc7', maxD: 1000, sym: 'Drinking Water' },
+  hut:     { label: 'Refuges, cabanes, gîtes', ico: 'hut',   color: '#8a5cc2', maxD: 1000, sym: 'Lodge' },
+  bivouac: { label: 'Bivouac, camping',        ico: 'tent',  color: '#2f8a4f', maxD: 1000, sym: 'Campground' },
+  shop:    { label: 'Ravitaillement',          ico: 'bread', color: '#c9952b', maxD: 1500, sym: 'Shopping Center' },
+  train:   { label: 'Gares',                   ico: 'train', color: '#5b6670', maxD: 3000, sym: 'Ground Transportation' }
 };
 const END_CATS = { refuge: ['hut'], bivouac: ['bivouac', 'water'], both: ['hut', 'bivouac', 'water'] };
 const END_LABEL = { refuge: 'refuge', bivouac: 'bivouac', both: 'refuge ou bivouac' };
@@ -877,7 +935,7 @@ function renderPOIs() {
     const ch = chosen.has(p.id);
     if (!S.show[p.cat] && !ch) continue;
     const m = L.circleMarker([p.lat, p.lon], { renderer: poiRenderer, bubblingMouseEvents: false, radius: ch ? 8 : (p.cat === 'water' ? 4.5 : 6), color: ch ? '#1c2320' : '#fff', weight: ch ? 3 : 1.5, fillColor: CAT[p.cat].color, fillOpacity: 1 })
-      .bindPopup(`<b>${CAT[p.cat].emoji} ${escXml(p.name || p.kind)}</b><br>${escXml(p.kind)}<br>km ${nf1.format(R.cum[p.idx] / 1000)} · ${p.d < 50 ? 'sur le tracé' : 'à ' + fM(p.d) + ' du tracé'}${ch ? '<br><b>Fin d\'étape</b>' : ''}`)
+      .bindPopup(`<b>${CI(p.cat)} ${escXml(p.name || p.kind)}</b><br>${escXml(p.kind)}<br>km ${nf1.format(R.cum[p.idx] / 1000)} · ${p.d < 50 ? 'sur le tracé' : 'à ' + fM(p.d) + ' du tracé'}${ch ? '<br><b>Fin d\'étape</b>' : ''}`)
       .addTo(poiLayer);
     poiMarkers.set(p.id, m);
   }
@@ -919,7 +977,7 @@ function render() {
   const editable = S.mode !== 'gpx';
   if (R && R.stages.length > 1) R.stages.slice(0, -1).forEach((s, k) => {
     const m = L.marker([R.lat[s.i1], R.lon[s.i1]], {
-      icon: L.divIcon({ className: 'stg' + (s.pinEnd ? ' pin' : '') + (editable ? ' drag' : ''), html: String(k + 1), iconSize: [22, 22] }),
+      icon: L.divIcon({ className: 'stg' + (s.pinEnd ? ' pin' : '') + (editable ? ' drag' : ''), html: 'J' + (k + 1), iconSize: [28, 24] }),
       draggable: editable, interactive: editable, keyboard: false, zIndexOffset: 1000,
       title: editable ? (s.pinEnd ? 'Fin d\'étape fixée : clic pour libérer, glisser pour déplacer' : 'Clic pour fixer, glisser pour déplacer') : ''
     });
@@ -991,11 +1049,11 @@ function renderStats() {
 }
 function buildPoiRows() {
   $('#poiRows').innerHTML = Object.entries(CAT).map(([k, c]) =>
-    `<div class="poi-row"><input type="checkbox" id="show_${k}"><label for="show_${k}"><span class="sw" style="background:${c.color}"></span> ${c.emoji} ${c.label}</label><span class="c" id="cnt_${k}">—</span></div>`).join('');
+    `<div class="poi-row"><input type="checkbox" id="show_${k}"><label for="show_${k}"><span class="sw" style="background:${c.color}"></span> ${CI(k)} ${c.label}</label><span class="c" id="cnt_${k}">—</span></div>`).join('');
   Object.keys(CAT).forEach(k => $('#show_' + k).addEventListener('change', e => setShow(k, e.target.checked)));
   const SHORT = { water: 'Eau', hut: 'Refuges', bivouac: 'Bivouac', shop: 'Ravito', train: 'Gares' };
   $('#chips').innerHTML = Object.entries(CAT).map(([k, c]) =>
-    `<button class="chip" data-k="${k}" style="--c:${c.color}"><span class="sw"></span>${SHORT[k]}<em id="chc_${k}"></em></button>`).join('');
+    `<button class="chip" data-k="${k}" style="--c:${c.color}"><span class="cb">${I(c.ico)}</span>${SHORT[k]}<em id="chc_${k}"></em></button>`).join('');
   document.querySelectorAll('#chips .chip').forEach(b => b.onclick = () => setShow(b.dataset.k, !S.show[b.dataset.k]));
 }
 // Afficher / masquer une catégorie de points (pastilles sur la carte et cases de l'onglet Préparer)
@@ -1005,10 +1063,10 @@ function setShow(k, on) {
 function renderPoiStatus() {
   const el = $('#poiStatus'), has = R && R.n > 1, n = has && R.pois ? R.pois.length : 0;
   const prog = poiProgress.total && !poiProgress.local ? ` ${nf0.format(Math.min(poiProgress.done, poiProgress.total))} / ${nf0.format(poiProgress.total)} km analysés` : '';
-  if (poiState === 'loading') el.textContent = poiProgress.local
-    ? `⏳ Chargement des points (${poiProgress.done} / ${poiProgress.total} zones)…`
-    : `⏳ Recherche dans OpenStreetMap (hors pays couverts)…${prog}${poiProgress.server > 1 ? ` (serveur de secours ${poiProgress.server - 1}/${OVERPASS.length - 1})` : ''}. ${n ? nf0.format(n) + ' points déjà trouvés.' : ''}`;
-  else if (poiState === 'error') { el.innerHTML = `⚠️ ${n ? nf0.format(n) + ' points trouvés, mais une partie du tracé n\'a pas pu être analysée' : 'Points indisponibles'} : ${poiIndex ? 'hors des pays couverts par Orri, ' : ''}les serveurs publics OpenStreetMap ne répondent pas. Réessaie dans quelques minutes.<button id="poiRetry">Réessayer</button>`; $('#poiRetry').onclick = () => fetchPOIs(); }
+  if (poiState === 'loading') el.innerHTML = poiProgress.local
+    ? `${I('clock')}Chargement des points (${poiProgress.done} / ${poiProgress.total} zones)…`
+    : `${I('clock')}Recherche dans OpenStreetMap (hors pays couverts)…${prog}${poiProgress.server > 1 ? ` (serveur de secours ${poiProgress.server - 1}/${OVERPASS.length - 1})` : ''}. ${n ? nf0.format(n) + ' points déjà trouvés.' : ''}`;
+  else if (poiState === 'error') { el.innerHTML = `${I('alert')}${n ? nf0.format(n) + ' points trouvés, mais une partie du tracé n\'a pas pu être analysée' : 'Points indisponibles'} : ${poiIndex ? 'hors des pays couverts par Orri, ' : ''}les serveurs publics OpenStreetMap ne répondent pas. Réessaie dans quelques minutes.<button id="poiRetry">Réessayer</button>`; $('#poiRetry').onclick = () => fetchPOIs(); }
   else el.textContent = has ? `${nf0.format(n)} points à moins de 1 km du tracé (1,5 km pour les commerces, 3 km pour les gares). Clique sur une étape pour voir le détail.${poiIndex ? ' Données OpenStreetMap du ' + new Date(poiIndex.generated + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) + '.' : ''}` : 'Trace un itinéraire pour voir l\'eau, les refuges et les commerces.';
   Object.keys(CAT).forEach(k => {
     const n = has && R.pois ? nf0.format(R.pois.filter(p => p.cat === k).length) : '—';
@@ -1031,53 +1089,53 @@ function stageDetail(s, k) {
   let h = '';
   const tm = stageTiming(s, k);
   if (tm) {
-    h += `<div class="info">📅 <b>Jour ${k + 1}</b> · ${tm.d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>`;
-    h += `<div class="info">🕗 Départ ${fT(tm.dep)} → arrivée vers <b>${fT(tm.arr)}</b> (marche ${fH(s.time)} + pauses ${S.pause || 0} min)</div>`;
-    if (tm.sun) h += `<div class="info">🌅 Soleil : lever ${fT(tm.sun.rise)}, coucher ${fT(tm.sun.set)}</div>`;
-    if (tm.late) h += `<div class="info warnline">⚠️ Arrivée après le coucher du soleil : pars plus tôt ou raccourcis l'étape.</div>`;
-    if (tm.early) h += `<div class="info warnline">🔦 Départ avant le lever du soleil : prévois la frontale.</div>`;
-  } else h += `<div class="info" style="color:var(--muted)">📅 Indique une date de départ (réglages ci-dessus) pour voir la date, les horaires et le coucher du soleil.</div>`;
+    h += `<div class="info">${I('cal')}<b>Jour ${k + 1}</b> · ${tm.d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>`;
+    h += `<div class="info">${I('clock')}Départ ${fT(tm.dep)} → arrivée vers <b>${fT(tm.arr)}</b> (marche ${fH(s.time)} + pauses ${S.pause || 0} min)</div>`;
+    if (tm.sun) h += `<div class="info">${I('sun')}Soleil : lever ${fT(tm.sun.rise)}, coucher ${fT(tm.sun.set)}</div>`;
+    if (tm.late) h += `<div class="info warnline">${I('alert')}Arrivée après le coucher du soleil : pars plus tôt ou raccourcis l'étape.</div>`;
+    if (tm.early) h += `<div class="info warnline">${I('moon')}Départ avant le lever du soleil : prévois la frontale.</div>`;
+  } else h += `<div class="info" style="color:var(--muted)">${I('cal')}Indique une date de départ (réglages ci-dessus) pour voir la date, les horaires et le coucher du soleil.</div>`;
   if (S.mode !== 'gpx' && k < R.stages.length - 1 && !s.pinEnd) {     // choisir où dormir pour cette étape seulement
     const cur = s.endType || 'any';
-    const opt = [['refuge', '🏠 Refuge'], ['bivouac', '⛺ Bivouac'], ['any', 'Libre']];
-    h += `<div class="sleep"><div class="info"><b>Dormir à la fin de l'étape</b>${s.endOwn ? ' · <a href="#" class="reset" data-k="' + k + '">revenir au réglage général</a>' : ''}</div>
+    const opt = [['refuge', I('hut') + 'Refuge'], ['bivouac', I('tent') + 'Bivouac'], ['any', 'Libre']];
+    h += `<div class="sleep"><div class="info"><b>Le soir, tu dors</b>${s.endOwn ? ' · <a href="#" class="reset" data-k="' + k + '">revenir au réglage général</a>' : ''}</div>
       <div class="seg">${opt.map(([v, l]) => `<button data-sleep="${v}" data-k="${k}" class="${cur === v ? 'on' : ''}">${l}</button>`).join('')}</div>
       ${s.endWide ? `<div class="info warnline">Rien dans ta tolérance de ${fTol(S.tol)} : étape ajustée de ${fDur(Math.abs(s.endDelta))}.</div>` : ''}</div>`;
   }
   const g = s.waterGap;
   if (poiState !== 'loading' && R.pois.length && g && g.km > 0.5)
-    h += `<div class="info${g.h > 3 ? ' warnline' : ''}">${g.h > 3 ? '⚠️' : '💧'} Plus long tronçon sans eau connue : <b>${nf1.format(g.km)} km</b> (≈ ${fDur(g.h)}), du km ${kmS(g.a)} au km ${kmS(g.b)}</div>`;
+    h += `<div class="info${g.h > 3 ? ' warnline' : ''}">${g.h > 3 ? I('alert') : I('drop', CAT.water.color)} Plus long tronçon sans eau connue : <b>${nf1.format(g.km)} km</b> (≈ ${fDur(g.h)}), du km ${kmS(g.a)} au km ${kmS(g.b)}</div>`;
   const list = R.pois.filter(p => p.idx >= s.i0 && p.idx <= s.i1 && S.show[p.cat]);
   h += '<div class="plist">';
-  h += `<div class="prow end" data-i="${s.i0}"><span class="km">km 0,0</span><span>▶ Départ${placeName(s.i0) ? ' : ' + escXml(placeName(s.i0)) : ''} · ${nf0.format(Math.round(R.zs ? R.zs[s.i0] : 0))} m</span></div>`;
+  h += `<div class="prow end" data-i="${s.i0}"><span class="km">km 0,0</span><span>${I('start')}Départ${placeName(s.i0) ? ' : ' + escXml(placeName(s.i0)) : ''} · ${nf0.format(Math.round(R.zs ? R.zs[s.i0] : 0))} m</span></div>`;
   list.forEach(p => {
     const fin = s.endPoi && s.endPoi.id === p.id;
-    h += `<div class="prow${fin ? ' end' : ''}" data-poi="${p.id}"><span class="km">km ${kmS(p.idx)}</span><span>${CAT[p.cat].emoji} ${escXml(p.name || p.kind)}${p.name && p.name.toLowerCase() !== p.kind.toLowerCase() ? ` <span class="k">· ${escXml(p.kind.toLowerCase())}</span>` : ''}${p.d >= 50 ? ` <span class="k">· à ${fM(p.d)} du tracé</span>` : ''}${fin ? ' · fin d\'étape' : ''}</span></div>`;
+    h += `<div class="prow${fin ? ' end' : ''}" data-poi="${p.id}"><span class="km">km ${kmS(p.idx)}</span><span>${CI(p.cat)} ${escXml(p.name || p.kind)}${p.name && p.name.toLowerCase() !== p.kind.toLowerCase() ? ` <span class="k">· ${escXml(p.kind.toLowerCase())}</span>` : ''}${p.d >= 50 ? ` <span class="k">· à ${fM(p.d)} du tracé</span>` : ''}${fin ? ' · fin d\'étape' : ''}</span></div>`;
   });
-  if (!list.length) h += `<div class="info" style="color:var(--muted)">${poiState === 'loading' ? '⏳ Recherche des points en cours…' : poiState === 'error' ? '⚠️ Points indisponibles (serveur OpenStreetMap).' : 'Aucun point d\'eau, refuge ou commerce trouvé dans OpenStreetMap sur cette étape.'}</div>`;
-  h += `<div class="prow end" data-i="${s.i1}"><span class="km">km ${kmS(s.i1)}</span><span>🏁 Arrivée${placeName(s.i1) ? ' : ' + escXml(placeName(s.i1)) : ''} · ${nf0.format(Math.round(R.zs ? R.zs[s.i1] : 0))} m</span></div>`;
+  if (!list.length) h += `<div class="info" style="color:var(--muted)">${poiState === 'loading' ? I('clock') + 'Recherche des points en cours…' : poiState === 'error' ? I('alert') + 'Points indisponibles (serveur OpenStreetMap).' : 'Aucun point d\'eau, refuge ou commerce trouvé dans OpenStreetMap sur cette étape.'}</div>`;
+  h += `<div class="prow end" data-i="${s.i1}"><span class="km">km ${kmS(s.i1)}</span><span>${I('flag')}Arrivée${placeName(s.i1) ? ' : ' + escXml(placeName(s.i1)) : ''} · ${nf0.format(Math.round(R.zs ? R.zs[s.i1] : 0))} m</span></div>`;
   return `<div class="detail">${h}</div></div>`;
 }
 function renderStages() {
   const ul = $('#stages'); ul.innerHTML = '';
-  if (!R || R.n < 2) { $('#hStages').textContent = 'Étapes'; ul.innerHTML = '<li style="cursor:default;color:var(--muted)">Trace un itinéraire ou importe un GPX.</li>'; return; }
-  $('#hStages').textContent = R.stages.length > 1 ? `Étapes (${R.stages.length}) · clique pour le détail` : 'Étape · clique pour le détail';
+  if (!R || R.n < 2) { $('#hStages').textContent = 'Tes journées'; ul.innerHTML = '<li class="empty" style="cursor:default;text-align:center"><svg class="empty-ill" viewBox="0 0 120 70"><path d="M5 62 38 22l16 18 14-14 47 36Z" fill="#e2ece4" stroke="#2f6650" stroke-width="2" stroke-linejoin="round"/><path d="M14 60c18-8 30-4 44-12s26-6 46 2" fill="none" stroke="#cf6a3c" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round"/></svg>Trace ton itinéraire : tes journées apparaîtront ici.</li>'; return; }
+  $('#hStages').textContent = R.stages.length > 1 ? `Ton trek en ${R.stages.length} jours` : 'Ton itinéraire';
   R.stages.forEach((s, k) => {
     const li = document.createElement('li');
     if (state.selStage === k) li.className = 'sel';
     const a = placeName(s.i0), b = placeName(s.i1);
     const tm = stageTiming(s, k);
-    const title = (R.stages.length > 1 ? `Étape ${k + 1}` : 'Itinéraire') + (tm ? ' · ' + tm.d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) : '');
+    const title = (R.stages.length > 1 ? `Jour ${k + 1}` : 'Itinéraire') + (tm ? ' · ' + tm.d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) : '');
     let end = '';
     if (s.endPoi) {
       const p = s.endPoi;
-      end = `<div class="e">${CAT[p.cat].emoji} Fin : ${escXml(p.name || p.kind)}${p.name ? ' (' + escXml(p.kind.toLowerCase()) + ')' : ''}${p.d >= 50 ? ', à ' + fM(p.d) + ' du tracé' : ''} · ${fDelta(s.endDelta)}</div>`;
+      end = `<div class="e">${CI(p.cat)} Fin : ${escXml(p.name || p.kind)}${p.name ? ' (' + escXml(p.kind.toLowerCase()) + ')' : ''}${p.d >= 50 ? ', à ' + fM(p.d) + ' du tracé' : ''} · ${fDelta(s.endDelta)}</div>`;
     } else if (s.endMiss) {
-      end = `<div class="e miss">⚠️ ${poiState === 'loading' ? 'Recherche des refuges et bivouacs en cours…' : poiState === 'error' ? 'Refuges et bivouacs indisponibles (serveur OpenStreetMap)' : `Aucun ${END_LABEL[s.endType] || END_LABEL[S.endType]} à ${fTol(s.endOwn ? Math.max(2, S.tol) : S.tol)} : fin d'étape libre`}</div>`;
+      end = `<div class="e miss">${I('alert')}${poiState === 'loading' ? 'Recherche des refuges et bivouacs en cours…' : poiState === 'error' ? 'Refuges et bivouacs indisponibles (serveur OpenStreetMap)' : `Aucun ${END_LABEL[s.endType] || END_LABEL[S.endType]} à ${fTol(s.endOwn ? Math.max(2, S.tol) : S.tol)} : fin d'étape libre`}</div>`;
     }
-    const cnt = Object.keys(CAT).filter(c => s.counts[c]).map(c => CAT[c].emoji + ' ' + s.counts[c]).join(' · ');
-    const flags = (tm && tm.late ? ' 🌙' : '') + (s.waterGap && s.waterGap.h > 3 && R.pois.length && poiState !== 'loading' ? ' 🚱' : '');
-    li.innerHTML = `<div class="t"><span class="dot" style="background:${COLORS[k % 2]}"></span>${title}${s.pinEnd ? ' 📌' : ''}${flags}${a || b ? ' · ' + escXml(a || '…') + ' → ' + escXml(b || '…') : ''}</div>
+    const cnt = Object.keys(CAT).filter(c => s.counts[c]).map(c => CI(c) + s.counts[c]).join(' · ');
+    const flags = (tm && tm.late ? ' ' + I('moon', 'var(--warn)') : '') + (s.waterGap && s.waterGap.h > 3 && R.pois.length && poiState !== 'loading' ? ' ' + I('nowater', 'var(--warn)') : '');
+    li.innerHTML = `<div class="t"><span class="dot" style="background:${COLORS[k % 2]}"></span>${title}${s.pinEnd ? ' ' + I('pin', 'var(--ok)') : ''}${flags}${a || b ? ' · ' + escXml(a || '…') + ' → ' + escXml(b || '…') : ''}</div>
       <div class="m">${fKm(s.dist)} · +${fM(s.up)} / −${fM(s.dn)} · ${fH(s.time)}${tm ? ' · arrivée ≈ ' + fT(tm.arr) : ''}</div>${end}${cnt ? `<div class="p">${cnt}</div>` : ''}${state.selStage === k ? stageDetail(s, k) : ''}`;
     li.onclick = ev => {
       const row = ev.target.closest('.prow');
@@ -1804,17 +1862,17 @@ function sheetHTML() {
   }
   const stages = R.stages.map((s, k) => {
     const tm = stageTiming(s, k), a = placeName(s.i0), b = placeName(s.i1);
-    const sleep = k === R.stages.length - 1 ? '🏁 Arrivée du trek'
-      : s.endPoi ? `${CAT[s.endPoi.cat].emoji} ${escXml(s.endPoi.name || s.endPoi.kind)}${s.endPoi.name ? ' (' + escXml(s.endPoi.kind.toLowerCase()) + ')' : ''}${s.endPoi.d >= 50 ? ', à ' + fM(s.endPoi.d) + ' du tracé' : ''}`
+    const sleep = k === R.stages.length - 1 ? I('flag') + 'Arrivée du trek'
+      : s.endPoi ? `${CI(s.endPoi.cat)} ${escXml(s.endPoi.name || s.endPoi.kind)}${s.endPoi.name ? ' (' + escXml(s.endPoi.kind.toLowerCase()) + ')' : ''}${s.endPoi.d >= 50 ? ', à ' + fM(s.endPoi.d) + ' du tracé' : ''}`
       : `Nuit libre${b ? ' vers ' + escXml(b) : ''} (km ${kmAt(s.i1)})`;
     const g = s.waterGap, pois = (R.pois || []).filter(p => p.idx >= s.i0 && p.idx <= s.i1 && S.show[p.cat]);
-    return `<section class="stg"><h2><span style="background:${COLORS[k % 2]}"></span>${R.stages.length > 1 ? 'Étape ' + (k + 1) : 'Itinéraire'}${tm ? ' · ' + tm.d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : ''}</h2>
+    return `<section class="stg"><h2><span style="background:${COLORS[k % 2]}"></span>${R.stages.length > 1 ? 'Jour ' + (k + 1) : 'Itinéraire'}${tm ? ' · ' + tm.d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : ''}</h2>
       ${a || b ? `<p class="route">${escXml(a || '…')} → ${escXml(b || '…')}</p>` : ''}
       <p class="nums"><b>${fKm(s.dist)}</b> · +${fM(s.up)} / −${fM(s.dn)} · <b>${fH(s.time)}</b> de marche</p>
       ${tm ? `<p>Départ ${fT(tm.dep)} → arrivée vers <b>${fT(tm.arr)}</b>${tm.sun ? ` · coucher du soleil ${fT(tm.sun.set)}` : ''}${tm.late ? ' · <b class="w">arrivée après la nuit</b>' : ''}</p>` : ''}
       <p class="sleep">Nuit : <b>${sleep}</b></p>
-      ${g && g.km > 0.5 && R.pois.length ? `<p class="${g.h > 3 ? 'w' : ''}">${g.h > 3 ? '⚠️' : '💧'} Plus long tronçon sans eau connue : ${nf1.format(g.km)} km (≈ ${fDur(g.h)})</p>` : ''}
-      ${pois.length ? `<table>${pois.map(p => `<tr><td>km ${kmAt(p.idx)}</td><td>${CAT[p.cat].emoji} ${escXml(p.name || p.kind)}${p.name ? ` <i>${escXml(p.kind.toLowerCase())}</i>` : ''}${p.d >= 50 ? ` <i>à ${fM(p.d)}</i>` : ''}</td></tr>`).join('')}</table>` : ''}
+      ${g && g.km > 0.5 && R.pois.length ? `<p class="${g.h > 3 ? 'w' : ''}">${g.h > 3 ? I('alert') : I('drop', CAT.water.color)} Plus long tronçon sans eau connue : ${nf1.format(g.km)} km (≈ ${fDur(g.h)})</p>` : ''}
+      ${pois.length ? `<table>${pois.map(p => `<tr><td>km ${kmAt(p.idx)}</td><td>${CI(p.cat)} ${escXml(p.name || p.kind)}${p.name ? ` <i>${escXml(p.kind.toLowerCase())}</i>` : ''}${p.d >= 50 ? ` <i>à ${fM(p.d)}</i>` : ''}</td></tr>`).join('')}</table>` : ''}
     </section>`;
   }).join('');
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escXml(title)} — fiche Orri</title>
@@ -1822,9 +1880,11 @@ function sheetHTML() {
 h1{font-size:22px;margin:4px 0 2px;color:#1c3a2e}.sub{color:#6b726c;margin:0 0 12px}
 .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0}.kpi div{background:#f3f0e8;border-radius:10px;padding:8px;text-align:center}.kpi b{display:block;font-size:clamp(13px,4vw,17px);white-space:nowrap;color:#1c3a2e}.kpi span{font-size:12px;color:#6b726c}
 svg{width:100%;height:auto;display:block;margin:8px 0;background:#f3f0e8;border-radius:10px}
-.stg{border-top:1px solid #e3ded2;padding:10px 0;break-inside:avoid}.stg h2{font-size:17px;margin:4px 0}.stg h2 span{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px}
+.stg{border-top:1px solid #e8e0d0;padding:10px 0;break-inside:avoid}.stg h2{font-size:17px;margin:4px 0}.stg h2 span{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px}
 p{margin:4px 0}.route{color:#6b726c}.w{color:#b45309}table{border-collapse:collapse;font-size:13.5px;margin-top:6px;width:100%}td{padding:3px 6px 3px 0;vertical-align:top;border-top:1px solid #efebe2}td:first-child{white-space:nowrap;color:#6b726c;width:70px}i{color:#6b726c;font-style:normal}
-footer{color:#6b726c;font-size:12px;border-top:1px solid #e3ded2;margin-top:16px;padding-top:8px}@media print{body{padding:0}}</style></head><body>
+footer{color:#6b726c;font-size:12px;border-top:1px solid #e3ded2;margin-top:16px;padding-top:8px}@media print{body{padding:0}}
+.ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:3px}
+h1,.stg h2{font-family:Fraunces,Georgia,serif}</style></head><body>${document.getElementById('sprite').outerHTML}
 <h1>${escXml(title)}</h1><p class="sub">${R.stages.length} étape${R.stages.length > 1 ? 's' : ''}${S.startDate ? ' · départ le ' + new Date(S.startDate + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''} · fiche créée le ${new Date().toLocaleDateString('fr-FR')}</p>
 <div class="kpi"><div><b>${fKm(R.dist)}</b><span>distance</span></div><div><b>+${fM(R.up)}</b><span>dénivelé</span></div><div><b>${fH(R.time)}</b><span>marche</span></div><div><b>${R.zmax != null ? fM(R.zmax) : '—'}</b><span>alt. max</span></div></div>
 ${mapSvg}${profSvg}${stages}
@@ -1892,6 +1952,7 @@ const sheet = {
     if (desk.matches) { root.setProperty('--hidden', '0px'); return; }
     root.setProperty('--peek', this.peekH() + 'px');
     this.y = this.pos(this.snap); root.setProperty('--hidden', this.y + 'px');
+    root.setProperty('--sheetv', (this.el.offsetHeight - this.y) + 'px');
     map.invalidateSize();
   },
   visible() { return desk.matches ? 0 : this.el.offsetHeight - this.y; }
