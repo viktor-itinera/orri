@@ -1,6 +1,6 @@
-# Itinera
+# Orri
 
-Planificateur de treks au long cours : tracé sur carte, découpage automatique en étapes, eau, refuges, bivouacs, ravitaillement et gares le long du parcours.
+Planificateur de randos et treks au long cours : tracé sur carte, découpage automatique en étapes, eau, refuges, bivouacs, ravitaillement et gares le long du parcours.
 
 Application web installable (Android : Chrome → menu ⋮ → « Installer l'application »).
 

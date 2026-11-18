@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Itinera — planificateur de treks au long cours</title>
-<meta name="description" content="Planifie tes treks au long cours : tracé, étapes, eau, refuges, bivouacs, ravitaillement et gares.">
+<title>Orri — Planificateur de randos et treks</title>
+<meta name="description" content="Orri : planifie tes randos et treks — tracé, étapes, eau, refuges, bivouacs, ravitaillement et gares.">
 <meta name="theme-color" content="#1c3a2e">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Itinera">
+<meta name="apple-mobile-web-app-title" content="Orri">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{
@@ -103,8 +103,8 @@ footer{font-size:11px;color:var(--muted);margin-top:18px;border-top:1px solid va
 <body>
 <div id="app">
   <aside id="panel">
-    <h1>Itinera</h1>
-    <p class="sub">Planificateur de treks au long cours · prototype v0.6</p>
+    <h1>Orri</h1>
+    <p class="sub">Planificateur de randos et treks · prototype v0.6</p>
 
     <input id="q" type="search" placeholder="Aller à… (ex. Cauterets, Pic du Canigou)" autocomplete="off">
     <ul id="results"></ul>
@@ -758,7 +758,7 @@ function renderPoiStatus() {
   if (poiState === 'loading') el.textContent = poiProgress.local
     ? `⏳ Chargement des points (${poiProgress.done} / ${poiProgress.total} zones)…`
     : `⏳ Recherche dans OpenStreetMap (hors pays couverts)…${prog}${poiProgress.server > 1 ? ` (serveur de secours ${poiProgress.server - 1}/${OVERPASS.length - 1})` : ''}. ${n ? nf0.format(n) + ' points déjà trouvés.' : ''}`;
-  else if (poiState === 'error') { el.innerHTML = `⚠️ ${n ? nf0.format(n) + ' points trouvés, mais une partie du tracé n\'a pas pu être analysée' : 'Points indisponibles'} : ${poiIndex ? 'hors des pays couverts par Itinera, ' : ''}les serveurs publics OpenStreetMap ne répondent pas. Réessaie dans quelques minutes.<button id="poiRetry">Réessayer</button>`; $('#poiRetry').onclick = () => fetchPOIs(); }
+  else if (poiState === 'error') { el.innerHTML = `⚠️ ${n ? nf0.format(n) + ' points trouvés, mais une partie du tracé n\'a pas pu être analysée' : 'Points indisponibles'} : ${poiIndex ? 'hors des pays couverts par Orri, ' : ''}les serveurs publics OpenStreetMap ne répondent pas. Réessaie dans quelques minutes.<button id="poiRetry">Réessayer</button>`; $('#poiRetry').onclick = () => fetchPOIs(); }
   else el.textContent = has ? `${nf0.format(n)} points à moins de 1 km du tracé (1,5 km pour les commerces, 3 km pour les gares). Clique sur une étape pour voir le détail.${poiIndex ? ' Données OpenStreetMap du ' + new Date(poiIndex.generated + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) + '.' : ''}` : 'Trace un itinéraire pour voir l\'eau, les refuges et les commerces.';
   Object.keys(CAT).forEach(k => { const c = $('#cnt_' + k); if (c) c.textContent = has && R.pois ? nf0.format(R.pois.filter(p => p.cat === k).length) : '—'; });
 }
@@ -1050,7 +1050,7 @@ function importTracks(tracks) {
 }
 function toGPX() {
   const stamp = new Date().toISOString();
-  let x = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Itinera" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>Itinéraire</name><time>${stamp}</time></metadata>\n`;
+  let x = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Orri" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>Itinéraire</name><time>${stamp}</time></metadata>\n`;
   R.stages.forEach((s, k) => {
     if (k < R.stages.length - 1) {
       const where = s.endPoi ? (s.endPoi.name || s.endPoi.kind) : placeName(s.i1);
@@ -1151,7 +1151,7 @@ async function overpass(q) {
   }
   throw lastErr;
 }
-/* Données propres à Itinera : tuiles de 0,25° extraites d'OpenStreetMap chaque mois (data/poi/) */
+/* Données propres à Orri : tuiles de 0,25° extraites d'OpenStreetMap chaque mois (data/poi/) */
 const POI_BASE = 'data/poi/';
 let poiIndex = null, poiIndexAt = 0;
 const tileLoaded = new Set();
@@ -1195,7 +1195,7 @@ async function fetchPOIs() {
   let failed = false;
   try {
     const ix = await loadPoiIndex();
-    // 1. Pays couverts : données Itinera (rapide, fiable)
+    // 1. Pays couverts : données Orri (rapide, fiable)
     if (ix) {
       const need = localTilesNeeded(ix);
       if (need.length) {

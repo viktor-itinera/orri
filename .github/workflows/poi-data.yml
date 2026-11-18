@@ -8,7 +8,7 @@ on:
     - cron: "17 3 2 * *"          # le 2 de chaque mois à 03:17 UTC
   push:
     branches: [main]
-    paths: ["tools/build_pois.py", ".github/workflows/poi-data.yml"]
+    paths: ["tools/build_pois.py"]
 
 permissions:
   contents: write
@@ -60,4 +60,5 @@ jobs:
           git add data/poi
           if git diff --cached --quiet; then echo "Aucun changement"; exit 0; fi
           git commit -m "Données OpenStreetMap du $(date -u +%Y-%m-%d)"
+          git pull --rebase --autostash origin main
           git push
