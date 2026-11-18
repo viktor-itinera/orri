@@ -32,6 +32,9 @@ def handler(route):
     q = urllib.parse.parse_qs(urllib.parse.urlparse(u).query)
     if u.startswith(URL): return route.continue_()
     if "unpkg.com/maplibre-gl@" in u: return route.fulfill(path=NM + "maplibre-gl/dist/maplibre-gl" + (".css" if u.endswith(".css") else ".js"), content_type="text/css" if u.endswith(".css") else "application/javascript")
+    if "unpkg.com/d3-" in u:
+        nm = u.split("unpkg.com/")[1].split("@")[0]
+        return route.fulfill(path=NM + nm + "/dist/" + nm + ".min.js", content_type="application/javascript")
     if "unpkg.com/@maplibre/maplibre-gl-leaflet" in u: return route.fulfill(path=NM + "@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js", content_type="application/javascript")
     if "cdnjs.cloudflare.com" in u and u.endswith(".js"): return route.fulfill(path=LEAF + "leaflet.js", content_type="application/javascript")
     if "cdnjs.cloudflare.com" in u and u.endswith(".css"): return route.fulfill(path=LEAF + "leaflet.css", content_type="text/css")
@@ -223,7 +226,18 @@ with sync_playwright() as p:
     pg.click("#vClose"); pg.click("#bTrekBack"); pg.wait_for_timeout(300)
     pg.click("#tFilter [data-f=done]"); pg.wait_for_timeout(200)
     check(len(pg.query_selector_all("#trekList .trek.done")) == 1 and "1" in pg.text_content("#cStats") and "km parcourus" in pg.text_content("#cStats"), "carnet : filtre « Faits » et statistiques")
-    pg.click("#tFilter [data-f=all]"); pg.click("#page-profile .close")
+    pg.click("#tFilter [data-f=all]")
+    # Globe souvenir : dans le carnet et sur l'accueil
+    pg.wait_for_function("globes.profile && globes.profile.w > 0", timeout=10000)
+    gp = J(pg, "() => ({ n: globes.profile.data.length, done: globes.profile.data.filter(g => g.done).length, ph: globes.profile.data.reduce((x, g) => x + g.photos.length, 0) })")
+    check(gp["n"] == 1 and gp["done"] == 1 and gp["ph"] == 1, f"globe du carnet : le trek fait et sa photo ({gp})")
+    J(pg, "() => { const G = globes.profile; G.select(G.data[0]); G.focus(G.data[0]); }"); pg.wait_for_timeout(1500)
+    check(pg.is_visible("#globeSlotProfile .gcard") and J(pg, "() => globes.profile.zoom") > 5, "globe : toucher un trek zoome dessus et affiche sa carte")
+    pg.click("#page-profile .close"); pg.click("#bProfile"); pg.click("#bWelcome"); pg.wait_for_function("globes.welcome && globes.welcome.w > 0", timeout=10000)
+    check(pg.is_visible("#globeSlotWelcome canvas") and pg.is_visible("#wDraw"), "globe sur l'accueil, boutons de préparation visibles")
+    J(pg, "() => { $('#gPlace').value = 'profile'; $('#gPlace').onchange({ target: $('#gPlace') }); }"); pg.wait_for_timeout(300)
+    check(not pg.is_visible("#globeSlotWelcome canvas"), "réglage : globe dans le carnet seulement")
+    J(pg, "() => { $('#gPlace').value = 'both'; $('#gPlace').onchange({ target: $('#gPlace') }); closePage(); }")
     pg.click("#bClear"); pg.click("#bClear"); pg.wait_for_timeout(300)
     pg.evaluate("() => { map.setView([42.89, -0.11], 12); }"); pg.wait_for_timeout(300)
     mb = pg.query_selector("#map").bounding_box(); c0 = calls["brouter"]

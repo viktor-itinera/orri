@@ -1,16 +1,18 @@
 // Orri — service worker : l'application s'ouvre même sans réseau.
 // (Les cartes et données hors ligne du trek arriveront en semaine 7.)
-const VERSION = 'orri-v1.5.0';
+const VERSION = 'orri-v1.6.0';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
-  './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/favicon-32.png', './fonts/figtree.woff2', './fonts/fraunces.woff2', './carte/orri-style.json'
+  './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/favicon-32.png', './fonts/figtree.woff2', './fonts/fraunces.woff2', './carte/orri-style.json', './carte/monde.json'
 ];
 const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
   'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css',
   'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js',
-  'https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js'
+  'https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js',
+  'https://unpkg.com/d3-array@3.2.4/dist/d3-array.min.js',
+  'https://unpkg.com/d3-geo@3.1.1/dist/d3-geo.min.js'
 ];
 
 self.addEventListener('install', e => {

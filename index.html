@@ -184,6 +184,25 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
 .tmain span{display:block;color:var(--forest);font-size:14px;margin-top:2px;font-variant-numeric:tabular-nums}
 .tmain small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px;font-weight:400}
 .tact{display:flex;border-top:1px solid var(--line)}
+/* Globe souvenir */
+.globe{position:relative;width:100%;height:min(46vh,380px);touch-action:none;user-select:none;-webkit-user-select:none}
+#globeSlotProfile .globe{height:min(88vw,420px);margin-top:4px}
+.globe canvas{display:block;cursor:grab}
+.globe canvas:active{cursor:grabbing}
+.gzoom{position:absolute;right:2px;bottom:10px;display:flex;flex-direction:column;gap:6px}
+.gzoom button{width:40px;min-height:40px;padding:0;border-radius:50%;border:0;background:rgba(255,253,248,.94);color:var(--forest);box-shadow:0 2px 8px rgba(23,58,44,.2)}
+.gzoom .ii{margin:0}
+.ghint{position:absolute;left:44px;right:44px;bottom:2px;text-align:center;font-size:12.5px;color:var(--muted);pointer-events:none}
+.gcard{display:flex;align-items:center;gap:8px;background:var(--panel);border-radius:16px;padding:10px 10px 10px 14px;box-shadow:0 1px 0 var(--line),0 4px 14px rgba(31,70,54,.1);margin:6px 0 4px;animation:slideUp .25s var(--ease) both}
+.gcard[hidden]{display:none}
+.gtx{flex:1;min-width:0;line-height:1.25}.gtx b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px}.gtx small{color:var(--muted);font-size:12.5px}
+.gcard button{flex:none;min-height:44px;padding:0 12px;border-radius:22px;font-size:14px;font-weight:600}
+.gcard .ii{width:16px;height:16px}
+.globe-welcome .wlogo{display:none}
+.globe-welcome .wbody{padding-top:4px}
+.globe-welcome .wbody h1{margin-top:-4px;font-size:28px}
+.globe-welcome .wbody .tag{font-size:15px;margin-bottom:4px}
+#globeSlotWelcome .globe{height:min(42vh,360px)}
 /* Mon carnet */
 .cstats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0 4px}
 .cstats div{background:var(--panel);border-radius:14px;padding:10px 4px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.05)}
@@ -521,6 +540,7 @@ details.why summary::-webkit-details-marker{display:none}
   <!-- ===== Accueil (premier lancement) ===== -->
   <div class="page" id="page-welcome" role="dialog" aria-label="Bienvenue sur Orri">
     <div class="wbody">
+      <div id="globeSlotWelcome"></div>
       <img src="icons/icon-192.png" alt="" class="wlogo">
       <h1>Orri</h1>
       <p class="tag">Prépare ton trek en quelques minutes : étapes, eau, refuges, bivouacs, ravitaillement et gares.</p>
@@ -564,6 +584,9 @@ details.why summary::-webkit-details-marker{display:none}
         </select></label>
       </div>
       <ul id="trekList"></ul>
+      <h2>Mon globe</h2>
+      <div class="lim"><label for="gPlace">Afficher le globe de mes treks</label>
+        <select id="gPlace"><option value="both">sur l'accueil et ici</option><option value="welcome">sur l'accueil</option><option value="profile">ici, dans le carnet</option><option value="off">nulle part</option></select></div>
       <h2>Sauvegarde</h2>
       <div class="row">
         <button id="bBackup" class="grow"><svg class="ico"><use href="#i-down"/></svg>Sauvegarder dans un fichier</button>
@@ -2425,6 +2448,7 @@ function openPage(name) {
   if (name === 'sheet') renderSheet();
   if (name === 'adjust') renderAdjLive();
   if (name === 'welcome') renderWelcome();
+  if (name === 'welcome' || name === 'profile') requestAnimationFrame(() => mountGlobe(name));
 }
 function closePage() { document.querySelectorAll('.page').forEach(p => p.classList.remove('on')); document.body.classList.remove('paged'); }
 document.querySelectorAll('.page .close:not(.back)').forEach(b => b.onclick = closePage);
@@ -2503,6 +2527,218 @@ $('#bSheetDl').onclick = () => {
 $('#bSheetPrint').onclick = () => { try { $('#sheetFrame').contentWindow.print(); } catch (e) { toast('Impression indisponible : télécharge la fiche', 'warn'); } };
 treks.load();
 
+/* ================= Globe souvenir =================
+   La Terre dessinée aux couleurs d'Orri (d3-geo, projection orthographique, terres Natural Earth de carte/monde.json),
+   avec les treks du carnet : faits en terracotta, à faire en pointillés, et les photos géolocalisées quand on zoome.
+   Glisser pour tourner, pincer / molette pour zoomer, toucher un trek pour s'y envoler.
+   Placement (réglage du carnet, `orri.globe`) : 'both' (accueil + carnet), 'welcome', 'profile' ou 'off'. */
+const GLOBE_LIBS = ['https://unpkg.com/d3-array@3.2.4/dist/d3-array.min.js', 'https://unpkg.com/d3-geo@3.1.1/dist/d3-geo.min.js'];
+let globePlace = (() => { try { const q = new URLSearchParams(location.search).get('globe'); if (['both', 'welcome', 'profile', 'off'].includes(q)) { localStorage.setItem('orri.globe', q); return q; } return localStorage.getItem('orri.globe') || 'both'; } catch (e) { return 'both'; } })();
+let globeLibs = null, worldData = null;
+function loadGlobeLibs() {
+  if (globeLibs) return globeLibs;
+  const add = src => new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = src; sc.onload = ok; sc.onerror = () => ko(new Error('globe : ' + src)); document.head.appendChild(sc); });
+  globeLibs = (async () => {
+    if (!window.d3 || !d3.geoOrthographic) { await add(GLOBE_LIBS[0]); await add(GLOBE_LIBS[1]); }
+    worldData = await (await fetch('carte/monde.json')).json();
+  })();
+  globeLibs.catch(() => { globeLibs = null; });
+  return globeLibs;
+}
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function globeTreks() {   // treks du carnet (+ le parcours en cours s'il n'est pas enregistré)
+  const out = treks.list.map(t => ({ id: t.id, name: t.name, done: t.status === 'done', pts: trekPts(t, 260), photos: (t.photos || []).filter(p => p.lat != null), t }));
+  if (state.start && R && R.n > 1 && !(treks.cur && !treks.dirty())) {
+    const st = Math.max(1, Math.floor(R.n / 260)), pts = []; for (let i = 0; i < R.n; i += st) pts.push([R.lat[i], R.lon[i]]);
+    out.push({ id: '_cur', name: treks.cur ? (treks.get(treks.cur) || {}).name || 'Parcours en cours' : 'Parcours en cours', done: false, cur: true, pts, photos: [] });
+  }
+  return out.filter(g => g.pts.length > 1);
+}
+class Globe {
+  constructor(slot, opt) {
+    this.slot = slot; this.opt = opt || {};
+    slot.innerHTML = `<div class="globe"><canvas aria-label="Globe de tes treks : glisse pour tourner, touche un trek"></canvas>
+      <div class="gzoom"><button data-z="1" aria-label="Zoomer">${I('plus')}</button><button data-z="-1" aria-label="Dézoomer">${I('minus')}</button><button data-z="0" aria-label="Vue d'ensemble">${I('globe')}</button></div>
+      <div class="ghint">${this.opt.hint || ''}</div></div><div class="gcard" hidden></div>`;
+    this.wrap = slot.firstElementChild; this.cv = this.wrap.querySelector('canvas'); this.ctx = this.cv.getContext('2d');
+    this.card = slot.querySelector('.gcard');
+    this.rot = [-2, -40, 0]; this.zoom = 1; this.sel = null; this.anim = null; this.idleAt = 0; this.imgs = new Map(); this.pointers = new Map();
+    this.wrap.querySelectorAll('.gzoom button').forEach(b => b.onclick = e => { e.stopPropagation(); const z = +b.dataset.z; if (!z) { this.select(null); this.fly(this.homeRot(), 1); } else this.fly(this.rot, this.zoom * (z > 0 ? 2.2 : 1 / 2.2)); });
+    this.bind();
+    this.ro = new ResizeObserver(() => this.resize()); this.ro.observe(this.wrap);
+  }
+  homeRot() { const g = this.data.find(x => x.cur) || this.data[0]; if (!g) return [-5, -42, 0]; const c = d3.geoCentroid({ type: 'LineString', coordinates: g.pts.map(p => [p[1], p[0]]) }); return [-c[0], -Math.max(-60, Math.min(60, c[1])) , 0]; }
+  setData(list) {
+    this.data = list.map(g => Object.assign(g, { line: { type: 'LineString', coordinates: g.pts.map(p => [p[1], p[0]]) } }));
+    this.data.forEach(g => g.c = d3.geoCentroid(g.line));
+    if (!this.started) { this.started = true; this.rot = this.homeRot(); this.rot[0] += 25; this.fly(this.homeRot(), 1, 1600); }
+    if (this.sel && !this.data.find(g => g.id === this.sel.id)) this.select(null);
+    this.draw();
+  }
+  resize() {
+    const w = this.wrap.clientWidth, h = this.wrap.clientHeight; if (!w || !h) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    this.cv.width = Math.round(w * dpr); this.cv.height = Math.round(h * dpr); this.cv.style.width = w + 'px'; this.cv.style.height = h + 'px';
+    this.w = w; this.h = h; this.dpr = dpr; this.r0 = Math.min(w, h) / 2 - 14; this.draw();
+  }
+  proj() { return d3.geoOrthographic().rotate(this.rot).scale(this.r0 * this.zoom).translate([this.w / 2, this.h / 2]).clipAngle(90).precision(0.4); }
+  visible(lonlat) { return d3.geoDistance(lonlat, [-this.rot[0], -this.rot[1]]) < Math.PI / 2 - 0.02; }
+  draw() {
+    if (!this.w || !worldData) return;
+    const c = this.ctx, P = this.proj(), path = d3.geoPath(P, c), R0 = this.r0 * this.zoom, cx = this.w / 2, cy = this.h / 2;
+    c.setTransform(this.dpr, 0, 0, this.dpr, 0, 0); c.clearRect(0, 0, this.w, this.h);
+    // halo et océan
+    if (R0 < Math.max(this.w, this.h) * 1.5) {
+      const halo = c.createRadialGradient(cx, cy, R0 * 0.96, cx, cy, R0 * 1.12);
+      halo.addColorStop(0, 'rgba(207,106,60,.22)'); halo.addColorStop(1, 'rgba(207,106,60,0)');
+      c.fillStyle = halo; c.beginPath(); c.arc(cx, cy, R0 * 1.12, 0, 2 * Math.PI); c.fill();
+    }
+    const sea = c.createRadialGradient(cx - R0 * .35, cy - R0 * .4, R0 * .1, cx, cy, R0);
+    sea.addColorStop(0, '#2f6650'); sea.addColorStop(1, '#173a2c');
+    c.beginPath(); path({ type: 'Sphere' }); c.fillStyle = sea; c.fill();
+    c.beginPath(); path(d3.geoGraticule10()); c.strokeStyle = 'rgba(239,231,216,.08)'; c.lineWidth = 1; c.stroke();
+    c.beginPath(); path(worldData.land); c.fillStyle = '#efe7d8'; c.fill();
+    c.strokeStyle = 'rgba(31,70,54,.35)'; c.lineWidth = .6; c.stroke();
+    c.beginPath(); path(worldData.borders); c.strokeStyle = 'rgba(31,70,54,.22)'; c.lineWidth = .6; c.stroke();
+    // reflet
+    const gl = c.createRadialGradient(cx - R0 * .45, cy - R0 * .5, 0, cx - R0 * .45, cy - R0 * .5, R0 * 1.1);
+    gl.addColorStop(0, 'rgba(255,255,255,.16)'); gl.addColorStop(.5, 'rgba(255,255,255,0)');
+    c.beginPath(); path({ type: 'Sphere' }); c.fillStyle = gl; c.fill();
+    // treks
+    this.hits = [];
+    const showLines = this.zoom > 2.2;
+    this.data.forEach(g => {
+      const sel = this.sel && this.sel.id === g.id, col = g.done ? '#cf6a3c' : g.cur ? '#f4c06b' : '#fffaf0';
+      if (showLines || sel) {
+        c.beginPath(); path(g.line); c.setLineDash([]); c.lineJoin = c.lineCap = 'round';
+        c.strokeStyle = 'rgba(23,58,44,.55)'; c.lineWidth = sel ? 7 : 5; c.stroke();
+        c.beginPath(); path(g.line); c.setLineDash(g.done ? [] : [6, 5]); c.strokeStyle = col; c.lineWidth = sel ? 4 : 2.6; c.stroke(); c.setLineDash([]);
+      }
+      if (!this.visible(g.c)) return;
+      const [x, y] = P(g.c);
+      if (!showLines || sel) {
+        c.beginPath(); c.arc(x, y, sel ? 9 : 7, 0, 2 * Math.PI); c.fillStyle = g.done ? '#cf6a3c' : '#173a2c'; c.fill();
+        c.lineWidth = 2.5; c.strokeStyle = g.done ? '#fff' : col; c.stroke();
+        if (g.done) { c.beginPath(); c.arc(x, y, 2.6, 0, 2 * Math.PI); c.fillStyle = '#fff'; c.fill(); }
+      }
+      if (this.zoom > 3.5 || sel) {
+        c.font = '600 12.5px Figtree, system-ui, sans-serif'; c.textAlign = 'left'; c.textBaseline = 'middle';
+        const s0 = g.line.coordinates[0], lp = this.visible(s0) && this.zoom > 3.5 ? P(s0) : [x, y], tx = lp[0] + 11, label = g.name.length > 34 ? g.name.slice(0, 33) + '…' : g.name;
+        c.lineWidth = 4; c.strokeStyle = 'rgba(23,58,44,.85)'; c.strokeText(label, tx, lp[1]); c.fillStyle = '#fffaf0'; c.fillText(label, tx, lp[1]);
+      }
+      this.hits.push({ g, x, y });
+      if (showLines) g.line.coordinates.forEach((q, i) => { if (i % 6 === 0 && this.visible(q)) { const [a, b] = P(q); this.hits.push({ g, x: a, y: b }); } });
+    });
+    // photos (quand on est assez près)
+    if (this.zoom > 6) this.data.forEach(g => g.photos.forEach(ph => {
+      const ll = [ph.lon, ph.lat]; if (!this.visible(ll)) return;
+      const [x, y] = P(ll), r = 17, im = this.img(ph.id);
+      c.save(); c.beginPath(); c.arc(x, y - r - 6, r, 0, 2 * Math.PI); c.closePath();
+      c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 6; c.fillStyle = '#fff'; c.fill(); c.shadowBlur = 0;
+      c.beginPath(); c.moveTo(x - 5, y - 8); c.lineTo(x, y); c.lineTo(x + 5, y - 8); c.fill();
+      c.beginPath(); c.arc(x, y - r - 6, r - 2.5, 0, 2 * Math.PI); c.clip();
+      if (im && im.complete && im.naturalWidth) { const k = Math.max((2 * r) / im.naturalWidth, (2 * r) / im.naturalHeight); c.drawImage(im, x - im.naturalWidth * k / 2, y - r - 6 - im.naturalHeight * k / 2, im.naturalWidth * k, im.naturalHeight * k); }
+      else { c.fillStyle = '#efe7d8'; c.fill(); }
+      c.restore();
+      this.hits.push({ g, x, y: y - r - 6, ph });
+    }));
+  }
+  img(id) {
+    if (this.imgs.has(id)) return this.imgs.get(id);
+    const im = new Image(); this.imgs.set(id, im);
+    photoURL(id).then(u => { if (u) { im.onload = () => this.draw(); im.src = u; } });
+    return im;
+  }
+  fly(rot, zoom, ms) {
+    const r0 = this.rot.slice(), z0 = this.zoom, z1 = Math.max(0.8, Math.min(900, zoom)), t0 = performance.now(), dur = reduceMotion ? 0 : (ms || 1100);
+    const ip = d3.geoInterpolate([-r0[0], -r0[1]], [-rot[0], -rot[1]]), far = d3.geoDistance([-r0[0], -r0[1]], [-rot[0], -rot[1]]);
+    const bump = Math.min(z0, z1) > 2 && far > 0.05 ? Math.max(1, Math.min(z0, z1) / Math.max(1, far * 6)) : null;   // on dézoome en route pour les grands sauts
+    cancelAnimationFrame(this.anim); this.idleAt = performance.now() + 6000;
+    const step = now => {
+      const k = dur ? Math.min(1, (now - t0) / dur) : 1, e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+      const p = ip(e); this.rot = [-p[0], -p[1], 0];
+      let lz = Math.log(z0) + (Math.log(z1) - Math.log(z0)) * e;
+      if (bump) lz = Math.min(lz, Math.log(bump) + (Math.max(Math.log(z0), Math.log(z1)) - Math.log(bump)) * Math.abs(2 * e - 1) * 1);
+      this.zoom = Math.exp(lz); this.draw();
+      if (k < 1) this.anim = requestAnimationFrame(step); else { this.anim = null; this.spin(); }
+    };
+    this.anim = requestAnimationFrame(step);
+  }
+  spin() {   // rotation lente quand on ne touche à rien, vue d'ensemble seulement
+    if (reduceMotion || this.spinning || this.opt.still) return;
+    this.spinning = true;
+    let last = performance.now();
+    const step = now => {
+      if (!this.slot.isConnected || !this.wrap.offsetParent) { this.spinning = false; return; }
+      if (!this.anim && !this.drag && now > this.idleAt && this.zoom < 1.6 && !this.sel) { this.rot[0] += (now - last) * 0.006; this.draw(); }
+      last = now; requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  focus(g) {
+    let a0 = Infinity, a1 = -Infinity, o0 = Infinity, o1 = -Infinity;
+    g.pts.forEach(p => { a0 = Math.min(a0, p[0]); a1 = Math.max(a1, p[0]); o0 = Math.min(o0, p[1]); o1 = Math.max(o1, p[1]); });
+    const ext = Math.max((a1 - a0), (o1 - o0) * Math.cos((a0 + a1) / 2 * Math.PI / 180), 0.05) * Math.PI / 180;
+    this.fly([-g.c[0], -g.c[1], 0], (0.55 * Math.min(this.w, this.h)) / ext / this.r0);
+  }
+  select(g) {
+    this.sel = g || null; this.draw();
+    if (!g) { this.card.hidden = true; return; }
+    const t = g.t, s = (t && t.sum) || {};
+    this.card.hidden = false;
+    this.card.innerHTML = `<div class="gtx"><b>${escXml(g.name)}</b><small>${g.cur ? 'en préparation, pas encore dans ton carnet' : (s.km ? nf1.format(s.km) + ' km · ' + s.stages + ' jour' + (s.stages > 1 ? 's' : '') + ' · ' : '') + (g.done ? 'fait' + (t.doneDate ? ' le ' + fDay(t.doneDate) : '') : 'à faire')}${g.photos.length ? ' · ' + g.photos.length + ' photo' + (g.photos.length > 1 ? 's' : '') : ''}</small></div>
+      ${g.cur ? '' : `<button data-g="memo">${I('book')}Souvenirs</button>`}<button class="primary" data-g="map">${I('route')}${g.done ? 'Carte' : 'Préparer'}</button>`;
+    this.card.querySelectorAll('[data-g]').forEach(b => b.onclick = () => {
+      if (b.dataset.g === 'memo') return openTrekPage(g.id);
+      if (g.cur) { closeWelcome(); return showTab('stages'); }
+      if (g.id !== treks.cur && state.start && treks.dirty()) return confirmTap(b, 'Parcours en cours non enregistré : touche encore', () => { openTrek(g.id); });
+      openTrek(g.id);
+    });
+  }
+  bind() {
+    const cv = this.cv;
+    cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); this.pointers.set(e.pointerId, [e.offsetX, e.offsetY]); this.drag = { x: e.offsetX, y: e.offsetY, rot: this.rot.slice(), z: this.zoom, moved: 0, d0: this.pinchD() }; cancelAnimationFrame(this.anim); this.anim = null; this.idleAt = performance.now() + 6000; });
+    cv.addEventListener('pointermove', e => {
+      if (!this.drag || !this.pointers.has(e.pointerId)) return;
+      this.pointers.set(e.pointerId, [e.offsetX, e.offsetY]);
+      if (this.pointers.size >= 2) { const d = this.pinchD(); if (this.drag.d0) { this.zoom = Math.max(0.8, Math.min(900, this.drag.z * d / this.drag.d0)); this.drag.moved = 99; this.draw(); } return; }
+      const dx = e.offsetX - this.drag.x, dy = e.offsetY - this.drag.y; this.drag.moved = Math.max(this.drag.moved, Math.abs(dx) + Math.abs(dy));
+      const k = 75 / (this.r0 * this.zoom);
+      this.rot = [this.drag.rot[0] + dx * k, Math.max(-85, Math.min(85, this.drag.rot[1] - dy * k)), 0]; this.draw();
+    });
+    const up = e => {
+      this.pointers.delete(e.pointerId);
+      if (this.pointers.size) { const [p] = this.pointers.values(); this.drag = { x: p[0], y: p[1], rot: this.rot.slice(), z: this.zoom, moved: 99, d0: 0 }; return; }
+      const d = this.drag; this.drag = null; this.idleAt = performance.now() + 6000;
+      if (d && d.moved < 8) this.tap(e.offsetX, e.offsetY);
+    };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+    cv.addEventListener('wheel', e => { e.preventDefault(); this.zoom = Math.max(0.8, Math.min(900, this.zoom * Math.exp(-e.deltaY * 0.0015))); this.idleAt = performance.now() + 6000; this.draw(); }, { passive: false });
+  }
+  pinchD() { const p = [...this.pointers.values()]; return p.length >= 2 ? Math.hypot(p[0][0] - p[1][0], p[0][1] - p[1][1]) : 0; }
+  tap(x, y) {
+    let best = null, bd = 26 * 26;
+    (this.hits || []).forEach(h => { const d = (h.x - x) ** 2 + (h.y - y) ** 2; if (d < bd || (h.ph && d < 22 * 22)) { if (!best || !best.ph || h.ph) { bd = d; best = h; } } });
+    if (!best) { if (this.sel) { this.select(null); } return; }
+    if (best.ph && best.g.t) { const i = best.g.t.photos.findIndex(p => p.id === best.ph.id); return viewPhoto(best.g.t, i); }
+    this.select(best.g); this.focus(best.g);
+  }
+}
+const globes = {};
+async function mountGlobe(where) {
+  const slot = $(where === 'welcome' ? '#globeSlotWelcome' : '#globeSlotProfile');
+  const want = globePlace === 'both' || globePlace === where;
+  document.body.classList.toggle('globe-' + where, want);
+  if (!want) { slot.innerHTML = ''; delete globes[where]; return; }
+  try { await loadGlobeLibs(); } catch (e) { slot.innerHTML = ''; document.body.classList.remove('globe-' + where); return; }
+  if (!globes[where] || !slot.firstElementChild) globes[where] = new Globe(slot, { hint: where === 'welcome' ? '' : 'Glisse pour tourner · touche un trek' });
+  const g = globes[where]; g.setData(globeTreks()); g.resize(); g.spin();
+  const n = treks.list.length, d = treks.list.filter(t => t.status === 'done').length;
+  g.wrap.querySelector('.ghint').textContent = where === 'welcome' ? (n ? `${d} trek${d > 1 ? 's' : ''} fait${d > 1 ? 's' : ''} · ${n - d} à faire` : 'Tes treks apparaîtront sur ce globe') : (n ? 'Glisse pour tourner · touche un trek' : 'Enregistre un trek : il apparaîtra sur ton globe');
+}
+$('#gPlace').value = globePlace;
+$('#gPlace').onchange = e => { globePlace = e.target.value; try { localStorage.setItem('orri.globe', globePlace); } catch (err) { } mountGlobe('profile'); mountGlobe('welcome'); };
+function globeRefresh() { Object.keys(globes).forEach(k => { if (globes[k] && globes[k].wrap.offsetParent) mountGlobe(k); }); }
 /* ================= Accueil (à chaque ouverture) et premiers pas ================= */
 const WELCOME_KEY = 'orri.welcomed';
 const once = (k) => { try { if (localStorage.getItem(k)) return false; localStorage.setItem(k, '1'); return true; } catch (e) { return false; } };
