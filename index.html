@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Itinera — planificateur de treks au long cours</title>
+<meta name="description" content="Planifie tes treks au long cours : tracé, étapes, eau, refuges, bivouacs, ravitaillement et gares.">
+<meta name="theme-color" content="#1c3a2e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Itinera">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{
+  --bg:#f4f3ee; --panel:#ffffff; --ink:#1c2320; --muted:#68716c; --line:#e2e0d8;
+  --a:#c2410c; --b:#1d4ed8; --ok:#15803d; --warn:#b45309; --err:#b91c1c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+#app{display:flex;height:100%}
+#panel{width:360px;flex:none;overflow-y:auto;background:var(--panel);border-right:1px solid var(--line);padding:14px 16px 28px}
+main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+#map{flex:1;min-height:220px}
+#profile{height:170px;flex:none;position:relative;background:var(--panel);border-top:1px solid var(--line)}
+#prof{width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
+#cursor{position:absolute;top:10px;bottom:22px;width:1px;background:var(--ink);opacity:.55;pointer-events:none;display:none}
+#tip{position:absolute;top:6px;padding:3px 7px;font-size:12px;background:var(--ink);color:#fff;border-radius:4px;pointer-events:none;display:none;white-space:nowrap}
+h1{font-size:17px;margin:0 0 2px}
+.sub{color:var(--muted);font-size:12px;margin:0 0 14px}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:18px 0 8px}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+button,.btn,select,input[type=search],input[type=number]{font:inherit;border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 10px;color:var(--ink)}
+input[type=number]{width:74px;padding:4px 6px;text-align:right}
+button,.btn{cursor:pointer}
+button:hover,.btn:hover{border-color:#bdb9ad}
+button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+button.danger{color:var(--err)}
+button:disabled{opacity:.45;cursor:default}
+input[type=search]{width:100%}
+#results{list-style:none;margin:4px 0 0;padding:0;border:1px solid var(--line);border-radius:7px;display:none;max-height:220px;overflow:auto}
+#results li{padding:6px 10px;cursor:pointer;border-top:1px solid var(--line)}
+#results li:first-child{border-top:0}
+#results li:hover{background:var(--bg)}
+.seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{border:0;border-radius:0;flex:1;padding:6px 8px}
+.box{background:var(--bg);border-radius:8px;padding:10px;margin-top:8px}
+.lim{display:flex;align-items:center;gap:8px;margin:4px 0}
+.lim label{flex:1;cursor:pointer}
+.lim .u{width:52px;color:var(--muted);font-size:12px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--bg);border-radius:8px;padding:8px 10px}
+.stat b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;color:var(--muted)}
+.note{font-size:12px;color:var(--muted);margin:8px 0 0}
+#stages{list-style:none;margin:0;padding:0}
+#stages li{padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;cursor:pointer}
+#stages li.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink) inset}
+#stages .t{font-weight:600}
+#stages .m{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px}
+#status{position:absolute;left:12px;bottom:182px;z-index:1000;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{background:var(--ink);color:#fff;padding:7px 11px;border-radius:7px;font-size:13px;max-width:360px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.toast.err{background:var(--err)} .toast.warn{background:var(--warn)} .toast.ok{background:var(--ok)}
+#busy{display:none}
+.wp{background:#fff;border:3px solid var(--ink);border-radius:50%}
+.wp.first{border-color:var(--ok)} .wp.last{border-color:var(--err)}
+.stg{background:var(--ink);color:#fff;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.stg.drag{cursor:grab}
+.stg.pin{background:var(--ok)}
+.lowzoom .stg{display:none}
+.poi-row{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:13px}
+.poi-row label{flex:1;cursor:pointer}
+.poi-row .c{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:2px;box-shadow:0 0 0 1px rgba(0,0,0,.2)}
+#stages .e{font-size:12px;margin-top:3px}
+#stages .e.miss{color:var(--warn)}
+#stages .p{font-size:12px;color:var(--muted);margin-top:2px}
+#poiStatus button{padding:2px 8px;font-size:12px;margin-left:4px}
+.detail{margin-top:8px;border-top:1px solid var(--line);padding-top:6px;cursor:default}
+.info{font-size:12.5px;margin:4px 0}
+.warnline{color:var(--warn)}
+.plist{margin-top:6px}
+.prow{display:flex;gap:6px;font-size:12.5px;padding:3px 4px;border-radius:5px;cursor:pointer}
+.prow:hover{background:var(--bg)}
+.prow .km{width:62px;flex:none;color:var(--muted);font-variant-numeric:tabular-nums}
+.prow .k{color:var(--muted)}
+.prow.end{font-weight:600}
+input[type=date],input[type=time]{font:inherit;border:1px solid var(--line);border-radius:7px;padding:4px 6px;background:#fff;color:var(--ink)}
+.help{font-size:12.5px;color:var(--muted);padding-left:18px;margin:6px 0}
+.help li{margin-bottom:3px}
+footer{font-size:11px;color:var(--muted);margin-top:18px;border-top:1px solid var(--line);padding-top:10px}
+@media (max-width:760px){
+  #app{flex-direction:column-reverse}
+  #panel{width:auto;height:48%;border-right:0;border-top:1px solid var(--line)}
+  #profile{height:120px}
+  #status{bottom:132px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="panel">
+    <h1>Itinera</h1>
+    <p class="sub">Planificateur de treks au long cours · prototype v0.5</p>
+
+    <input id="q" type="search" placeholder="Aller à… (ex. Cauterets, Pic du Canigou)" autocomplete="off">
+    <ul id="results"></ul>
+
+    <h2>Tracer</h2>
+    <div class="row">
+      <button id="bDraw" class="on" title="Cliquer sur la carte ajoute un point">✏️ Tracer</button>
+      <div class="seg" style="flex:1">
+        <button id="mRoute" class="on" title="Le tracé suit les sentiers">Sentiers</button>
+        <button id="mLine" title="Ligne droite, pour le hors-sentier">Ligne droite</button>
+      </div>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <button id="bUndo" title="Ctrl+Z">↶ Annuler</button>
+      <button id="bReverse">⇄ Inverser le sens</button>
+      <button id="bClear" class="danger">Effacer</button>
+    </div>
+
+    <h2>Découpage en étapes</h2>
+    <div class="seg" id="modeSeg">
+      <button data-m="limits" title="Des limites par jour, combinables">Limites / jour</button>
+      <button data-m="days" title="Un nombre de jours imposé, étapes d'effort égal">Nb de jours</button>
+      <button data-m="gpx" title="Les étapes contenues dans le fichier GPX importé">Du GPX</button>
+    </div>
+    <div class="box" id="limitsBox">
+      <div class="lim"><input type="checkbox" id="cH"><label for="cH">Marche max</label><input type="number" id="vH" min="1" max="16" step="0.5"><span class="u">h / jour</span></div>
+      <div class="lim"><input type="checkbox" id="cUp"><label for="cUp">D+ max</label><input type="number" id="vUp" min="100" max="6000" step="100"><span class="u">m / jour</span></div>
+      <div class="lim"><input type="checkbox" id="cKm"><label for="cKm">Distance max</label><input type="number" id="vKm" min="1" max="150" step="1"><span class="u">km / jour</span></div>
+      <div class="lim"><input type="checkbox" id="cBal"><label for="cBal">Équilibrer les étapes (pas de petite dernière étape)</label></div>
+    </div>
+    <div class="box" id="daysBox">
+      <div class="lim"><label for="vDays">Nombre de jours</label><input type="number" id="vDays" min="1" max="300" step="1"><span class="u">jours</span></div>
+      <p class="note" style="margin:2px 0 0">Les étapes sont d'effort égal (même temps de marche), pas de distance égale.</p>
+    </div>
+    <div class="box" id="gpxBox">
+      <p class="note" style="margin:0">Étapes telles qu'elles sont dans le fichier GPX importé (une trace = une étape).</p>
+    </div>
+    <div class="box" id="endBox">
+      <div class="lim"><label for="endType">Fin d'étape</label>
+        <select id="endType">
+          <option value="any">N'importe où</option>
+          <option value="refuge">Refuge, cabane ou gîte</option>
+          <option value="bivouac">Bivouac</option>
+          <option value="both">Refuge ou bivouac</option>
+        </select>
+      </div>
+      <div class="lim" id="tolRow"><label for="vTol">Tolérance (± sur l'étape)</label><input type="number" id="vTol" min="0" max="4" step="0.25"><span class="u">h</span></div>
+      <p class="note" id="endNote" style="margin:2px 0 0"></p>
+    </div>
+    <div class="lim" style="margin-top:10px"><label for="pace">Allure</label>
+      <select id="pace">
+        <option value="0.85">Tranquille</option>
+        <option value="1">Standard</option>
+        <option value="1.2">Sportive</option>
+        <option value="1.4">Très sportive</option>
+      </select>
+    </div>
+    <div class="box">
+      <div class="lim"><label for="vDate">Départ le</label><input type="date" id="vDate"></div>
+      <div class="lim"><label for="vTime">Heure de départ chaque jour</label><input type="time" id="vTime" step="900"></div>
+      <div class="lim"><label for="vPause">Pauses par jour</label><input type="number" id="vPause" min="0" max="300" step="15"><span class="u">min</span></div>
+    </div>
+    <p class="note" id="pinNote">📌 Clique sur un numéro d'étape pour fixer cette fin d'étape, ou glisse-le ailleurs sur le tracé. Clique sur un numéro vert pour le libérer. Double-clic sur le profil : nouvelle fin d'étape.</p>
+
+    <h2>Itinéraire</h2>
+    <div class="stats">
+      <div class="stat"><b id="sDist">—</b><span>distance</span></div>
+      <div class="stat"><b id="sTime">—</b><span>temps de marche estimé</span></div>
+      <div class="stat"><b id="sUp">—</b><span>dénivelé positif</span></div>
+      <div class="stat"><b id="sDown">—</b><span>dénivelé négatif</span></div>
+      <div class="stat"><b id="sMax">—</b><span>altitude max</span></div>
+      <div class="stat"><b id="sDays">—</b><span>étapes</span></div>
+    </div>
+    <p class="note">Temps : méthode DIN 33466 (4 km/h à plat, 300 m/h en montée, 500 m/h en descente) ajustée selon l'allure, sans les pauses. Dénivelé lissé sur 200 m.</p>
+
+    <h2>Sur le parcours</h2>
+    <div id="poiRows"></div>
+    <p class="note" id="poiStatus"></p>
+
+    <h2 id="hStages">Étapes</h2>
+    <ul id="stages"></ul>
+
+    <h2>Fichiers GPX</h2>
+    <div class="row">
+      <label class="btn" for="file">📂 Importer un GPX</label>
+      <input id="file" type="file" accept=".gpx,application/gpx+xml" hidden>
+      <button id="bExport">💾 Exporter le GPX</button>
+    </div>
+
+    <h2>Fond de carte</h2>
+    <select id="base">
+      <option value="ign">Plan IGN</option>
+      <option value="ortho">Photos aériennes IGN</option>
+      <option value="otm">OpenTopoMap (monde)</option>
+      <option value="no">Norvège topo (Kartverket)</option>
+    </select>
+
+    <h2>Mode d'emploi</h2>
+    <ul class="help">
+      <li>Clique sur la carte pour poser le départ, puis les points suivants : le tracé suit les sentiers et les étapes se recalculent à chaque clic.</li>
+      <li>Glisse un point blanc pour déplacer le tracé.</li>
+      <li>« Ligne droite » sert pour les passages hors sentier.</li>
+      <li>Survole le profil pour voir où tu es sur la carte.</li>
+      <li>L'export GPX contient une trace par étape et un point à chaque fin d'étape.</li>
+    </ul>
+    <footer>Itinéraires : BRouter (serveur public communautaire, usage modéré) sur données © contributeurs OpenStreetMap. Cartes, altitudes et noms de lieux : © IGN. Brouillon gardé dans ce navigateur.</footer>
+  </aside>
+
+  <main>
+    <div id="map"></div>
+    <div id="status"><div id="busy" class="toast">Calcul de l'itinéraire…</div></div>
+    <div id="profile">
+      <canvas id="prof"></canvas>
+      <div id="cursor"></div>
+      <div id="tip"></div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+"use strict";
+/* ================= Réglages ================= */
+const CFG = {
+  brouterProfile: 'hiking-mountain',
+  smoothWindow: 200,   // m, lissage altitude
+  gainThreshold: 3,    // m, hystérésis du dénivelé
+  storageKey: 'trekplanner.v0'
+};
+const DEFAULT_S = { mode: 'limits', useH: true, h: 7, useUp: false, up: 1500, useKm: false, km: 30, balance: true, days: 10, pace: 1, pins: [],
+  endType: 'any', tol: 1, show: { water: true, hut: true, bivouac: true, shop: true, train: true },
+  startDate: '', startTime: '08:00', pause: 60 };
+const COLORS = ['#c2410c', '#1d4ed8'];
+// Catégories de points d'intérêt (OpenStreetMap) ; maxD = distance max au tracé
+const CAT = {
+  water:   { label: 'Eau',                     emoji: '💧', color: '#0284c7', maxD: 1000, sym: 'Drinking Water' },
+  hut:     { label: 'Refuges, cabanes, gîtes', emoji: '🏠', color: '#9333ea', maxD: 1000, sym: 'Lodge' },
+  bivouac: { label: 'Bivouac, camping',        emoji: '⛺', color: '#15803d', maxD: 1000, sym: 'Campground' },
+  shop:    { label: 'Ravitaillement',          emoji: '🛒', color: '#ca8a04', maxD: 1500, sym: 'Shopping Center' },
+  train:   { label: 'Gares',                   emoji: '🚉', color: '#475569', maxD: 3000, sym: 'Ground Transportation' }
+};
+const END_CATS = { refuge: ['hut'], bivouac: ['bivouac', 'water'], both: ['hut', 'bivouac', 'water'] };
+const END_LABEL = { refuge: 'refuge', bivouac: 'bivouac', both: 'refuge ou bivouac' };
+const $ = s => document.querySelector(s);
+
+/* ================= Géométrie & calculs (fonctions pures) ================= */
+function hav(a, b) {
+  const R = 6371008.8, r = Math.PI / 180;
+  const dLa = (b[0] - a[0]) * r, dLo = (b[1] - a[1]) * r;
+  const s = Math.sin(dLa / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLo / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+function interpNulls(e) {
+  const n = e.length, z = new Array(n);
+  let first = -1;
+  for (let i = 0; i < n; i++) if (e[i] != null && isFinite(e[i])) { first = i; break; }
+  if (first < 0) return null;
+  let prev = first;
+  for (let i = 0; i <= first; i++) z[i] = e[first];
+  for (let i = first + 1; i < n; i++) {
+    if (e[i] != null && isFinite(e[i])) {
+      for (let k = prev + 1; k < i; k++) z[k] = e[prev] + (e[i] - e[prev]) * (k - prev) / (i - prev);
+      z[i] = e[i]; prev = i;
+    }
+  }
+  for (let i = prev + 1; i < n; i++) z[i] = e[prev];
+  return z;
+}
+function smoothByDist(z, cum, win) {
+  const n = z.length, out = new Float64Array(n), h = win / 2;
+  let j0 = 0, j1 = 0, sum = z[0];
+  for (let i = 0; i < n; i++) {
+    while (j1 + 1 < n && cum[j1 + 1] - cum[i] <= h) { j1++; sum += z[j1]; }
+    while (cum[i] - cum[j0] > h) { sum -= z[j0]; j0++; }
+    out[i] = sum / (j1 - j0 + 1);
+  }
+  return out;
+}
+function gainLoss(z, i0, i1, th) {
+  let up = 0, dn = 0, ref = z[i0];
+  for (let i = i0 + 1; i <= i1; i++) {
+    const d = z[i] - ref;
+    if (d >= th) { up += d; ref = z[i]; }
+    else if (-d >= th) { dn -= d; ref = z[i]; }
+  }
+  return { up, dn };
+}
+function dinHours(km, up, dn) {            // DIN 33466
+  const h = km / 4, v = up / 300 + dn / 500;
+  return Math.max(h, v) + Math.min(h, v) / 2;
+}
+// Temps cumulé à chaque point : DIN appliquée par tronçons d'1 km, interpolée dans le tronçon
+function cumulativeTime(cum, z, n, pace) {
+  const T = new Float64Array(n); if (n < 2) return T;
+  if (!z) { for (let i = 1; i < n; i++) T[i] = cum[i] / 4000 / pace; return T; }
+  let c0 = 0, up = 0, dn = 0;
+  for (let i = 1; i < n; i++) {
+    const d = z[i] - z[i - 1]; if (d > 0) up += d; else dn -= d;
+    if (cum[i] - cum[c0] >= 1000 || i === n - 1) {
+      const t = dinHours((cum[i] - cum[c0]) / 1000, up, dn) / pace, Lc = cum[i] - cum[c0];
+      for (let k = c0 + 1; k <= i; k++) T[k] = T[c0] + (Lc > 0 ? t * (cum[k] - cum[c0]) / Lc : t * (k - c0) / (i - c0));
+      c0 = i; up = dn = 0;
+    }
+  }
+  return T;
+}
+function lowerBound(arr, target, lo, hi) {
+  while (lo < hi) { const m = (lo + hi) >> 1; if (arr[m] < target) lo = m + 1; else hi = m; }
+  return lo;
+}
+// Fin de l'étape qui part de s : le plus loin possible sans dépasser les limites (× scale)
+function nextEnd(B, s, b, lim, scale) {
+  const th = CFG.gainThreshold, z = B.zs;
+  let ref = z ? z[s] : 0, up = 0;
+  for (let i = s + 1; i <= b; i++) {
+    let upI = up, refI = ref;
+    if (z) { const d = z[i] - refI; if (d >= th) { upI += d; refI = z[i]; } else if (-d >= th) refI = z[i]; }
+    const over = (lim.h && B.cumT[i] - B.cumT[s] > lim.h * scale) ||
+                 (lim.up && upI > lim.up * scale) ||
+                 (lim.km && (B.cum[i] - B.cum[s]) / 1000 > lim.km * scale);
+    if (over && i - 1 > s) return i - 1;
+    up = upI; ref = refI;
+  }
+  return b;
+}
+function greedyCount(B, a, b, lim, scale) { let s = a, k = 0, e; while ((e = nextEnd(B, s, b, lim, scale)) < b) { k++; s = e; } return k; }
+// Équilibrage : même nombre d'étapes que le découpage glouton, avec des limites resserrées au minimum
+function findScale(B, a, b, lim) {
+  const K = greedyCount(B, a, b, lim, 1); if (!K) return 1;
+  let lo = 0.05, hi = 1;
+  for (let it = 0; it < 22; it++) { const mid = (lo + hi) / 2; if (greedyCount(B, a, b, lim, mid) <= K) hi = mid; else lo = mid; }
+  return hi;
+}
+// snap(e, s, b, idealTime) -> {i, poi?, delta?, miss?} : déplace une fin d'étape vers un refuge / bivouac
+function splitLimits(B, a, b, lim, balance, snap, tailMin, ends, info) {
+  const scale = balance ? findScale(B, a, b, lim) : 1, start = ends.length;
+  let s = a;
+  for (let guard = 0; guard < 5000; guard++) {
+    const e = nextEnd(B, s, b, lim, scale);
+    if (e >= b) break;
+    const r = snap(e, s, b, B.cumT[e]);
+    if (r.i <= s || r.i >= b) break;
+    if (r.poi && B.cumT[b] - B.cumT[r.i] < tailMin) break;   // pas de micro-étape finale
+    ends.push(r.i); info.set(r.i, r); s = r.i;
+  }
+  // Les décalages vers les refuges/bivouacs peuvent laisser une toute petite dernière étape :
+  // on la fusionne avec la précédente si le total reste dans la tolérance.
+  const mine = ends.length - start;
+  if (mine > 0 && tailMin > 0) {
+    const last = ends[ends.length - 1], prevStart = mine > 1 ? ends[ends.length - 2] : a;
+    const tail = B.cumT[b] - B.cumT[last], mean = (B.cumT[b] - B.cumT[a]) / (mine + 1);
+    if (tail < 0.4 * mean) {
+      const mt = B.cumT[b] - B.cumT[prevStart], mk = (B.cum[b] - B.cum[prevStart]) / 1000;
+      const mu = B.zs ? gainLoss(B.zs, prevStart, b, CFG.gainThreshold).up : 0;
+      info.delete(last); ends.pop();
+      if (!((!lim.h || mt <= lim.h + tailMin) && (!lim.up || mu <= lim.up * 1.1) && (!lim.km || mk <= lim.km * 1.1))) {
+        // fusion impossible : on répartit les deux dernières étapes équitablement
+        const ideal = (B.cumT[prevStart] + B.cumT[b]) / 2, e = lowerBound(B.cumT, ideal, prevStart + 1, b);
+        const r = snap(e, prevStart, b, ideal);
+        if (r.i > prevStart && r.i < b) { ends.push(r.i); info.set(r.i, r); }
+      }
+    }
+  }
+}
+function splitDays(B, a, b, d, snap, ends, info) {
+  let s = a;
+  for (let k = d; k > 1; k--) {
+    const ideal = B.cumT[s] + (B.cumT[b] - B.cumT[s]) / k;
+    const e = lowerBound(B.cumT, ideal, s + 1, b);
+    if (e >= b) break;
+    const r = snap(e, s, b, ideal);
+    if (r.i <= s || r.i >= b) break;
+    ends.push(r.i); info.set(r.i, r); s = r.i;
+  }
+}
+// Répartition de N jours entre les sections délimitées par les fins d'étape fixées
+function allocDays(B, secs, N) {
+  const T = secs.map(([a, b]) => B.cumT[b] - B.cumT[a]), tot = T.reduce((x, y) => x + y, 0) || 1;
+  N = Math.max(secs.length, Math.round(N) || 1);
+  const raw = T.map(t => N * t / tot), alloc = raw.map(r => Math.max(1, Math.floor(r)));
+  let rest = N - alloc.reduce((x, y) => x + y, 0);
+  const order = raw.map((r, i) => [r - Math.floor(r), i]).sort((x, y) => y[0] - x[0]);
+  for (let k = 0; rest > 0; k = (k + 1) % order.length) { alloc[order[k][1]]++; rest--; }
+  while (rest < 0) {
+    let j = -1; alloc.forEach((v, i) => { if (v > 1 && (j < 0 || raw[i] / v < raw[j] / alloc[j])) j = i; });
+    if (j < 0) break; alloc[j]--; rest++;
+  }
+  return alloc;
+}
+// Rattache chaque point d'intérêt au point le plus proche du tracé (grille de 0,01°)
+function projectPOIs(B) {
+  const out = []; if (B.n < 2 || !poiCache.size) return out;
+  const G = new Map(), C = 0.01;
+  for (let i = 0; i < B.n; i++) {
+    const k = Math.floor(B.lat[i] / C) + ':' + Math.floor(B.lon[i] / C);
+    let a = G.get(k); if (!a) G.set(k, a = []); a.push(i);
+  }
+  for (const p of poiCache.values()) {
+    const maxD = CAT[p.cat].maxD, cosl = Math.cos(p.lat * Math.PI / 180);
+    const ry = Math.ceil(maxD / 1110), rx = Math.ceil(maxD / (1110 * cosl));
+    const cy = Math.floor(p.lat / C), cx = Math.floor(p.lon / C);
+    let best = -1, bd = Infinity;
+    for (let y = cy - ry; y <= cy + ry; y++) for (let x = cx - rx; x <= cx + rx; x++) {
+      const a = G.get(y + ':' + x); if (!a) continue;
+      for (const i of a) { const d = (B.lat[i] - p.lat) ** 2 + ((B.lon[i] - p.lon) * cosl) ** 2; if (d < bd) { bd = d; best = i; } }
+    }
+    if (best < 0) continue;
+    const dm = Math.sqrt(bd) * 111195;
+    if (dm <= maxD) out.push(Object.assign({}, p, { idx: best, d: dm }));
+  }
+  return out.sort((a, b) => a.idx - b.idx);
+}
+const WATER_KINDS = ['Refuge gardé', 'Gîte / auberge', 'Gîte / chambre d\'hôtes', 'Camping'];
+const hasWater = p => p.cat === 'water' || p.cat === 'shop' || WATER_KINDS.includes(p.kind);
+// Lever / coucher du soleil (algorithme de SunCalc, précision ~1 min)
+function sunTimes(date, lat, lon) {
+  const rad = Math.PI / 180, J1970 = 2440588, J2000 = 2451545, e = rad * 23.4397;
+  const d = date.valueOf() / 86400000 - 0.5 + J1970 - J2000;
+  const lw = -lon * rad, phi = lat * rad;
+  const n = Math.round(d - 0.0009 - lw / (2 * Math.PI));
+  const ds = 0.0009 + lw / (2 * Math.PI) + n;
+  const M = rad * (357.5291 + 0.98560028 * ds);
+  const Lc = M + rad * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M)) + rad * 102.9372 + Math.PI;
+  const dec = Math.asin(Math.sin(e) * Math.sin(Lc));
+  const Jnoon = J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * Lc);
+  const cw = (Math.sin(-0.833 * rad) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec));
+  if (cw < -1 || cw > 1) return null;                         // jour ou nuit polaire
+  const w = Math.acos(cw);
+  const Jset = J2000 + 0.0009 + (w + lw) / (2 * Math.PI) + n + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * Lc);
+  const toDate = j => new Date((j + 0.5 - J1970) * 86400000);
+  return { rise: toDate(Jnoon - (Jset - Jnoon)), set: toDate(Jset) };
+}
+// Classement des objets OpenStreetMap
+function classify(t) {
+  if (t.tourism === 'alpine_hut') return { cat: 'hut', kind: 'Refuge gardé' };
+  if (t.tourism === 'wilderness_hut') return { cat: 'hut', kind: 'Cabane non gardée' };
+  if (t.amenity === 'shelter' && ['basic_hut', 'lean_to'].includes(t.shelter_type)) return { cat: 'hut', kind: 'Abri' };
+  if (t.tourism === 'hostel') return { cat: 'hut', kind: 'Gîte / auberge' };
+  if (t.tourism === 'guest_house') return { cat: 'hut', kind: 'Gîte / chambre d\'hôtes' };
+  if (t.tourism === 'camp_site') return { cat: 'bivouac', kind: (t.camp_site === 'basic' || t.backcountry === 'yes') ? 'Aire de bivouac' : 'Camping' };
+  if (t.tourism === 'camp_pitch') return { cat: 'bivouac', kind: 'Emplacement de bivouac' };
+  if (t.drinking_water === 'no') return null;
+  if (t.amenity === 'drinking_water') return { cat: 'water', kind: 'Eau potable' };
+  if (t.amenity === 'water_point') return { cat: 'water', kind: 'Point d\'eau' };
+  if (t.man_made === 'water_tap') return { cat: 'water', kind: 'Robinet' };
+  if (t.natural === 'spring') return { cat: 'water', kind: 'Source (potabilité non garantie)' };
+  if (t.shop === 'bakery') return { cat: 'shop', kind: 'Boulangerie' };
+  if (['supermarket', 'convenience', 'general'].includes(t.shop)) return { cat: 'shop', kind: 'Épicerie / supérette' };
+  if (t.railway === 'station' || t.railway === 'halt') return { cat: 'train', kind: 'Gare' };
+  return null;
+}
+function parseGPX(text) {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length) throw new Error('Fichier GPX illisible');
+  const childText = (el, tag) => { for (const c of el.childNodes) if (c.nodeName === tag) return (c.textContent || '').trim(); return ''; };
+  const pt = el => {
+    const e = parseFloat(childText(el, 'ele'));
+    return [parseFloat(el.getAttribute('lat')), parseFloat(el.getAttribute('lon')), isFinite(e) ? e : null];
+  };
+  const tracks = [];
+  for (const trk of doc.getElementsByTagName('trk')) {
+    const name = childText(trk, 'name');
+    for (const seg of trk.getElementsByTagName('trkseg')) {
+      const pts = [...seg.getElementsByTagName('trkpt')].map(pt).filter(p => isFinite(p[0]) && isFinite(p[1]));
+      if (pts.length > 1) tracks.push({ name, pts });
+    }
+  }
+  if (!tracks.length) for (const rte of doc.getElementsByTagName('rte')) {
+    const pts = [...rte.getElementsByTagName('rtept')].map(pt).filter(p => isFinite(p[0]) && isFinite(p[1]));
+    if (pts.length > 1) tracks.push({ name: childText(rte, 'name'), pts });
+  }
+  if (!tracks.length) throw new Error('Aucune trace trouvée dans ce GPX');
+  return tracks;
+}
+function escXml(s) { return String(s).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[c])); }
+
+/* ================= État ================= */
+// start : [lat,lon] ; legs : {to:[lat,lon], pts:[[lat,lon,ele]], kind:'route'|'line'|'import', name, stageBreak}
+const state = { start: null, legs: [], draw: true, mode: 'route', selStage: -1 };
+let S = JSON.parse(JSON.stringify(DEFAULT_S));    // réglages du découpage
+let R = null;                                      // résultats calculés
+const placeCache = {};
+const poiCache = new Map();        // id -> {id, lat, lon, cat, kind, name}
+let poiState = 'idle';             // idle | loading | ok | error
+
+function endOf(li) { const p = state.legs[li].pts; const q = p[p.length - 1]; return [q[0], q[1]]; }
+function lastPoint() { return state.legs.length ? endOf(state.legs.length - 1) : state.start; }
+
+function flatten() {
+  const lat = [], lon = [], ele = [], kind = [], legBreaks = [];
+  if (state.start) { lat.push(state.start[0]); lon.push(state.start[1]); ele.push(null); kind.push(null); }
+  state.legs.forEach((leg, li) => {
+    leg.pts.forEach((p, k) => {
+      if (k === 0 && lat.length) {
+        const j = lat.length - 1;
+        if (Math.abs(lat[j] - p[0]) < 1e-6 && Math.abs(lon[j] - p[1]) < 1e-6) { if (ele[j] == null) ele[j] = p[2]; return; }
+      }
+      lat.push(p[0]); lon.push(p[1]); ele.push(p[2] == null ? null : p[2]); kind.push(leg.kind);
+    });
+    if (leg.stageBreak && li < state.legs.length - 1) legBreaks.push(lat.length - 1);
+  });
+  return { lat, lon, ele, kind, legBreaks };
+}
+function nearestIdx(B, la, lo) {
+  let best = -1, bd = Infinity; const c = Math.cos(la * Math.PI / 180);
+  for (let i = 0; i < B.n; i++) { const d = (B.lat[i] - la) ** 2 + ((B.lon[i] - lo) * c) ** 2; if (d < bd) { bd = d; best = i; } }
+  return { i: best, m: Math.sqrt(bd) * 111195 };
+}
+function mapPins(B) {
+  const idx = [], kept = [];
+  for (const p of S.pins) {
+    const r = nearestIdx(B, p[0], p[1]);
+    if (r.i > 0 && r.i < B.n - 1 && r.m < 400 && !idx.includes(r.i)) { idx.push(r.i); kept.push([B.lat[r.i], B.lon[r.i]]); }
+  }
+  S.pins = kept;
+  return idx.sort((a, b) => a - b);
+}
+function compute() {
+  const F = flatten(), n = F.lat.length;
+  const cum = new Float64Array(n);
+  for (let i = 1; i < n; i++) cum[i] = cum[i - 1] + hav([F.lat[i - 1], F.lon[i - 1]], [F.lat[i], F.lon[i]]);
+  const zr = n ? interpNulls(F.ele) : null;
+  const zs = zr && n > 1 ? smoothByDist(zr, cum, CFG.smoothWindow) : zr;
+  const B = { lat: F.lat, lon: F.lon, kind: F.kind, zr, zs, cum, n, cumT: cumulativeTime(cum, zs, n, S.pace) };
+  B.pois = projectPOIs(B);
+  const hasGpx = F.legBreaks.length > 0;
+  if (S.mode === 'gpx' && !hasGpx && n > 1) S.mode = 'limits';
+  let ends = [], pinIdx = [];
+  const info = new Map();
+  if (n > 2) {
+    if (S.mode === 'gpx') ends = F.legBreaks.slice();
+    else {
+      pinIdx = mapPins(B);
+      const secs = []; let a = 0; for (const p of pinIdx) { secs.push([a, p]); a = p; } secs.push([a, n - 1]);
+      // candidats de fin d'étape (refuge / bivouac), triés par temps d'arrivée (détour compris)
+      const cats = END_CATS[S.endType];
+      const cands = cats ? B.pois.filter(p => cats.includes(p.cat)).map(p => Object.assign({}, p, { t: B.cumT[p.idx] + p.d / 4000 / S.pace })).sort((x, y) => x.t - y.t) : null;
+      const snap = (e, s, b, ideal) => {
+        if (!cands) return { i: e };
+        const lo = ideal - S.tol, hi = ideal + S.tol, minT = B.cumT[s] + 0.25;
+        let k = 0, k1 = cands.length;
+        while (k < k1) { const m = (k + k1) >> 1; if (cands[m].t < lo) k = m + 1; else k1 = m; }
+        let best = null, bs = Infinity;
+        for (; k < cands.length && cands[k].t <= hi; k++) {
+          const c = cands[k]; if (c.idx <= s || c.idx >= b || c.t < minT) continue;
+          const sc = Math.abs(c.t - ideal) + (c.cat === 'water' ? 0.25 : 0);   // une vraie aire de bivouac vaut 15 min de mieux qu'une simple source
+          if (sc < bs) { bs = sc; best = c; }
+        }
+        return best ? { i: best.idx, poi: best, delta: B.cumT[best.idx] - ideal } : { i: e, miss: true };
+      };
+      if (S.mode === 'days') {
+        const alloc = allocDays(B, secs, S.days);
+        secs.forEach(([a, b], s) => { splitDays(B, a, b, alloc[s], snap, ends, info); if (s < secs.length - 1) ends.push(b); });
+      } else {
+        const lim = { h: S.useH ? S.h : 0, up: S.useUp ? S.up : 0, km: S.useKm ? S.km : 0 };
+        secs.forEach(([a, b], s) => { if (lim.h || lim.up || lim.km) splitLimits(B, a, b, lim, S.balance, snap, cands ? S.tol : 0, ends, info); if (s < secs.length - 1) ends.push(b); });
+      }
+    }
+  }
+  const bounds = [0, ...ends, Math.max(0, n - 1)], stages = [];
+  for (let s = 0; s + 1 < bounds.length; s++) {
+    const i0 = bounds[s], i1 = bounds[s + 1];
+    const gl = zs ? gainLoss(zs, i0, i1, CFG.gainThreshold) : { up: 0, dn: 0 };
+    const r = s + 2 < bounds.length ? info.get(i1) : null;
+    stages.push({ i0, i1, dist: cum[i1] - cum[i0], up: gl.up, dn: gl.dn, time: B.cumT[i1] - B.cumT[i0], pinEnd: pinIdx.includes(i1),
+      endPoi: r && r.poi || null, endDelta: r && r.poi ? r.delta : 0, endMiss: !!(r && r.miss), counts: {} });
+  }
+  // nombre de points d'intérêt par étape
+  let si = 0;
+  for (const p of B.pois) {
+    while (si < stages.length - 1 && p.idx > stages[si].i1) si++;
+    if (stages[si]) stages[si].counts[p.cat] = (stages[si].counts[p.cat] || 0) + 1;
+  }
+  // plus long tronçon sans eau connue dans chaque étape (eau, commerces, refuges gardés, gîtes, campings)
+  const wIdx = B.pois.filter(hasWater).map(p => p.idx);
+  stages.forEach(s => {
+    const pts = [s.i0, ...wIdx.filter(i => i > s.i0 && i < s.i1), s.i1];
+    let g = { km: 0, h: 0, a: s.i0, b: s.i0 };
+    for (let k = 1; k < pts.length; k++) {
+      const km = (cum[pts[k]] - cum[pts[k - 1]]) / 1000;
+      if (km > g.km) g = { km, h: B.cumT[pts[k]] - B.cumT[pts[k - 1]], a: pts[k - 1], b: pts[k] };
+    }
+    s.waterGap = g;
+  });
+  let zmax = null; if (zr) { zmax = -Infinity; for (const v of zr) if (v > zmax) zmax = v; }
+  R = Object.assign(B, {
+    stages, hasGpx, zmax,
+    dist: n ? cum[n - 1] : 0,
+    up: stages.reduce((x, s) => x + s.up, 0),
+    dn: stages.reduce((x, s) => x + s.dn, 0),
+    time: n ? B.cumT[n - 1] : 0
+  });
+  if (state.selStage >= stages.length) state.selStage = -1;
+}
+
+/* ================= Formatage ================= */
+const nf0 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
+const nf1 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+const fKm = m => nf1.format(m / 1000) + ' km';
+const fM = m => nf0.format(Math.round(m)) + ' m';
+function fH(h) { const H = Math.floor(h), M = Math.round((h - H) * 60); return M === 60 ? (H + 1) + ' h' : H + ' h ' + String(M).padStart(2, '0'); }
+function fDur(h) { const m = Math.round(Math.abs(h) * 60); if (m < 60) return m + ' min'; const H = Math.floor(m / 60), M = m % 60; return H + ' h' + (M ? ' ' + String(M).padStart(2, '0') : ''); }
+const fTol = h => '±' + fDur(h);
+function fDelta(h) { const m = Math.round(h * 60); if (Math.abs(m) < 5) return 'durée prévue'; return (m > 0 ? 'étape rallongée de ' : 'étape raccourcie de ') + fDur(h); }
+
+/* ================= Carte ================= */
+const geopf = (layer, fmt) => `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${layer}&STYLE=normal&TILEMATRIXSET=PM&FORMAT=${fmt}&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}`;
+const BASES = {
+  ign: L.tileLayer(geopf('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png'), { maxZoom: 19, attribution: '© <a href="https://www.ign.fr">IGN</a>' }),
+  ortho: L.tileLayer(geopf('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg'), { maxZoom: 19, attribution: '© <a href="https://www.ign.fr">IGN</a>' }),
+  no: L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png', { maxZoom: 18, attribution: '© <a href="https://www.kartverket.no">Kartverket</a> (CC BY 4.0)' }),
+  otm: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, subdomains: 'abc', attribution: '© contributeurs <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, SRTM, © <a href="https://opentopomap.org">OpenTopoMap</a>' })
+};
+const map = L.map('map', { zoomControl: true }).setView([42.85, 0.6], 8);
+let base = BASES.ign.addTo(map);
+map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
+const routeLayer = L.layerGroup().addTo(map);
+const markLayer = L.layerGroup().addTo(map);
+const hoverMk = L.circleMarker([0, 0], { radius: 7, color: '#fff', weight: 3, fillColor: '#1c2320', fillOpacity: 1, interactive: false });
+const poiRenderer = L.canvas({ padding: 0.3 });
+const poiLayer = L.layerGroup();
+const zoomClass = () => {
+  map.getContainer().classList.toggle('lowzoom', map.getZoom() < 9);
+  const show = map.getZoom() >= 9;           // points d'intérêt visibles à partir du zoom 9
+  if (show && !map.hasLayer(poiLayer)) poiLayer.addTo(map);
+  if (!show && map.hasLayer(poiLayer)) map.removeLayer(poiLayer);
+};
+map.on('zoomend', zoomClass); zoomClass();
+const poiMarkers = new Map();
+function renderPOIs() {
+  poiLayer.clearLayers(); poiMarkers.clear();
+  if (!R || !R.pois || R.n < 2) return;
+  const chosen = new Set(R.stages.map(s => s.endPoi && s.endPoi.id).filter(Boolean));
+  for (const p of R.pois) {
+    const ch = chosen.has(p.id);
+    if (!S.show[p.cat] && !ch) continue;
+    const m = L.circleMarker([p.lat, p.lon], { renderer: poiRenderer, bubblingMouseEvents: false, radius: ch ? 8 : (p.cat === 'water' ? 4.5 : 6), color: ch ? '#1c2320' : '#fff', weight: ch ? 3 : 1.5, fillColor: CAT[p.cat].color, fillOpacity: 1 })
+      .bindPopup(`<b>${CAT[p.cat].emoji} ${escXml(p.name || p.kind)}</b><br>${escXml(p.kind)}<br>km ${nf1.format(R.cum[p.idx] / 1000)} · ${p.d < 50 ? 'sur le tracé' : 'à ' + fM(p.d) + ' du tracé'}${ch ? '<br><b>Fin d\'étape</b>' : ''}`)
+      .addTo(poiLayer);
+    poiMarkers.set(p.id, m);
+  }
+}
+function focusPOI(id) {
+  const p = R.pois.find(q => q.id === id); if (!p) return;
+  map.setView([p.lat, p.lon], Math.max(map.getZoom(), 14));
+  const m = poiMarkers.get(id); if (m) setTimeout(() => m.openPopup(), 300);
+}
+$('#base').onchange = e => { map.removeLayer(base); base = BASES[e.target.value].addTo(map); };
+
+function render() {
+  routeLayer.clearLayers(); markLayer.clearLayers();
+  if (R && R.n > 1) R.stages.forEach((s, k) => {
+    const sel = state.selStage === k, col = COLORS[k % 2];
+    // morceaux de même nature (sentier / ligne droite) dans l'étape
+    let r0 = s.i0, rk = R.kind[s.i0 + 1];
+    for (let i = s.i0 + 2; i <= s.i1 + 1; i++) {
+      if (i > s.i1 || R.kind[i] !== rk) {
+        const ll = []; for (let j = r0; j <= i - 1; j++) ll.push([R.lat[j], R.lon[j]]);
+        L.polyline(ll, { color: '#fff', weight: sel ? 9 : 7, opacity: .85, interactive: false }).addTo(routeLayer);
+        L.polyline(ll, { color: col, weight: sel ? 6 : 4, opacity: .95, dashArray: rk === 'line' ? '7 7' : null }).addTo(routeLayer);
+        r0 = i - 1; rk = R.kind[i];
+      }
+    }
+  });
+  // points de passage déplaçables (pas aux jonctions de traces importées)
+  const N = state.legs.length, isImp = l => !!l && l.kind === 'import';
+  if (state.start) for (let i = 0; i <= N; i++) {
+    const prev = state.legs[i - 1], next = state.legs[i];
+    if (i > 0 && i < N && isImp(prev) && isImp(next)) continue;
+    const fixed = isImp(prev) || isImp(next);
+    const cls = 'wp' + (i === 0 ? ' first' : '') + (i === N && i > 0 ? ' last' : '');
+    const m = L.marker(i === 0 ? state.start : endOf(i - 1), { icon: L.divIcon({ className: cls, iconSize: [16, 16] }), draggable: !fixed, keyboard: false, title: fixed ? '' : 'Glisser pour déplacer' });
+    if (!fixed) m.on('dragend', ev => { const q = ev.target.getLatLng(); enqueue(() => moveWaypoint(i, [q.lat, q.lng])); });
+    m.addTo(markLayer);
+  }
+  // fins d'étape (au-dessus des points de passage)
+  const editable = S.mode !== 'gpx';
+  if (R && R.stages.length > 1) R.stages.slice(0, -1).forEach((s, k) => {
+    const m = L.marker([R.lat[s.i1], R.lon[s.i1]], {
+      icon: L.divIcon({ className: 'stg' + (s.pinEnd ? ' pin' : '') + (editable ? ' drag' : ''), html: String(k + 1), iconSize: [22, 22] }),
+      draggable: editable, interactive: editable, keyboard: false, zIndexOffset: 1000,
+      title: editable ? (s.pinEnd ? 'Fin d\'étape fixée : clic pour libérer, glisser pour déplacer' : 'Clic pour fixer, glisser pour déplacer') : ''
+    });
+    if (editable) {
+      m.on('click', () => {
+        if (s.pinEnd) removePinNear(R.lat[s.i1], R.lon[s.i1]);
+        else S.pins.push([R.lat[s.i1], R.lon[s.i1]]);
+        changed();
+      });
+      m.on('dragend', ev => {
+        const q = ev.target.getLatLng(), r = nearestIdx(R, q.lat, q.lng);
+        if (s.pinEnd) removePinNear(R.lat[s.i1], R.lon[s.i1]);
+        if (r.i > 0 && r.i < R.n - 1) S.pins.push([R.lat[r.i], R.lon[r.i]]);
+        changed();
+      });
+    }
+    m.addTo(markLayer);
+  });
+  renderPOIs(); syncUI(); renderStats(); renderStages(); renderPoiStatus(); drawProfile();
+}
+function removePinNear(la, lo) {
+  let best = -1, bd = Infinity;
+  S.pins.forEach((p, k) => { const d = hav(p, [la, lo]); if (d < bd) { bd = d; best = k; } });
+  if (best >= 0) S.pins.splice(best, 1);
+}
+
+/* ================= Panneau ================= */
+function syncUI() {
+  document.querySelectorAll('#modeSeg button').forEach(b => {
+    b.classList.toggle('on', b.dataset.m === S.mode);
+    if (b.dataset.m === 'gpx') b.style.display = (R && R.hasGpx) ? '' : 'none';
+  });
+  $('#limitsBox').style.display = S.mode === 'limits' ? '' : 'none';
+  $('#daysBox').style.display = S.mode === 'days' ? '' : 'none';
+  $('#gpxBox').style.display = S.mode === 'gpx' ? '' : 'none';
+  $('#pinNote').style.display = S.mode === 'gpx' ? 'none' : '';
+  $('#endBox').style.display = S.mode === 'gpx' ? 'none' : '';
+  $('#endType').value = S.endType;
+  $('#tolRow').style.display = S.endType === 'any' ? 'none' : '';
+  $('#endNote').textContent = S.endType === 'any' ? '' :
+    `Chaque étape peut être rallongée ou raccourcie de ${fTol(S.tol)} au maximum pour finir ${S.endType === 'refuge' ? 'à un refuge' : S.endType === 'bivouac' ? 'à un bivouac' : 'à un refuge ou un bivouac'}. L'écart est indiqué sous chaque étape.` +
+    (S.endType !== 'refuge' ? ' Bivouac = aire de bivouac, camping ou point d\'eau ; vérifie la réglementation locale (parcs nationaux, réserves).' : '');
+  Object.keys(CAT).forEach(k => { const c = $('#show_' + k); if (c) c.checked = !!S.show[k]; });
+  const setNum = (id, v) => { const el = $(id); if (document.activeElement !== el) el.value = v; };
+  setNum('#vTol', S.tol); setNum('#vDate', S.startDate); setNum('#vTime', S.startTime); setNum('#vPause', S.pause);
+  $('#cH').checked = S.useH; $('#cUp').checked = S.useUp; $('#cKm').checked = S.useKm; $('#cBal').checked = S.balance;
+  setNum('#vH', S.h); setNum('#vUp', S.up); setNum('#vKm', S.km); setNum('#vDays', S.days);
+  $('#pace').value = String(S.pace);
+}
+function renderStats() {
+  const has = R && R.n > 1;
+  $('#sDist').textContent = has ? fKm(R.dist) : '—';
+  $('#sUp').textContent = has && R.zs ? fM(R.up) : '—';
+  $('#sDown').textContent = has && R.zs ? fM(R.dn) : '—';
+  $('#sMax').textContent = has && R.zmax != null ? fM(R.zmax) : '—';
+  $('#sTime').textContent = has ? fH(R.time) : '—';
+  $('#sDays').textContent = has ? nf0.format(R.stages.length) : '—';
+  $('#bUndo').disabled = !state.start;
+  $('#bReverse').disabled = !state.legs.length;
+  $('#bExport').disabled = !state.legs.length;
+  $('#bClear').disabled = !state.start;
+}
+function buildPoiRows() {
+  $('#poiRows').innerHTML = Object.entries(CAT).map(([k, c]) =>
+    `<div class="poi-row"><input type="checkbox" id="show_${k}"><label for="show_${k}"><span class="sw" style="background:${c.color}"></span> ${c.emoji} ${c.label}</label><span class="c" id="cnt_${k}">—</span></div>`).join('');
+  Object.keys(CAT).forEach(k => $('#show_' + k).addEventListener('change', e => { S.show[k] = e.target.checked; renderPOIs(); save(); }));
+}
+function renderPoiStatus() {
+  const el = $('#poiStatus'), has = R && R.n > 1, n = has && R.pois ? R.pois.length : 0;
+  const prog = poiProgress.total ? ` ${nf0.format(Math.min(poiProgress.done, poiProgress.total))} / ${nf0.format(poiProgress.total)} km analysés` : '';
+  if (poiState === 'loading') el.textContent = `⏳ Recherche dans OpenStreetMap…${prog}. ${n ? nf0.format(n) + ' points déjà trouvés.' : ''}`;
+  else if (poiState === 'error') { el.innerHTML = `⚠️ Le serveur OpenStreetMap (Overpass) ne répond pas (${prog.trim() || 'aucune donnée'}).<button id="poiRetry">Réessayer</button>`; $('#poiRetry').onclick = () => fetchPOIs(); }
+  else el.textContent = has ? `${nf0.format(n)} points à moins de 1 km du tracé (1,5 km pour les commerces, 3 km pour les gares). Clique sur une étape pour voir le détail.` : 'Trace un itinéraire pour voir l\'eau, les refuges et les commerces.';
+  Object.keys(CAT).forEach(k => { const c = $('#cnt_' + k); if (c) c.textContent = has && R.pois ? nf0.format(R.pois.filter(p => p.cat === k).length) : '—'; });
+}
+function placeName(i) { return placeCache[R.lat[i].toFixed(3) + ',' + R.lon[i].toFixed(3)] || null; }
+function stageDate(k) { if (!S.startDate) return null; const d = new Date(S.startDate + 'T12:00:00'); if (isNaN(d)) return null; d.setDate(d.getDate() + k); return d; }
+function timeOn(d, hhmm) { const [h, m] = String(hhmm || '08:00').split(':').map(Number); const x = new Date(d); x.setHours(h || 0, m || 0, 0, 0); return x; }
+const fT = d => d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+function stageTiming(s, k) {
+  const d = stageDate(k); if (!d) return null;
+  const dep = timeOn(d, S.startTime), arr = new Date(dep.getTime() + (s.time * 60 + (S.pause || 0)) * 60000);
+  const sun = sunTimes(d, R.lat[s.i1], R.lon[s.i1]);
+  return { d, dep, arr, sun, late: !!(sun && arr > sun.set), early: !!(sun && dep < sun.rise) };
+}
+function stageDetail(s, k) {
+  const kmS = i => nf1.format((R.cum[i] - R.cum[s.i0]) / 1000);
+  let h = '';
+  const tm = stageTiming(s, k);
+  if (tm) {
+    h += `<div class="info">📅 <b>Jour ${k + 1}</b> · ${tm.d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>`;
+    h += `<div class="info">🕗 Départ ${fT(tm.dep)} → arrivée vers <b>${fT(tm.arr)}</b> (marche ${fH(s.time)} + pauses ${S.pause || 0} min)</div>`;
+    if (tm.sun) h += `<div class="info">🌅 Soleil : lever ${fT(tm.sun.rise)}, coucher ${fT(tm.sun.set)}</div>`;
+    if (tm.late) h += `<div class="info warnline">⚠️ Arrivée après le coucher du soleil : pars plus tôt ou raccourcis l'étape.</div>`;
+    if (tm.early) h += `<div class="info warnline">🔦 Départ avant le lever du soleil : prévois la frontale.</div>`;
+  } else h += `<div class="info" style="color:var(--muted)">📅 Indique une date de départ (réglages ci-dessus) pour voir la date, les horaires et le coucher du soleil.</div>`;
+  const g = s.waterGap;
+  if (poiState !== 'loading' && R.pois.length && g && g.km > 0.5)
+    h += `<div class="info${g.h > 3 ? ' warnline' : ''}">${g.h > 3 ? '⚠️' : '💧'} Plus long tronçon sans eau connue : <b>${nf1.format(g.km)} km</b> (≈ ${fDur(g.h)}), du km ${kmS(g.a)} au km ${kmS(g.b)}</div>`;
+  const list = R.pois.filter(p => p.idx >= s.i0 && p.idx <= s.i1 && S.show[p.cat]);
+  h += '<div class="plist">';
+  h += `<div class="prow end" data-i="${s.i0}"><span class="km">km 0,0</span><span>▶ Départ${placeName(s.i0) ? ' : ' + escXml(placeName(s.i0)) : ''} · ${nf0.format(Math.round(R.zs ? R.zs[s.i0] : 0))} m</span></div>`;
+  list.forEach(p => {
+    const fin = s.endPoi && s.endPoi.id === p.id;
+    h += `<div class="prow${fin ? ' end' : ''}" data-poi="${p.id}"><span class="km">km ${kmS(p.idx)}</span><span>${CAT[p.cat].emoji} ${escXml(p.name || p.kind)}${p.name ? ` <span class="k">· ${escXml(p.kind.toLowerCase())}</span>` : ''}${p.d >= 50 ? ` <span class="k">· à ${fM(p.d)} du tracé</span>` : ''}${fin ? ' · fin d\'étape' : ''}</span></div>`;
+  });
+  if (!list.length) h += `<div class="info" style="color:var(--muted)">${poiState === 'loading' ? '⏳ Recherche des points en cours…' : poiState === 'error' ? '⚠️ Points indisponibles (serveur OpenStreetMap).' : 'Aucun point d\'eau, refuge ou commerce trouvé dans OpenStreetMap sur cette étape.'}</div>`;
+  h += `<div class="prow end" data-i="${s.i1}"><span class="km">km ${kmS(s.i1)}</span><span>🏁 Arrivée${placeName(s.i1) ? ' : ' + escXml(placeName(s.i1)) : ''} · ${nf0.format(Math.round(R.zs ? R.zs[s.i1] : 0))} m</span></div>`;
+  return `<div class="detail">${h}</div></div>`;
+}
+function renderStages() {
+  const ul = $('#stages'); ul.innerHTML = '';
+  if (!R || R.n < 2) { $('#hStages').textContent = 'Étapes'; ul.innerHTML = '<li style="cursor:default;color:var(--muted)">Trace un itinéraire ou importe un GPX.</li>'; return; }
+  $('#hStages').textContent = R.stages.length > 1 ? `Étapes (${R.stages.length}) · clique pour le détail` : 'Étape · clique pour le détail';
+  R.stages.forEach((s, k) => {
+    const li = document.createElement('li');
+    if (state.selStage === k) li.className = 'sel';
+    const a = placeName(s.i0), b = placeName(s.i1);
+    const tm = stageTiming(s, k);
+    const title = (R.stages.length > 1 ? `Étape ${k + 1}` : 'Itinéraire') + (tm ? ' · ' + tm.d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) : '');
+    let end = '';
+    if (s.endPoi) {
+      const p = s.endPoi;
+      end = `<div class="e">${CAT[p.cat].emoji} Fin : ${escXml(p.name || p.kind)}${p.name ? ' (' + escXml(p.kind.toLowerCase()) + ')' : ''}${p.d >= 50 ? ', à ' + fM(p.d) + ' du tracé' : ''} · ${fDelta(s.endDelta)}</div>`;
+    } else if (s.endMiss) {
+      end = `<div class="e miss">⚠️ ${poiState === 'loading' ? 'Recherche des refuges et bivouacs en cours…' : poiState === 'error' ? 'Refuges et bivouacs indisponibles (serveur OpenStreetMap)' : `Aucun ${END_LABEL[S.endType]} à ${fTol(S.tol)} : fin d'étape libre`}</div>`;
+    }
+    const cnt = Object.keys(CAT).filter(c => s.counts[c]).map(c => CAT[c].emoji + ' ' + s.counts[c]).join(' · ');
+    const flags = (tm && tm.late ? ' 🌙' : '') + (s.waterGap && s.waterGap.h > 3 && R.pois.length && poiState !== 'loading' ? ' 🚱' : '');
+    li.innerHTML = `<div class="t"><span class="dot" style="background:${COLORS[k % 2]}"></span>${title}${s.pinEnd ? ' 📌' : ''}${flags}${a || b ? ' · ' + escXml(a || '…') + ' → ' + escXml(b || '…') : ''}</div>
+      <div class="m">${fKm(s.dist)} · +${fM(s.up)} / −${fM(s.dn)} · ${fH(s.time)}${tm ? ' · arrivée ≈ ' + fT(tm.arr) : ''}</div>${end}${cnt ? `<div class="p">${cnt}</div>` : ''}${state.selStage === k ? stageDetail(s, k) : ''}`;
+    li.onclick = ev => {
+      const row = ev.target.closest('.prow');
+      if (row) { ev.stopPropagation(); if (row.dataset.poi) focusPOI(row.dataset.poi); else { const i = +row.dataset.i; map.setView([R.lat[i], R.lon[i]], Math.max(map.getZoom(), 14)); } return; }
+      if (ev.target.closest('.detail')) return;
+      selectStage(state.selStage === k ? -1 : k);
+    };
+    ul.appendChild(li);
+  });
+  queueNames();
+}
+function selectStage(k) {
+  state.selStage = k;
+  render();
+  if (k >= 0) {
+    const s = R.stages[k], pts = [];
+    for (let i = s.i0; i <= s.i1; i += Math.max(1, Math.floor((s.i1 - s.i0) / 300))) pts.push([R.lat[i], R.lon[i]]);
+    pts.push([R.lat[s.i1], R.lon[s.i1]]);
+    map.fitBounds(L.latLngBounds(pts), { padding: [30, 30] });
+  }
+}
+
+/* Noms de lieux des fins d'étape (géocodage inverse IGN, France) */
+let namesRunning = false, namesAgain = false;
+async function queueNames() {
+  if (!R || R.n < 2) return;
+  if (namesRunning) { namesAgain = true; return; }
+  const idx = new Set([0, R.n - 1]); R.stages.forEach(s => { idx.add(s.i0); idx.add(s.i1); });
+  const todo = [...idx].map(i => [R.lat[i], R.lon[i]]).filter(p => !(p[0].toFixed(3) + ',' + p[1].toFixed(3) in placeCache)).slice(0, 80);
+  if (!todo.length) return;
+  namesRunning = true;
+  let got = false;
+  try {
+    for (let k = 0; k < todo.length; k += 4) {
+      await Promise.all(todo.slice(k, k + 4).map(async p => {
+        const key = p[0].toFixed(3) + ',' + p[1].toFixed(3);
+        let name = '';
+        try {      // France : IGN
+          const r = await fetch(`https://data.geopf.fr/geocodage/reverse?lon=${p[1].toFixed(5)}&lat=${p[0].toFixed(5)}&index=address&limit=1`);
+          const j = await r.json(); const f = j.features && j.features[0];
+          if (f && f.properties && (f.properties.distance == null || f.properties.distance < 3000)) name = f.properties.city || f.properties.name || '';
+        } catch (e) { }
+        if (!name) try {   // ailleurs : Photon (OpenStreetMap)
+          const r = await fetch(`https://photon.komoot.io/reverse?lat=${p[0].toFixed(5)}&lon=${p[1].toFixed(5)}&limit=1&lang=fr`);
+          const j = await r.json(); const q = j.features && j.features[0] && j.features[0].properties;
+          if (q) name = q.osm_key === 'place' ? q.name : (q.city || q.locality || q.district || q.county || q.name || '');
+        } catch (e) { }
+        placeCache[key] = name || '';
+        if (name) got = true;
+      }));
+    }
+  } finally { namesRunning = false; }
+  if (got) renderStages();
+  if (namesAgain) { namesAgain = false; queueNames(); }
+}
+
+/* ================= Profil altimétrique ================= */
+const PAD = { l: 46, r: 12, t: 10, b: 22 };
+let prof = null;
+function drawProfile() {
+  const c = $('#prof'), dpr = window.devicePixelRatio || 1, W = c.clientWidth, H = c.clientHeight;
+  c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
+  const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  g.font = '11px system-ui,sans-serif';
+  prof = null;
+  if (!R || R.n < 2 || !R.zs) {
+    g.fillStyle = '#68716c'; g.fillText(R && R.n > 1 ? 'Altitudes indisponibles pour ce tracé.' : 'Le profil altimétrique apparaîtra ici.', 16, H / 2); return;
+  }
+  const w = W - PAD.l - PAD.r, h = H - PAD.t - PAD.b, D = R.dist || 1;
+  let zmin = Infinity, zmax = -Infinity; for (const v of R.zs) { if (v < zmin) zmin = v; if (v > zmax) zmax = v; }
+  const step = niceStep((zmax - zmin) / 4 || 50);
+  const z0 = Math.floor(zmin / step) * step, z1 = Math.max(Math.ceil(zmax / step) * step, z0 + step);
+  const X = d => PAD.l + d / D * w, Y = z => PAD.t + h - (z - z0) / (z1 - z0) * h;
+  prof = { X, Y, w, h, D, W, H };
+  g.strokeStyle = '#ebe9e2'; g.fillStyle = '#68716c'; g.lineWidth = 1;
+  for (let z = z0; z <= z1 + 1e-6; z += step) { g.beginPath(); g.moveTo(PAD.l, Y(z) + .5); g.lineTo(W - PAD.r, Y(z) + .5); g.stroke(); g.fillText(nf0.format(z), 4, Y(z) + 4); }
+  const kstep = niceStep(Math.max(D / 1000 / 8, 0.1));
+  for (let k = 0; k * 1000 <= D; k += kstep) { const x = X(k * 1000); g.fillText(nf0.format(k) + (k === 0 ? ' km' : ''), x - 6, H - 6); }
+  if (state.selStage >= 0 && R.stages[state.selStage]) {
+    const s = R.stages[state.selStage]; g.fillStyle = 'rgba(28,35,32,.07)';
+    g.fillRect(X(R.cum[s.i0]), PAD.t, X(R.cum[s.i1]) - X(R.cum[s.i0]), h);
+  }
+  R.stages.forEach((s, k) => {
+    const stepI = Math.max(1, Math.floor((s.i1 - s.i0) / Math.max(2, (X(R.cum[s.i1]) - X(R.cum[s.i0])) * 2)));
+    g.beginPath(); g.moveTo(X(R.cum[s.i0]), Y(z0));
+    for (let i = s.i0; i <= s.i1; i += stepI) g.lineTo(X(R.cum[i]), Y(R.zs[i]));
+    g.lineTo(X(R.cum[s.i1]), Y(R.zs[s.i1])); g.lineTo(X(R.cum[s.i1]), Y(z0)); g.closePath();
+    g.fillStyle = COLORS[k % 2] + '33'; g.fill();
+    g.beginPath();
+    for (let i = s.i0; i <= s.i1; i += stepI) { const x = X(R.cum[i]), y = Y(R.zs[i]); i === s.i0 ? g.moveTo(x, y) : g.lineTo(x, y); }
+    g.lineTo(X(R.cum[s.i1]), Y(R.zs[s.i1]));
+    g.strokeStyle = COLORS[k % 2]; g.lineWidth = 1.6; g.stroke();
+  });
+  R.stages.slice(0, -1).forEach(s => {
+    const x = Math.round(X(R.cum[s.i1])) + .5;
+    g.strokeStyle = s.pinEnd ? '#15803d' : 'rgba(28,35,32,.35)'; g.setLineDash(s.pinEnd ? [] : [3, 3]); g.lineWidth = s.pinEnd ? 2 : 1;
+    g.beginPath(); g.moveTo(x, PAD.t); g.lineTo(x, PAD.t + h); g.stroke();
+  });
+  g.setLineDash([]); g.lineWidth = 1;
+  // points d'intérêt sur le profil : eau = petits traits en bas, le reste = pastilles sur la courbe
+  if (R.pois) for (const p of R.pois) {
+    if (!S.show[p.cat]) continue;
+    const x = X(R.cum[p.idx]);
+    if (p.cat === 'water') { g.fillStyle = CAT.water.color; g.fillRect(x - 0.75, PAD.t + h - 7, 1.5, 7); }
+    else { g.beginPath(); g.arc(x, Y(R.zs[p.idx]), 3.6, 0, 2 * Math.PI); g.fillStyle = CAT[p.cat].color; g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 1.2; g.stroke(); }
+  }
+  g.lineWidth = 1;
+}
+function niceStep(raw) {
+  const p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
+}
+function profIdx(ev) {
+  if (!prof) return -1;
+  const x = ev.clientX - $('#prof').getBoundingClientRect().left;
+  if (x < PAD.l || x > prof.W - PAD.r) return -1;
+  return { x, i: lowerBound(R.cum, (x - PAD.l) / prof.w * prof.D, 0, R.n - 1) };
+}
+function onProfMove(ev) {
+  const p = profIdx(ev); if (p === -1) return onProfLeave();
+  const cur = $('#cursor'), tip = $('#tip');
+  cur.style.left = p.x + 'px'; cur.style.display = 'block';
+  tip.textContent = `km ${nf1.format(R.cum[p.i] / 1000)} · ${fM(R.zs[p.i])}`;
+  tip.style.display = 'block';
+  tip.style.left = Math.min(p.x + 8, prof.W - tip.offsetWidth - 4) + 'px';
+  hoverMk.setLatLng([R.lat[p.i], R.lon[p.i]]); if (!map.hasLayer(hoverMk)) hoverMk.addTo(map);
+}
+function onProfLeave() { $('#cursor').style.display = 'none'; $('#tip').style.display = 'none'; if (map.hasLayer(hoverMk)) map.removeLayer(hoverMk); }
+$('#prof').addEventListener('pointermove', onProfMove);
+$('#prof').addEventListener('pointerdown', onProfMove);
+$('#prof').addEventListener('pointerleave', onProfLeave);
+$('#prof').addEventListener('dblclick', ev => {
+  if (S.mode === 'gpx') { toast('Passe en « Limites / jour » ou « Nb de jours » pour ajouter des fins d\'étape', 'warn'); return; }
+  const p = profIdx(ev); if (p === -1 || p.i <= 0 || p.i >= R.n - 1) return;
+  S.pins.push([R.lat[p.i], R.lon[p.i]]); changed(); toast('Fin d\'étape ajoutée au km ' + nf1.format(R.cum[p.i] / 1000), 'ok');
+});
+
+/* ================= Calcul des tronçons ================= */
+async function brouter(a, b) {
+  const url = `https://brouter.de/brouter?lonlats=${a[1].toFixed(6)},${a[0].toFixed(6)}|${b[1].toFixed(6)},${b[0].toFixed(6)}&profile=${CFG.brouterProfile}&alternativeidx=0&format=geojson`;
+  const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 30000);
+  let r; try { r = await fetch(url, { signal: ctrl.signal }); } finally { clearTimeout(t); }
+  const txt = await r.text(); let j;
+  try { j = JSON.parse(txt); } catch (e) { throw new Error(txt.slice(0, 140) || 'réponse vide'); }
+  const c = j.features && j.features[0] && j.features[0].geometry && j.features[0].geometry.coordinates;
+  if (!c || c.length < 2) throw new Error('aucun itinéraire');
+  return c.map(q => [q[1], q[0], q.length > 2 && isFinite(q[2]) ? q[2] : null]);
+}
+async function fillElevation(pts) {
+  for (let i = 0; i < pts.length; i += 100) {
+    const ch = pts.slice(i, i + 100);
+    const url = `https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json?lon=${ch.map(p => p[1].toFixed(6)).join('|')}&lat=${ch.map(p => p[0].toFixed(6)).join('|')}&resource=ign_rge_alti_wld&zonly=true`;
+    const j = await (await fetch(url)).json();
+    ch.forEach((p, k) => { let v = j.elevations && j.elevations[k]; if (v && typeof v === 'object') v = v.z; p[2] = (typeof v === 'number' && v > -500) ? v : null; });
+  }
+}
+async function straight(a, b) {
+  const n = Math.max(1, Math.ceil(hav(a, b) / 40)), pts = [];
+  for (let i = 0; i <= n; i++) { const t = i / n; pts.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, null]); }
+  try { await fillElevation(pts); } catch (e) { toast('Altitude indisponible pour ce segment', 'warn'); }
+  return pts;
+}
+async function computeLeg(a, b, mode) {
+  if (mode === 'route') {
+    try { return { pts: await brouter(a, b), kind: 'route' }; }
+    catch (e) { toast('Pas de sentier trouvé (' + (e.name === 'AbortError' ? 'délai dépassé' : e.message) + ') : tronçon en ligne droite', 'warn'); }
+  }
+  return { pts: await straight(a, b), kind: 'line' };
+}
+
+/* ================= Actions ================= */
+let queue = Promise.resolve();
+function enqueue(fn) { queue = queue.then(fn).catch(e => { console.error(e); toast(e.message || String(e), 'err'); }); return queue; }
+let busyN = 0;
+function busy(on) { busyN += on ? 1 : -1; $('#busy').style.display = busyN > 0 ? 'block' : 'none'; }
+
+async function addPoint(p) {
+  if (!state.start) { state.start = p; changed(); return; }
+  busy(true);
+  try {
+    const leg = await computeLeg(lastPoint(), p, state.mode);
+    const e = leg.pts[leg.pts.length - 1];
+    state.legs.push({ to: [e[0], e[1]], pts: leg.pts, kind: leg.kind });
+  } finally { busy(false); }
+  changed();
+}
+async function moveWaypoint(i, p) {
+  const redo = async li => {
+    const L0 = state.legs[li]; if (!L0 || L0.kind === 'import') return;
+    const from = li === 0 ? state.start : endOf(li - 1);
+    const leg = await computeLeg(from, L0.to, L0.kind === 'line' ? 'line' : 'route');
+    const e = leg.pts[leg.pts.length - 1];
+    L0.pts = leg.pts; L0.kind = leg.kind; L0.to = [e[0], e[1]];
+  };
+  if (i === 0) state.start = p; else state.legs[i - 1].to = p;
+  busy(true);
+  try { if (i > 0) await redo(i - 1); await redo(i); } finally { busy(false); }
+  changed();
+}
+function undo() {
+  if (state.legs.length) state.legs.pop(); else state.start = null;
+  state.selStage = -1; changed();
+}
+function reverse() {
+  const N = state.legs.length; if (!N) return;
+  const W = [state.start, ...state.legs.map((_, i) => endOf(i))];
+  const out = [];
+  for (let k = 0; k < N; k++) {
+    const src = state.legs[N - 1 - k];
+    out.push({ to: W[N - 1 - k], pts: src.pts.slice().reverse(), kind: src.kind, name: src.name, stageBreak: (N - 1 - k >= 1) ? !!state.legs[N - 2 - k].stageBreak : !!src.stageBreak });
+  }
+  state.start = W[N]; state.legs = out; state.selStage = -1; changed();
+  toast('Sens inversé', 'ok');
+}
+let clearArmed = null;
+function clearAll() {
+  if (!clearArmed) { $('#bClear').textContent = 'Confirmer ?'; clearArmed = setTimeout(() => { clearArmed = null; $('#bClear').textContent = 'Effacer'; }, 3000); return; }
+  clearTimeout(clearArmed); clearArmed = null; $('#bClear').textContent = 'Effacer';
+  state.start = null; state.legs = []; state.selStage = -1; S.pins = []; changed();
+}
+function importTracks(tracks) {
+  const names = new Set(tracks.map(t => t.name));
+  const useNames = names.size === tracks.length;
+  state.start = [tracks[0].pts[0][0], tracks[0].pts[0][1]];
+  state.legs = tracks.map(t => { const e = t.pts[t.pts.length - 1]; return { to: [e[0], e[1]], pts: t.pts, kind: 'import', name: useNames ? t.name : '', stageBreak: true }; });
+  state.selStage = -1; S.pins = [];
+  if (tracks.length > 1) S.mode = 'gpx';
+  changed();
+  map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), { padding: [20, 20] });
+  toast(`GPX importé : ${tracks.length} trace${tracks.length > 1 ? 's' : ''}, ${fKm(R.dist)}`, 'ok');
+}
+function toGPX() {
+  const stamp = new Date().toISOString();
+  let x = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Itinera" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>Itinéraire</name><time>${stamp}</time></metadata>\n`;
+  R.stages.forEach((s, k) => {
+    if (k < R.stages.length - 1) {
+      const where = s.endPoi ? (s.endPoi.name || s.endPoi.kind) : placeName(s.i1);
+      x += `<wpt lat="${R.lat[s.i1].toFixed(6)}" lon="${R.lon[s.i1].toFixed(6)}"><name>${escXml('Fin étape ' + (k + 1) + (where ? ' – ' + where : ''))}</name><sym>Flag, Blue</sym><type>fin-etape</type></wpt>\n`;
+    }
+  });
+  (R.pois || []).filter(p => S.show[p.cat]).forEach(p => {
+    x += `<wpt lat="${p.lat.toFixed(6)}" lon="${p.lon.toFixed(6)}"><name>${escXml(p.name ? p.name + ' (' + p.kind + ')' : p.kind)}</name><desc>${escXml(CAT[p.cat].label + ' · km ' + (R.cum[p.idx] / 1000).toFixed(1))}</desc><sym>${CAT[p.cat].sym}</sym><type>${p.cat}</type></wpt>\n`;
+  });
+  R.stages.forEach((s, k) => {
+    x += `<trk><name>${escXml(R.stages.length > 1 ? 'Étape ' + (k + 1) : 'Itinéraire')}</name><trkseg>\n`;
+    for (let i = s.i0; i <= s.i1; i++) x += `<trkpt lat="${R.lat[i].toFixed(6)}" lon="${R.lon[i].toFixed(6)}">${R.zr ? `<ele>${R.zr[i].toFixed(1)}</ele>` : ''}</trkpt>\n`;
+    x += `</trkseg></trk>\n`;
+  });
+  return x + '</gpx>\n';
+}
+function exportGPX() {
+  if (!R || R.n < 2) return;
+  const blob = new Blob([toGPX()], { type: 'application/gpx+xml' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'itineraire.gpx';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+/* ================= Sauvegarde locale ================= */
+function save() {
+  try {
+    const r6 = v => Math.round(v * 1e6) / 1e6, r1 = v => v == null ? null : Math.round(v * 10) / 10;
+    localStorage.setItem(CFG.storageKey, JSON.stringify({
+      S, start: state.start,
+      legs: state.legs.map(l => ({ to: l.to, kind: l.kind, name: l.name || '', stageBreak: !!l.stageBreak, pts: l.pts.map(p => [r6(p[0]), r6(p[1]), r1(p[2])]) }))
+    }));
+  } catch (e) { /* stockage indisponible : pas grave */ }
+}
+function restore() {
+  try {
+    const d = JSON.parse(localStorage.getItem(CFG.storageKey) || 'null');
+    if (d && d.S) S = Object.assign(JSON.parse(JSON.stringify(DEFAULT_S)), d.S);
+    if (d && d.start) { state.start = d.start; state.legs = d.legs || []; return true; }
+  } catch (e) { }
+  return false;
+}
+function changed() { compute(); render(); save(); schedulePOIs(); }
+
+/* ================= Points d'intérêt OpenStreetMap (Overpass) ================= */
+// Recherche dans un couloir autour du tracé (around), par morceaux de 20 km, 3 morceaux par requête.
+// Chaque morceau déjà analysé est gardé en cache : tracer plus loin ne relance que la fin.
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+const CHUNK_M = 20000, BATCH = 3;
+const chunkDone = new Set();
+let poiTimer = null, poiRunning = false, poiAgain = false, poiProgress = { done: 0, total: 0 };
+function schedulePOIs() { clearTimeout(poiTimer); poiTimer = setTimeout(fetchPOIs, 1200); }
+function hashStr(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + ':' + s.length; }
+function routeChunks() {
+  const out = []; if (!R || R.n < 2) return out;
+  let pts = [], c0 = 0, last = -Infinity;
+  for (let i = 0; i < R.n; i++) {
+    const d = R.cum[i];
+    if (!pts.length || d - last >= 300 || i === R.n - 1) { pts.push([R.lat[i], R.lon[i]]); last = d; }
+    if ((d - c0 >= CHUNK_M || i === R.n - 1) && pts.length > 1) {
+      out.push({ pts, km: (d - c0) / 1000 });
+      pts = [[R.lat[i], R.lon[i]]]; c0 = d; last = d;
+    }
+  }
+  out.forEach(c => { c.key = hashStr(c.pts.map(p => p[0].toFixed(4) + ',' + p[1].toFixed(4)).join(';')); });
+  return out;
+}
+function buildQuery(chunks) {
+  const st = [];
+  for (const c of chunks) {
+    const ls = c.pts.map(p => p[0].toFixed(5) + ',' + p[1].toFixed(5)).join(',');
+    st.push(`nwr["tourism"~"^(alpine_hut|wilderness_hut|hostel|guest_house|camp_site|camp_pitch)$"](around:1000,${ls});`,
+      `nwr["amenity"~"^(shelter|drinking_water|water_point)$"](around:1000,${ls});`,
+      `nwr["natural"="spring"](around:1000,${ls});`,
+      `nwr["man_made"="water_tap"](around:1000,${ls});`,
+      `nwr["shop"~"^(supermarket|convenience|general|bakery)$"](around:1500,${ls});`,
+      `nwr["railway"~"^(station|halt)$"](around:3000,${ls});`);
+  }
+  return `[out:json][timeout:90];(${st.join('')});out center tags qt;`;
+}
+async function overpass(q) {
+  let lastErr;
+  for (const url of OVERPASS) {
+    const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 100000);
+    try {
+      const r = await fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal: ctrl.signal });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      if (j.remark && /timed out|out of memory|runtime error/i.test(j.remark) && !(j.elements && j.elements.length)) throw new Error(j.remark);
+      return j;
+    } catch (e) { lastErr = e; console.warn('Overpass', url, e); }
+    finally { clearTimeout(t); }
+  }
+  throw lastErr;
+}
+async function fetchPOIs() {
+  if (poiRunning) { poiAgain = true; return; }
+  const chunks = routeChunks(), todo = chunks.filter(c => !chunkDone.has(c.key));
+  const totalKm = chunks.reduce((a, c) => a + c.km, 0);
+  if (!todo.length) { if (poiState !== 'ok' && chunks.length) { poiState = 'ok'; renderPoiStatus(); renderStages(); } return; }
+  poiRunning = true; poiState = 'loading';
+  poiProgress = { done: totalKm - todo.reduce((a, c) => a + c.km, 0), total: totalKm };
+  renderPoiStatus(); renderStages();
+  try {
+    for (let k = 0; k < todo.length; k += BATCH) {
+      const batch = todo.slice(k, k + BATCH);
+      const data = await overpass(buildQuery(batch));
+      for (const el of data.elements || []) {
+        const t = el.tags || {}, c = classify(t); if (!c) continue;
+        const lat = el.lat != null ? el.lat : el.center && el.center.lat, lon = el.lon != null ? el.lon : el.center && el.center.lon;
+        if (lat == null || lon == null) continue;
+        poiCache.set(el.type + el.id, { id: el.type + el.id, lat, lon, cat: c.cat, kind: c.kind, name: (t.name || '').trim() });
+      }
+      batch.forEach(c => chunkDone.add(c.key));
+      poiProgress.done += batch.reduce((a, c) => a + c.km, 0);
+      compute(); render();                       // résultats partiels visibles tout de suite
+    }
+    poiState = 'ok';
+  } catch (e) { poiState = 'error'; }
+  finally { poiRunning = false; }
+  compute(); render();
+  if (poiAgain) { poiAgain = false; fetchPOIs(); }
+}
+
+/* ================= Interface ================= */
+function toast(msg, kind) {
+  const el = document.createElement('div'); el.className = 'toast ' + (kind || ''); el.textContent = msg;
+  $('#status').appendChild(el); setTimeout(() => el.remove(), 4500);
+}
+map.on('click', e => { if (state.draw) enqueue(() => addPoint([e.latlng.lat, e.latlng.lng])); });
+$('#bDraw').onclick = () => { state.draw = !state.draw; $('#bDraw').classList.toggle('on', state.draw); map.getContainer().style.cursor = state.draw ? 'crosshair' : ''; };
+$('#mRoute').onclick = () => { state.mode = 'route'; $('#mRoute').classList.add('on'); $('#mLine').classList.remove('on'); };
+$('#mLine').onclick = () => { state.mode = 'line'; $('#mLine').classList.add('on'); $('#mRoute').classList.remove('on'); };
+$('#bUndo').onclick = () => enqueue(undo);
+$('#bReverse').onclick = () => enqueue(reverse);
+$('#bClear').onclick = () => enqueue(clearAll);
+$('#bExport').onclick = exportGPX;
+$('#file').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => enqueue(() => importTracks(parseGPX(rd.result)));
+  rd.readAsText(f); e.target.value = '';
+};
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !['INPUT', 'SELECT'].includes(document.activeElement.tagName)) { e.preventDefault(); enqueue(undo); } });
+map.getContainer().style.cursor = 'crosshair';
+
+// Réglages du découpage
+document.querySelectorAll('#modeSeg button').forEach(b => b.onclick = () => { S.mode = b.dataset.m; state.selStage = -1; changed(); });
+let settingsTimer = null;
+function readSettings() {
+  const num = (id, min, max, def) => { const v = parseFloat($(id).value); return isFinite(v) ? Math.min(max, Math.max(min, v)) : def; };
+  S.useH = $('#cH').checked; S.useUp = $('#cUp').checked; S.useKm = $('#cKm').checked; S.balance = $('#cBal').checked;
+  S.h = num('#vH', 1, 16, S.h); S.up = num('#vUp', 100, 6000, S.up); S.km = num('#vKm', 1, 150, S.km);
+  S.days = Math.round(num('#vDays', 1, 300, S.days)); S.pace = parseFloat($('#pace').value) || 1;
+  S.endType = $('#endType').value; S.tol = num('#vTol', 0, 4, S.tol);
+  state.selStage = -1;
+  changed();
+}
+function readDates() {      // dates et horaires : ne changent pas le découpage
+  S.startDate = $('#vDate').value || ''; S.startTime = $('#vTime').value || '08:00';
+  const p = parseFloat($('#vPause').value); S.pause = isFinite(p) ? Math.min(300, Math.max(0, p)) : S.pause;
+  renderStages(); save();
+}
+['#vDate', '#vTime', '#vPause'].forEach(id => { $(id).addEventListener('change', readDates); $(id).addEventListener('input', readDates); });
+['#cH', '#cUp', '#cKm', '#cBal', '#pace', '#endType'].forEach(id => $(id).addEventListener('change', readSettings));
+['#vH', '#vUp', '#vKm', '#vDays', '#vTol'].forEach(id => $(id).addEventListener('input', () => { clearTimeout(settingsTimer); settingsTimer = setTimeout(readSettings, 300); }));
+
+/* Recherche de lieux (géocodage IGN) */
+async function search(q) {
+  const ul = $('#results'); ul.innerHTML = ''; ul.style.display = 'none';
+  if (!q.trim()) return;
+  const urls = ['poi', 'address'].map(ix => `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(q)}&index=${ix}&limit=5`);
+  const res = await Promise.all(urls.map(u => fetch(u).then(r => r.json()).catch(() => null)));
+  const feats = []; res.forEach(j => j && j.features && feats.push(...j.features));
+  if (!feats.length) { ul.innerHTML = '<li style="cursor:default">Aucun résultat</li>'; ul.style.display = 'block'; return; }
+  feats.slice(0, 8).forEach(f => {
+    const p = f.properties || {}, c = f.geometry.coordinates;
+    const label = p.label || (Array.isArray(p.toponym) ? p.toponym[0] : p.toponym) || p.name || (p.names && p.names[0]) || 'Résultat';
+    const extra = Array.isArray(p.city) ? p.city[0] : (p.city && p.city !== label ? p.city : '');
+    const li = document.createElement('li'); li.textContent = label + (extra && !String(label).includes(extra) ? ' — ' + extra : '');
+    li.onclick = () => { map.setView([c[1], c[0]], 14); ul.style.display = 'none'; };
+    ul.appendChild(li);
+  });
+  ul.style.display = 'block';
+}
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); search(e.target.value); } });
+
+window.addEventListener('resize', () => { map.invalidateSize(); drawProfile(); });
+
+/* ================= Démarrage ================= */
+buildPoiRows();
+if (restore()) {
+  compute(); render();
+  if (R.n > 1) map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), { padding: [20, 20] });
+  toast('Brouillon restauré', 'ok');
+  schedulePOIs();
+} else { compute(); render(); }
+
+/* Application installable (Android : menu ⋮ > « Installer l'application ») */
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW', e)));
+}
+</script>
+</body>
+</html>
