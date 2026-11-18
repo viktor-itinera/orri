@@ -23,7 +23,7 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
-#app{position:relative;height:100%;height:100dvh}
+#app{position:relative;height:100%;height:100dvh;overflow:hidden}
 .ico{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* --- Carte --- */
@@ -62,7 +62,7 @@ html,body{margin:0;height:100%;overflow:hidden;font:15px/1.45 system-ui,-apple-s
 #q::-webkit-search-cancel-button{filter:grayscale(1) opacity(.6)}
 
 /* --- Messages --- */
-#status{position:absolute;z-index:1200;top:116px;left:12px;right:12px;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+#status{position:absolute;z-index:2100;top:116px;left:12px;right:12px;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
 .toast{background:var(--forest);color:#fff;padding:9px 14px;border-radius:20px;font-size:14px;max-width:420px;box-shadow:var(--shadow)}
 .toast.err{background:var(--err)} .toast.warn{background:var(--warn)} .toast.ok{background:var(--forest-2)}
 #busy{display:none}
@@ -156,6 +156,31 @@ input[type=checkbox]{width:20px;height:20px;accent-color:var(--forest);margin:0;
 footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
 .empty{color:var(--muted);font-size:14px;padding:8px 0}
 
+/* --- Profil et pages plein écran --- */
+.avatar{width:36px;height:36px;min-height:0;padding:0;border-radius:50%;border:0;background:var(--moss);color:var(--forest);flex:none}
+.page{position:fixed;inset:0;z-index:2000;background:var(--bg);display:none;flex-direction:column}
+.page.on{display:flex}
+.paged #status{top:70px}
+.paged #chips{display:none}
+.page header{flex:none;display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--panel);box-shadow:0 1px 0 var(--line)}
+.page header h1{flex:1;font-size:18px;margin:0}
+.page .close{width:44px;padding:0;border:0;background:transparent}
+.hbtn{min-height:40px;padding:0 12px}
+.pbody{flex:1;overflow-y:auto;padding:4px 16px 40px;max-width:640px;width:100%;margin:0 auto}
+.card{background:var(--panel);border-radius:var(--r);padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+#trekName,.rename{width:100%;font:inherit;font-size:16px;font-weight:600;border:1px solid var(--line);border-radius:var(--r);padding:0 12px;min-height:44px;background:#fff;color:var(--ink)}
+#trekList{list-style:none;margin:0;padding:0}
+.trek{background:var(--panel);border-radius:var(--r);margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:hidden}
+.trek.cur{box-shadow:0 0 0 2px var(--forest)}
+.tmain{display:block;width:100%;text-align:left;border:0;border-radius:0;background:transparent;padding:12px 14px;min-height:0}
+.tmain b{display:block;font-size:16px}
+.tmain span{display:block;color:var(--forest);font-size:14px;margin-top:2px;font-variant-numeric:tabular-nums}
+.tmain small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px;font-weight:400}
+.tact{display:flex;border-top:1px solid var(--line)}
+.tact button{flex:1;border:0;border-radius:0;background:transparent;font-size:13.5px;min-height:40px;padding:0 4px}
+.tact button+button{border-left:1px solid var(--line)}
+#sheetFrame{flex:1;border:0;width:100%;background:#fffdf9}
+
 /* --- Ordinateur : panneau latéral, profil sous la carte --- */
 @media (min-width:900px){
   #map{left:var(--side);bottom:170px}
@@ -188,6 +213,12 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
   <symbol id="i-pack" viewBox="0 0 24 24"><path d="M6 8a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2Z"/><path d="M9 4V2h6v2"/><path d="M8 13h8v5H8z"/></symbol>
   <symbol id="i-tap" viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
   <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h8M8 9h2"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
 </svg>
 <div id="app">
@@ -198,7 +229,7 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
       <div class="searchbar">
         <img src="icons/apple-touch-icon.png" alt="Orri">
         <input id="q" type="search" placeholder="Rechercher un lieu…" autocomplete="off" enterkeyhint="search">
-        <svg class="ico" style="color:var(--muted);margin-right:8px"><use href="#i-search"/></svg>
+        <button id="bProfile" class="avatar" title="Mon profil et mes parcours" aria-label="Mon profil"><svg class="ico"><use href="#i-user"/></svg></button>
       </div>
       <ul id="results"></ul>
     </div>
@@ -261,8 +292,9 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
         <div class="row">
           <label class="btn grow" for="file"><svg class="ico"><use href="#i-up"/></svg>Importer</label>
           <input id="file" type="file" accept=".gpx,application/gpx+xml" hidden>
-          <button id="bExport" class="primary grow"><svg class="ico"><use href="#i-down"/></svg>Exporter</button>
+          <button id="bExport" class="grow"><svg class="ico"><use href="#i-down"/></svg>Exporter</button>
         </div>
+        <button id="bQuickSave" class="primary" style="width:100%;margin-top:12px"><svg class="ico"><use href="#i-save"/></svg>Enregistrer dans Mes parcours</button>
 
         <ul class="tips">
           <li><svg class="ico"><use href="#i-tap"/></svg><span>Touche la carte pour poser le départ puis chaque point : le tracé suit les sentiers et les étapes se recalculent.</span></li>
@@ -332,6 +364,10 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
           <div class="lim"><label for="vPause">Pauses par jour</label><input type="number" id="vPause" min="0" max="300" step="15" inputmode="numeric"><span class="u">min</span></div>
         </div>
 
+        <h2>Fiche du trek</h2>
+        <button id="bSheet" class="primary" style="width:100%"><svg class="ico"><use href="#i-doc"/></svg>Voir la fiche (hors ligne, à imprimer)</button>
+        <p class="note">Toutes les étapes sur une page : horaires, nuits, eau, points utiles. Télécharge-la pour l'avoir sans réseau sur le sentier.</p>
+
         <h2>Sur le parcours</h2>
         <div id="poiRows"></div>
         <p class="note" id="poiStatus"></p>
@@ -340,6 +376,40 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
       </section>
     </div>
   </aside>
+
+  <!-- ===== Profil : Mes parcours ===== -->
+  <div class="page" id="page-profile" role="dialog" aria-label="Mon profil">
+    <header><button class="close" aria-label="Fermer"><svg class="ico"><use href="#i-x"/></svg></button><h1>Mon profil</h1></header>
+    <div class="pbody">
+      <h2>Parcours en cours</h2>
+      <div class="card">
+        <input id="trekName" type="text" placeholder="Nom du parcours" maxlength="80" autocomplete="off">
+        <p class="note" id="curState"></p>
+        <div class="row" style="margin-top:10px">
+          <button id="bSaveTrek" class="primary grow"><svg class="ico"><use href="#i-save"/></svg><span>Enregistrer</span></button>
+          <button id="bSaveCopy" class="grow">Enregistrer une copie</button>
+        </div>
+        <button id="bNewTrek" style="width:100%;margin-top:8px"><svg class="ico"><use href="#i-plus"/></svg>Nouveau parcours</button>
+      </div>
+      <h2>Mes parcours <span id="nTreks"></span></h2>
+      <ul id="trekList"></ul>
+      <h2>Sauvegarde</h2>
+      <div class="row">
+        <button id="bBackup" class="grow"><svg class="ico"><use href="#i-down"/></svg>Sauvegarder dans un fichier</button>
+        <label class="btn grow" for="restoreFile"><svg class="ico"><use href="#i-up"/></svg>Restaurer</label>
+        <input id="restoreFile" type="file" accept=".json,application/json" hidden>
+      </div>
+      <p class="note">Tes parcours sont gardés dans ce navigateur, sur cet appareil, sans compte. Ils disparaissent si tu effaces les données du navigateur : garde une sauvegarde dans un fichier (par exemple sur ton drive).</p>
+    </div>
+  </div>
+
+  <!-- ===== Fiche du trek ===== -->
+  <div class="page" id="page-sheet" role="dialog" aria-label="Fiche du trek">
+    <header><button class="close" aria-label="Fermer"><svg class="ico"><use href="#i-x"/></svg></button><h1>Fiche du trek</h1>
+      <button id="bSheetPrint" class="hbtn" title="Imprimer ou PDF" aria-label="Imprimer"><svg class="ico"><use href="#i-print"/></svg></button>
+      <button id="bSheetDl" class="hbtn primary" title="Télécharger"><svg class="ico"><use href="#i-down"/></svg>Télécharger</button></header>
+    <iframe id="sheetFrame" title="Fiche du trek"></iframe>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -1244,14 +1314,16 @@ function exportGPX() {
 }
 
 /* ================= Sauvegarde locale ================= */
+// Itinéraire et réglages, tels qu'ils sont gardés (brouillon et « Mes parcours »)
+function draftData() {
+  const r6 = v => Math.round(v * 1e6) / 1e6, r1 = v => v == null ? null : Math.round(v * 10) / 10;
+  return JSON.parse(JSON.stringify({
+    S, start: state.start,
+    legs: state.legs.map(l => ({ to: l.to, kind: l.kind, name: l.name || '', stageBreak: !!l.stageBreak, pts: l.pts.map(p => [r6(p[0]), r6(p[1]), r1(p[2])]) }))
+  }));
+}
 function save() {
-  try {
-    const r6 = v => Math.round(v * 1e6) / 1e6, r1 = v => v == null ? null : Math.round(v * 10) / 10;
-    localStorage.setItem(CFG.storageKey, JSON.stringify({
-      S, start: state.start,
-      legs: state.legs.map(l => ({ to: l.to, kind: l.kind, name: l.name || '', stageBreak: !!l.stageBreak, pts: l.pts.map(p => [r6(p[0]), r6(p[1]), r1(p[2])]) }))
-    }));
-  } catch (e) { /* stockage indisponible : pas grave */ }
+  try { localStorage.setItem(CFG.storageKey, JSON.stringify(draftData())); } catch (e) { /* stockage indisponible : pas grave */ }
 }
 function restore() {
   try {
@@ -1510,6 +1582,229 @@ $('#bLocate').onclick = () => {
     toast(err.code === 1 ? 'Localisation refusée : autorise-la dans les réglages du navigateur' : 'Position introuvable pour le moment', 'warn');
   }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
 };
+
+/* ================= Mes parcours (profil sur l'appareil, sans compte) ================= */
+const TREKS_KEY = 'orri.treks.v1', CUR_KEY = 'orri.current';
+const treks = {
+  list: [], cur: null,
+  load() {
+    try { const d = JSON.parse(localStorage.getItem(TREKS_KEY) || 'null'); this.list = d && Array.isArray(d.list) ? d.list : []; } catch (e) { this.list = []; }
+    try { this.cur = localStorage.getItem(CUR_KEY) || null; } catch (e) { }
+    if (this.cur && !this.get(this.cur)) this.cur = null;
+  },
+  store() {
+    try { localStorage.setItem(TREKS_KEY, JSON.stringify({ v: 1, list: this.list })); }
+    catch (e) { toast('Mémoire du navigateur pleine : sauvegarde tes parcours dans un fichier, puis supprimes-en', 'err'); return false; }
+    try { this.cur ? localStorage.setItem(CUR_KEY, this.cur) : localStorage.removeItem(CUR_KEY); } catch (e) { }
+    return true;
+  },
+  get(id) { return this.list.find(t => t.id === id); },
+  dirty() { const t = this.cur && this.get(this.cur); return t ? JSON.stringify(t.data) !== JSON.stringify(draftData()) : !!state.start; },
+  summary() {
+    return R && R.n > 1 ? { km: Math.round(R.dist / 100) / 10, up: Math.round(R.up), stages: R.stages.length, start: S.startDate || '' } : { km: 0, up: 0, stages: 0, start: '' };
+  }
+};
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function defaultName() {
+  const a = R && R.n > 1 ? placeName(0) : null, b = R && R.n > 1 ? placeName(R.n - 1) : null;
+  return a && b && a !== b ? `${a} → ${b}` : a ? `Rando depuis ${a}` : 'Mon parcours';
+}
+function saveTrek(asNew) {
+  if (!state.start) return toast('Trace ou importe un itinéraire avant de l\'enregistrer', 'warn');
+  const name = ($('#trekName').value || '').trim() || defaultName(), now = new Date().toISOString();
+  let t = !asNew && treks.cur && treks.get(treks.cur);
+  if (t) Object.assign(t, { name, updated: now, data: draftData(), sum: treks.summary() });
+  else { t = { id: newId(), name: asNew && treks.cur ? name + ' (copie)' : name, created: now, updated: now, data: draftData(), sum: treks.summary() }; treks.list.unshift(t); treks.cur = t.id; }
+  if (treks.store()) toast(`« ${t.name} » enregistré dans Mes parcours`, 'ok');
+  renderProfile();
+}
+function openTrek(id) {
+  const t = treks.get(id); if (!t) return;
+  S = Object.assign(JSON.parse(JSON.stringify(DEFAULT_S)), JSON.parse(JSON.stringify(t.data.S || {})));
+  state.start = t.data.start; state.legs = JSON.parse(JSON.stringify(t.data.legs || [])); state.selStage = -1;
+  treks.cur = id; treks.store();
+  changed(); closePage();
+  if (R.n > 1) map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), fitPad(20));
+  toast(`« ${t.name} » ouvert`, 'ok');
+}
+function newTrek() {
+  treks.cur = null; treks.store();
+  state.start = null; state.legs = []; state.selStage = -1; S.pins = []; S.over = {};
+  changed(); closePage(); showTab('trace');
+  toast('Nouveau parcours : touche la carte pour poser ton départ');
+}
+// Une action sensible demande une 2e touche (pas de boîte de dialogue du navigateur)
+let armed = null;
+function confirmTap(btn, label, fn) {
+  if (armed && armed.btn === btn) { clearTimeout(armed.t); armed = null; return fn(); }
+  if (armed) { clearTimeout(armed.t); armed.btn.innerHTML = armed.html; }
+  armed = { btn, html: btn.innerHTML, t: setTimeout(() => { btn.innerHTML = armed.html; armed = null; }, 3500) };
+  btn.textContent = label;
+}
+const fDateFr = iso => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+function renderProfile() {
+  const t = treks.cur && treks.get(treks.cur), dirty = treks.dirty();
+  $('#trekName').value = t ? t.name : (state.start ? defaultName() : '');
+  $('#curState').textContent = !state.start ? 'Aucun itinéraire tracé pour l\'instant.'
+    : t ? (dirty ? 'Modifications non enregistrées.' : 'Enregistré · à jour.') : 'Pas encore enregistré.';
+  saveBtnState();
+  $('#bSaveTrek span').textContent = t ? 'Mettre à jour' : 'Enregistrer';
+  $('#bSaveCopy').style.display = t ? '' : 'none';
+  $('#nTreks').textContent = treks.list.length ? `(${treks.list.length})` : '';
+  const ul = $('#trekList'); ul.innerHTML = '';
+  if (!treks.list.length) { ul.innerHTML = '<li class="empty">Tes parcours enregistrés apparaîtront ici. Ils restent sur cet appareil : pense à les sauvegarder dans un fichier de temps en temps.</li>'; return; }
+  treks.list.forEach(tr => {
+    const li = document.createElement('li'); li.className = 'trek' + (tr.id === treks.cur ? ' cur' : '');
+    const s = tr.sum || {};
+    li.innerHTML = `<button class="tmain" data-a="open"><b>${escXml(tr.name)}</b>
+      <span>${s.km ? nf1.format(s.km) + ' km · +' + nf0.format(s.up) + ' m · ' + s.stages + ' étape' + (s.stages > 1 ? 's' : '') : 'Itinéraire vide'}</span>
+      <small>${tr.id === treks.cur ? 'Ouvert · ' : ''}modifié le ${fDateFr(tr.updated)}</small></button>
+      <div class="tact">
+        <button data-a="rename">Renommer</button><button data-a="dup">Dupliquer</button><button data-a="del" class="danger">Supprimer</button>
+      </div>`;
+    li.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
+      const a = b.dataset.a;
+      if (a === 'open') {
+        if (tr.id !== treks.cur && state.start && treks.dirty()) return confirmTap(b, 'Le parcours en cours n\'est pas enregistré : touche encore pour l\'abandonner et ouvrir celui-ci', () => openTrek(tr.id));
+        return openTrek(tr.id);
+      }
+      if (a === 'rename') {
+        const main = li.querySelector('.tmain b'), inp = document.createElement('input');
+        inp.type = 'text'; inp.value = tr.name; inp.className = 'rename'; main.replaceWith(inp); inp.focus(); inp.select();
+        inp.onclick = e => e.stopPropagation();
+        const done = () => { const v = inp.value.trim(); if (v) { tr.name = v; treks.store(); } renderProfile(); };
+        inp.onblur = done; inp.onkeydown = e => { if (e.key === 'Enter') inp.blur(); };
+        return;
+      }
+      if (a === 'dup') {
+        const c = JSON.parse(JSON.stringify(tr)); c.id = newId(); c.name = tr.name + ' (copie)'; c.created = c.updated = new Date().toISOString();
+        treks.list.splice(treks.list.indexOf(tr) + 1, 0, c); treks.store(); renderProfile(); return;
+      }
+      if (a === 'del') return confirmTap(b, 'Confirmer ?', () => {
+        treks.list = treks.list.filter(x => x !== tr); if (treks.cur === tr.id) treks.cur = null;
+        treks.store(); renderProfile(); toast(`« ${tr.name} » supprimé`);
+      });
+    });
+    ul.appendChild(li);
+  });
+}
+// Sauvegarde de tous les parcours dans un fichier, et restauration (fusion par identifiant)
+function download(name, text, type) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+$('#bBackup').onclick = () => {
+  if (!treks.list.length) return toast('Aucun parcours enregistré à sauvegarder', 'warn');
+  download(`orri-mes-parcours-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ app: 'orri', v: 1, list: treks.list }), 'application/json');
+};
+$('#restoreFile').onchange = e => {
+  const f = e.target.files[0]; if (!f) return; e.target.value = '';
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const d = JSON.parse(rd.result); if (!d || d.app !== 'orri' || !Array.isArray(d.list)) throw new Error();
+      let n = 0;
+      d.list.forEach(t => {
+        if (!t || !t.id || !t.data || !t.name) return;
+        const old = treks.get(t.id);
+        if (!old) { treks.list.push(t); n++; } else if ((t.updated || '') > (old.updated || '')) { Object.assign(old, t); n++; }
+      });
+      treks.list.sort((a, b) => (b.updated || '').localeCompare(a.updated || ''));
+      if (treks.store()) toast(n ? `${n} parcours restauré${n > 1 ? 's' : ''}` : 'Tous ces parcours sont déjà là', 'ok');
+      renderProfile();
+    } catch (err) { toast('Ce fichier n\'est pas une sauvegarde Orri', 'err'); }
+  };
+  rd.readAsText(f);
+};
+function saveBtnState() {   // actif s'il y a quelque chose de neuf : itinéraire modifié ou nouveau nom
+  const t = treks.cur && treks.get(treks.cur), nm = ($('#trekName').value || '').trim();
+  $('#bSaveTrek').disabled = !state.start || (t && !treks.dirty() && (!nm || nm === t.name));
+}
+$('#trekName').addEventListener('input', saveBtnState);
+$('#bSaveTrek').onclick = () => saveTrek(false);
+$('#bSaveCopy').onclick = () => saveTrek(true);
+$('#bNewTrek').onclick = () => {
+  if (state.start && treks.dirty()) return confirmTap($('#bNewTrek'), 'Non enregistré : touche encore pour l\'abandonner', newTrek);
+  newTrek();
+};
+$('#bQuickSave').onclick = () => { openPage('profile'); if (state.start) saveTrek(false); };
+
+/* ================= Pages plein écran (profil, fiche) ================= */
+function openPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'page-' + name));
+  document.body.classList.add('paged');
+  if (name === 'profile') renderProfile();
+  if (name === 'sheet') renderSheet();
+}
+function closePage() { document.querySelectorAll('.page').forEach(p => p.classList.remove('on')); document.body.classList.remove('paged'); }
+document.querySelectorAll('.page .close').forEach(b => b.onclick = closePage);
+$('#bProfile').onclick = () => openPage('profile');
+$('#bSheet').onclick = () => { if (!R || R.n < 2) return toast('Trace ou importe un itinéraire d\'abord', 'warn'); openPage('sheet'); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('paged')) closePage(); });
+
+/* ================= Fiche du trek (lisible hors ligne, à télécharger ou imprimer) ================= */
+function sheetHTML() {
+  const t = treks.cur && treks.get(treks.cur), title = (t && t.name) || ($('#trekName').value || '').trim() || defaultName();
+  const kmAt = i => nf1.format(R.cum[i] / 1000);
+  // tracé simplifié et profil en SVG (pas besoin de réseau)
+  const step = Math.max(1, Math.floor(R.n / 600)), idx = []; for (let i = 0; i < R.n; i += step) idx.push(i); idx.push(R.n - 1);
+  let la0 = Infinity, la1 = -Infinity, lo0 = Infinity, lo1 = -Infinity;
+  idx.forEach(i => { la0 = Math.min(la0, R.lat[i]); la1 = Math.max(la1, R.lat[i]); lo0 = Math.min(lo0, R.lon[i]); lo1 = Math.max(lo1, R.lon[i]); });
+  const kx = Math.cos((la0 + la1) / 2 * Math.PI / 180), w = Math.max(1e-6, (lo1 - lo0) * kx), h = Math.max(1e-6, la1 - la0);
+  const W = 600, H = Math.max(120, Math.min(420, W * h / w)), sc = Math.min((W - 40) / w, (H - 40) / h);
+  const px = i => [20 + (R.lon[i] - lo0) * kx * sc + ((W - 40) - w * sc) / 2, H - 20 - (R.lat[i] - la0) * sc - ((H - 40) - h * sc) / 2];
+  const mapSvg = `<svg viewBox="0 0 ${W} ${H.toFixed(0)}" class="mapsvg">${R.stages.map((s, k) => {
+      const pts = idx.filter(i => i >= s.i0 && i <= s.i1).concat([s.i1]).map(i => px(i).map(v => v.toFixed(1)).join(',')).join(' ');
+      return `<polyline points="${pts}" fill="none" stroke="${COLORS[k % 2]}" stroke-width="3" stroke-linejoin="round"/>`;
+    }).join('')}${R.stages.map((s, k) => { const [x, y] = px(s.i1); return k < R.stages.length - 1 ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" fill="#1c3a2e" stroke="#fff" stroke-width="2"/><text x="${x.toFixed(1)}" y="${(y + 3.5).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${k + 1}</text>` : ''; }).join('')}
+    <circle cx="${px(0)[0].toFixed(1)}" cy="${px(0)[1].toFixed(1)}" r="6" fill="#fff" stroke="#15803d" stroke-width="3"/>
+    <circle cx="${px(R.n - 1)[0].toFixed(1)}" cy="${px(R.n - 1)[1].toFixed(1)}" r="6" fill="#fff" stroke="#b91c1c" stroke-width="3"/></svg>`;
+  let profSvg = '';
+  if (R.zs) {
+    let z0 = Infinity, z1 = -Infinity; idx.forEach(i => { z0 = Math.min(z0, R.zs[i]); z1 = Math.max(z1, R.zs[i]); });
+    const PW = 600, PH = 130, dz = Math.max(50, z1 - z0), X = i => 30 + (R.cum[i] / (R.dist || 1)) * (PW - 40), Y = z => PH - 18 - (z - z0) / dz * (PH - 30);
+    profSvg = `<svg viewBox="0 0 ${PW} ${PH}" class="profsvg"><path d="M${X(0).toFixed(1)},${PH - 18} ${idx.map(i => 'L' + X(i).toFixed(1) + ',' + Y(R.zs[i]).toFixed(1)).join(' ')} L${X(R.n - 1).toFixed(1)},${PH - 18}Z" fill="#e4ece6" stroke="#1c3a2e" stroke-width="1.5"/>
+      ${R.stages.slice(0, -1).map(s => `<line x1="${X(s.i1).toFixed(1)}" x2="${X(s.i1).toFixed(1)}" y1="8" y2="${PH - 18}" stroke="#6b726c" stroke-dasharray="3 3"/>`).join('')}
+      <text x="2" y="14" font-size="10" fill="#6b726c">${nf0.format(Math.round(z1))} m</text><text x="2" y="${PH - 20}" font-size="10" fill="#6b726c">${nf0.format(Math.round(z0))} m</text>
+      <text x="30" y="${PH - 4}" font-size="10" fill="#6b726c">0 km</text><text x="${PW - 10}" y="${PH - 4}" font-size="10" fill="#6b726c" text-anchor="end">${nf0.format(R.dist / 1000)} km</text></svg>`;
+  }
+  const stages = R.stages.map((s, k) => {
+    const tm = stageTiming(s, k), a = placeName(s.i0), b = placeName(s.i1);
+    const sleep = k === R.stages.length - 1 ? '🏁 Arrivée du trek'
+      : s.endPoi ? `${CAT[s.endPoi.cat].emoji} ${escXml(s.endPoi.name || s.endPoi.kind)}${s.endPoi.name ? ' (' + escXml(s.endPoi.kind.toLowerCase()) + ')' : ''}${s.endPoi.d >= 50 ? ', à ' + fM(s.endPoi.d) + ' du tracé' : ''}`
+      : `Nuit libre${b ? ' vers ' + escXml(b) : ''} (km ${kmAt(s.i1)})`;
+    const g = s.waterGap, pois = (R.pois || []).filter(p => p.idx >= s.i0 && p.idx <= s.i1 && S.show[p.cat]);
+    return `<section class="stg"><h2><span style="background:${COLORS[k % 2]}"></span>${R.stages.length > 1 ? 'Étape ' + (k + 1) : 'Itinéraire'}${tm ? ' · ' + tm.d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : ''}</h2>
+      ${a || b ? `<p class="route">${escXml(a || '…')} → ${escXml(b || '…')}</p>` : ''}
+      <p class="nums"><b>${fKm(s.dist)}</b> · +${fM(s.up)} / −${fM(s.dn)} · <b>${fH(s.time)}</b> de marche</p>
+      ${tm ? `<p>Départ ${fT(tm.dep)} → arrivée vers <b>${fT(tm.arr)}</b>${tm.sun ? ` · coucher du soleil ${fT(tm.sun.set)}` : ''}${tm.late ? ' · <b class="w">arrivée après la nuit</b>' : ''}</p>` : ''}
+      <p class="sleep">Nuit : <b>${sleep}</b></p>
+      ${g && g.km > 0.5 && R.pois.length ? `<p class="${g.h > 3 ? 'w' : ''}">${g.h > 3 ? '⚠️' : '💧'} Plus long tronçon sans eau connue : ${nf1.format(g.km)} km (≈ ${fDur(g.h)})</p>` : ''}
+      ${pois.length ? `<table>${pois.map(p => `<tr><td>km ${kmAt(p.idx)}</td><td>${CAT[p.cat].emoji} ${escXml(p.name || p.kind)}${p.name ? ` <i>${escXml(p.kind.toLowerCase())}</i>` : ''}${p.d >= 50 ? ` <i>à ${fM(p.d)}</i>` : ''}</td></tr>`).join('')}</table>` : ''}
+    </section>`;
+  }).join('');
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escXml(title)} — fiche Orri</title>
+<style>body{margin:0;padding:16px;font:15px/1.45 system-ui,-apple-system,Roboto,sans-serif;color:#1f2622;background:#fffdf9;max-width:760px;margin:auto}
+h1{font-size:22px;margin:4px 0 2px;color:#1c3a2e}.sub{color:#6b726c;margin:0 0 12px}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0}.kpi div{background:#f3f0e8;border-radius:10px;padding:8px;text-align:center}.kpi b{display:block;font-size:clamp(13px,4vw,17px);white-space:nowrap;color:#1c3a2e}.kpi span{font-size:12px;color:#6b726c}
+svg{width:100%;height:auto;display:block;margin:8px 0;background:#f3f0e8;border-radius:10px}
+.stg{border-top:1px solid #e3ded2;padding:10px 0;break-inside:avoid}.stg h2{font-size:17px;margin:4px 0}.stg h2 span{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px}
+p{margin:4px 0}.route{color:#6b726c}.w{color:#b45309}table{border-collapse:collapse;font-size:13.5px;margin-top:6px;width:100%}td{padding:3px 6px 3px 0;vertical-align:top;border-top:1px solid #efebe2}td:first-child{white-space:nowrap;color:#6b726c;width:70px}i{color:#6b726c;font-style:normal}
+footer{color:#6b726c;font-size:12px;border-top:1px solid #e3ded2;margin-top:16px;padding-top:8px}@media print{body{padding:0}}</style></head><body>
+<h1>${escXml(title)}</h1><p class="sub">${R.stages.length} étape${R.stages.length > 1 ? 's' : ''}${S.startDate ? ' · départ le ' + new Date(S.startDate + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''} · fiche créée le ${new Date().toLocaleDateString('fr-FR')}</p>
+<div class="kpi"><div><b>${fKm(R.dist)}</b><span>distance</span></div><div><b>+${fM(R.up)}</b><span>dénivelé</span></div><div><b>${fH(R.time)}</b><span>marche</span></div><div><b>${R.zmax != null ? fM(R.zmax) : '—'}</b><span>alt. max</span></div></div>
+${mapSvg}${profSvg}${stages}
+<footer>Fiche Orri — temps estimés (méthode DIN 33466, sans les pauses) : à vérifier sur place. Eau, refuges, bivouacs, commerces et gares : © contributeurs OpenStreetMap (ODbL) ; vérifie qu'ils sont ouverts et que l'eau est potable. Noms de lieux : © IGN, OpenStreetMap.</footer></body></html>`;
+}
+let sheetCache = '';
+function renderSheet() { sheetCache = sheetHTML(); $('#sheetFrame').srcdoc = sheetCache; }
+$('#bSheetDl').onclick = () => {
+  const name = (((treks.cur && treks.get(treks.cur)) || {}).name || 'trek').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+  download(`fiche-${name || 'trek'}.html`, sheetCache, 'text/html');
+  toast('Fiche téléchargée : elle s\'ouvre sans réseau depuis tes fichiers', 'ok');
+};
+$('#bSheetPrint').onclick = () => { try { $('#sheetFrame').contentWindow.print(); } catch (e) { toast('Impression indisponible : télécharge la fiche', 'warn'); } };
+treks.load();
 
 /* ================= Tiroir (mobile), onglets, profil ================= */
 const desk = matchMedia('(min-width: 900px)');
