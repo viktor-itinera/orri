@@ -11,6 +11,7 @@ from playwright.sync_api import sync_playwright
 URL = os.environ.get("ORRI_URL", "http://localhost:8765/")
 GPX = os.environ.get("ORRI_GPX")
 LEAF = os.environ.get("ORRI_LEAFLET", os.path.join(os.path.dirname(os.path.abspath(__file__)), "node_modules/leaflet/dist/"))
+NM = os.path.join(os.path.dirname(os.path.abspath(__file__)), "node_modules/")
 CHROME = os.environ.get("ORRI_CHROME")
 if not GPX: sys.exit("Indique un fichier GPX : ORRI_GPX=/chemin/trek.gpx python3 smoke_test.py")
 
@@ -30,6 +31,8 @@ def handler(route):
     u = route.request.url
     q = urllib.parse.parse_qs(urllib.parse.urlparse(u).query)
     if u.startswith(URL): return route.continue_()
+    if "unpkg.com/maplibre-gl@" in u: return route.fulfill(path=NM + "maplibre-gl/dist/maplibre-gl" + (".css" if u.endswith(".css") else ".js"), content_type="text/css" if u.endswith(".css") else "application/javascript")
+    if "unpkg.com/@maplibre/maplibre-gl-leaflet" in u: return route.fulfill(path=NM + "@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js", content_type="application/javascript")
     if "cdnjs.cloudflare.com" in u and u.endswith(".js"): return route.fulfill(path=LEAF + "leaflet.js", content_type="application/javascript")
     if "cdnjs.cloudflare.com" in u and u.endswith(".css"): return route.fulfill(path=LEAF + "leaflet.css", content_type="text/css")
     if "/wmts" in u or "opentopomap" in u or "kartverket" in u: return route.fulfill(body=TILE, content_type="image/png")
@@ -69,6 +72,10 @@ with sync_playwright() as p:
     pg.goto(URL); pg.wait_for_timeout(500)
     pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_timeout(500)
     check(pg.is_visible("#page-welcome"), "accueil affiché au premier lancement")
+    gl = J(pg, """() => new Promise(ok => { if (!hasGL) return ok('sans WebGL : ' + $('#base').value);
+      const t0 = Date.now(), w = () => { const m = base.getMaplibreMap && base.getMaplibreMap(); const st = m && m.style && m.style._order && m.style._order.length && { layers: m.style._order };
+        if (st) ok(st.layers.length); else if (Date.now() - t0 > 8000) ok('style non chargé'); else setTimeout(w, 200); }; w(); })""")
+    check(gl == 28 or str(gl).endswith("otm"), "carte Orri par défaut (style chargé : %s)" % gl)
     pg.click("#wDraw"); pg.wait_for_timeout(300)
     check(not pg.is_visible("#page-welcome") and J(pg, "() => state.draw"), "accueil : « Tracer mon itinéraire » ouvre la carte")
 
