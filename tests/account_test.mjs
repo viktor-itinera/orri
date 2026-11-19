@@ -34,6 +34,19 @@ async function supa(route) {
   }
   const tok = (h.authorization || '').replace('Bearer ', ''), me = db.users.find(x => 'tok-' + x.id === tok);
   if (p === '/auth/v1/logout') return send(204);
+  if (p === '/rest/v1/rpc/nearby_treks') {   // public, même sans compte
+    const R = x => x * Math.PI / 180, km = Math.min(body.km, 200);
+    const dist = r => 6371 * 2 * Math.asin(Math.sqrt(Math.sin(R(r.lat - body.lat) / 2) ** 2 + Math.cos(R(body.lat)) * Math.cos(R(r.lat)) * Math.sin(R(r.lon - body.lon) / 2) ** 2));
+    if (db.noNear) return send(404, { code: 'PGRST202', message: 'Could not find the function public.nearby_treks(km, lat, lon) in the schema cache' });
+    db.nearCalls = (db.nearCalls || 0) + 1;
+    return send(200, db.treks.filter(r => r.share === 'public' && !r.deleted && r.lat != null && dist(r) <= km).map(r => ({ user_id: r.user_id, id: r.id, name: r.data.name,
+      author: (db.profiles[r.user_id] || {}).name || 'Randonneur', sum: r.data.sum, status: r.data.status || 'todo', line: r.line, dist_km: dist(r), updated_at: r.updated_at })).sort((a, b) => a.dist_km - b.dist_km));
+  }
+  if (p === '/rest/v1/rpc/public_trek') {
+    const r = db.treks.find(x => x.user_id === body.uid && x.id === body.tid && x.share === 'public' && !x.deleted);
+    if (!r) return send(200, null);
+    const d = Object.assign({}, r.data); delete d.note; delete d.pub; delete d.share; return send(200, d);
+  }
   if (!me) return send(401, { message: 'JWT invalide' });
   if (p === '/rest/v1/rpc/delete_my_account') { db.users = db.users.filter(x => x !== me); db.treks = db.treks.filter(r => r.user_id !== me.id); db.friends = db.friends.filter(f => f.a !== me.id && f.b !== me.id); delete db.profiles[me.id]; return send(204); }
   if (p === '/rest/v1/rpc/add_friend') {
@@ -71,14 +84,16 @@ async function supa(route) {
         if (r.user_id !== me.id) throw new Error('user_id');
         let row = db.treks.find(x => x.user_id === me.id && x.id === r.id);
         if (!row) { row = { user_id: me.id, id: r.id }; db.treks.push(row); }
+        if (r.share && !['private', 'friends', 'public'].includes(r.share)) throw new Error('share');
         Object.assign(row, { data: r.data, deleted: r.deleted, share: r.share || 'private', updated_at: now() });
+        if ('lat' in r) Object.assign(row, { lat: r.lat, lon: r.lon, line: r.line });
         return { id: row.id, updated_at: row.updated_at };
       });
       return send(201, out);
     }
-    let rows = db.treks.filter(r => r.user_id === me.id || (r.share === 'friends' && !r.deleted && isFriend(me.id, r.user_id)));   // RLS
+    let rows = db.treks.filter(r => r.user_id === me.id || (['friends', 'public'].includes(r.share) && !r.deleted && isFriend(me.id, r.user_id)));   // RLS
     for (const [k, v] of q) {
-      if (k === 'share') rows = rows.filter(r => r.share === v.slice(3));
+      if (k === 'share') rows = rows.filter(r => v.startsWith('in.(') ? v.slice(4, -1).split(',').includes(r.share) : r.share === v.slice(3));
       if (k === 'deleted') rows = rows.filter(r => String(r.deleted) === v.slice(3));
       if (k === 'user_id') rows = rows.filter(r => v.startsWith('neq.') ? r.user_id !== v.slice(4) : r.user_id === v.slice(3));
     }
@@ -154,8 +169,8 @@ await A.evaluate(() => friendsRefresh(true)); await A.waitForTimeout(300);
 const code = await A.evaluate(() => friends.code);
 check(/^[A-Z0-9]{8}$/.test(code) && (await A.textContent('#friendsBox')).includes(code), 'code ami affiché dans Mon carnet (' + code + ')');
 await A.evaluate(() => openTrekPage('t1')); await A.waitForTimeout(200);
-check(await A.isVisible('#tdShare') && !(await A.isChecked('#tdShare')), 'trek privé par défaut, case « Partager avec mes amis »');
-await A.check('#tdShare');
+check(await A.isVisible('#tdShare') && await A.evaluate(() => $('#tdShare [data-sh=private]').classList.contains('on')), 'trek privé par défaut, choix « Qui le voit ? »');
+await A.click('#tdShare [data-sh=friends]');
 check(await until(A, () => treks.get('t1').share === 'friends' && !acct.busy && acct.m.rows.t1.h === trekHash(treks.get('t1')), 9000) && db.treks.find(r => r.id === 't1').share === 'friends', 'trek partagé : colonne share = friends en ligne');
 const D = await (async () => {
   const ctx = await b.newContext({ ...require('playwright').devices['Pixel 7'] }); await ctx.route('**/*', handler);
@@ -225,13 +240,65 @@ check(await D.evaluate(() => /500 m/.test($('#friendsBox .lb').textContent)), 'c
 
 await D.evaluate(() => openPage('profile')); await D.fill('#fCode', 'ZZZZ9999'); await D.click('#fAdd');
 check(await until(D, () => /ne correspond/.test($('#friendsBox').textContent)), 'code inconnu : message clair');
-await A.evaluate(() => openTrekPage('t1')); await A.uncheck('#tdShare');
+await A.evaluate(() => openTrekPage('t1')); await A.click('#tdShare [data-sh=private]');
 for (let i = 0; i < 60 && db.treks.find(r => r.id === 't1').share !== 'private'; i++) await A.waitForTimeout(150);
-check(db.treks.find(r => r.id === 't1').share === 'private', 'case décochée : trek de nouveau privé en ligne');
+check(db.treks.find(r => r.id === 't1').share === 'private', '« Moi seul » : trek de nouveau privé en ligne');
 await D.evaluate(() => friendsRefresh(true));
 check(await until(D, () => friends.treks.length === 0 && friendLayer.getLayers().length === 0), 'trek redevenu privé : disparaît chez Léa');
 await D.evaluate(() => openPage('profile')); await D.click('.fdel'); await D.click('.fdel');
 check(await until(D, () => friends.list.length === 0) && !isFriend('u1', 'u2'), 'Léa retire Viktor de ses amis');
+
+// Randos publiques « autour de moi »
+await A.evaluate(() => openTrekPage('t1')); await A.click('#tdShare [data-sh=public]');
+check(await A.evaluate(() => treks.get('t1').share !== 'public' && /Touche encore/.test($('#tdShare [data-sh=public]').textContent)), 'rendre public demande une 2e touche');
+await A.click('#tdShare [data-sh=public]');
+for (let i = 0; i < 60 && db.treks.find(r => r.id === 't1').share !== 'public'; i++) await A.waitForTimeout(150);
+const pubRowDb = db.treks.find(r => r.id === 't1');
+check(pubRowDb.share === 'public' && Math.abs(pubRowDb.lat - 42.9) < 0.2 && pubRowDb.line.length > 1 && pubRowDb.line.length <= 80, 'trek public en ligne : départ et tracé simplifié');
+check((await A.textContent('#tdBody')).includes('Randos autour de moi'), 'page Souvenirs : explique ce que voit le public');
+const E = await device([]);
+await E.evaluate(() => { map.setView([42.95, -0.2], 10); openPage('welcome'); });
+check(await E.isVisible('#wNear'), 'accueil : « Randos autour de moi », sans compte');
+db.noNear = true; await E.click('#wNear'); await E.click('#nMap');
+check(await until(E, () => /pas encore activées/.test($('#nStatus').textContent)), 'base pas à jour : message clair');
+db.noNear = false; await E.click('#nMap');
+check(await until(E, () => near.rows.length === 1 && $('#nList').textContent.includes('GR10 étape 1') && $('#nList').textContent.includes('Viktor')), 'sans compte : la rando publique de Viktor est trouvée autour de la carte');
+await E.click('#nKm [data-km="25"]');
+check(await until(E, () => near.km === 25 && !near.busy), 'rayon réglable');
+await E.evaluate(() => map.setView([46.2, 6.1], 10)); await E.click('#nMap');
+check(await until(E, () => !near.busy && near.rows.length === 0 && /Aucune rando/.test($('#nStatus').textContent)), 'loin de tout : message clair');
+await E.evaluate(() => map.setView([42.95, -0.2], 10)); await E.click('#nMap');
+await until(E, () => near.rows.length === 1); await E.click('#nList .tmain');
+const ftx = await E.textContent('#ftBody');
+check(ftx.includes('Viktor') && !ftx.includes('Superbe') && await E.isVisible('#ftCopy'), 'page de la rando publique : auteur, sans son souvenir écrit');
+await E.click('#ftCopy');
+check(await until(E, () => treks.list.length === 1 && treks.list[0].name === 'GR10 étape 1' && !treks.list[0].note && treks.list[0].from === 'Viktor' && treks.list[0].data.legs.length > 0), 'copiée dans le carnet, sans compte');
+await E.evaluate(() => openPublicTrek(near.rows[0])); await E.click('#ftMap');
+check(await E.evaluate(() => nearLayer.getLayers().length === 1 && !document.body.classList.contains('paged')), 'voir sur la carte : tracé violet');
+check(await E.evaluate(() => !acct.s && !localStorage.getItem('orri.account')), 'toujours sans compte');
+check(await E.evaluate(() => near.onMap && $('#chNear').classList.contains('on')), 'pastille « Randos publiques » cochée après « Voir sur la carte »');
+await E.click('#chNear');
+check(await E.evaluate(() => !near.onMap && nearLayer.getLayers().length === 0), 'pastille décochée : randos publiques masquées');
+await E.evaluate(() => { treks.cur = null; state.start = null; state.legs = []; changed(); map.setView([42.95, -0.2], 11); });
+await E.waitForTimeout(300);
+check(await E.isVisible('#chNear') && !(await E.isVisible('#chips .chip[data-k=water]')), 'pastille visible même sans parcours (les autres non)');
+await E.click('#chNear');
+check(await until(E, () => near.onMap && nearLayer.getLayers().length === 1 && $('#chc_near').textContent === '1'), 'pastille cochée : la rando publique de la zone apparaît');
+await E.evaluate(() => map.setView([46.2, 6.1], 11));
+check(await until(E, () => nearLayer.getLayers().length === 0 && $('#chc_near').textContent === '0'), 'la carte bouge : la liste suit la zone affichée');
+await E.evaluate(() => map.setView([42.95, -0.2], 11));
+check(await until(E, () => nearLayer.getLayers().length === 1), 'retour dans la zone : la rando revient');
+await E.waitForTimeout(500); await E.screenshot({ path: '/tmp/claude-0/near-chip.png' });
+await E.click('#bHome');
+check(await until(E, () => $('#page-welcome').classList.contains('on')), 'logo de la barre de recherche : retour à l\'accueil');
+await E.evaluate(() => closePage());
+await E.evaluate(() => { openPage('near'); renderNear(); }); await E.waitForTimeout(800); await E.screenshot({ path: '/tmp/claude-0/near-list.png' });
+await E.evaluate(() => openPublicTrek(near.rows[0])); await E.waitForTimeout(800); await E.screenshot({ path: '/tmp/claude-0/near-trek.png' });
+await A.evaluate(() => openTrekPage('t1')); await A.screenshot({ path: '/tmp/claude-0/near-share.png' });
+await A.click('#tdShare [data-sh=private]');
+for (let i = 0; i < 60 && db.treks.find(r => r.id === 't1').share !== 'private'; i++) await A.waitForTimeout(150);
+await E.evaluate(() => { openPage('near'); return nearSearch(near.at); });
+check(await E.evaluate(() => near.rows.length === 0), 'redevenu privé : plus trouvé');
 
 // Déconnexion sur B : le carnet reste
 await B.click('#aOut'); await B.click('#aOut');

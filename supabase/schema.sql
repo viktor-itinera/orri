@@ -163,3 +163,50 @@ create policy "stats : celles de mes amis" on public.stats for select to authent
   using (public.is_friend(user_id));
 revoke all on public.stats from anon;
 grant select, insert, update, delete on public.stats to authenticated;
+
+-- ================= Réveil =================
+-- Appelée deux fois par semaine par le robot GitHub (.github/workflows/supabase-reveil.yml) : l'offre gratuite
+-- met le projet en pause après 7 jours sans activité. Ne lit ni n'écrit aucune donnée.
+create or replace function public.ping() returns text language sql stable as $$ select 'ok ' || now()::text $$;
+revoke all on function public.ping() from public;
+grant execute on function public.ping() to anon, authenticated;
+
+-- ================= Randos publiques « autour de moi » =================
+-- Un trek peut être rendu public (share = 'public') : tout le monde le trouve autour de lui, même sans compte.
+-- On montre le tracé, les étapes et le pseudo ; jamais l'e-mail, le souvenir écrit, les photos ni « Je suis ici ».
+-- Les amis voient aussi les treks publics.
+alter table public.treks drop constraint if exists treks_share_check;
+alter table public.treks add constraint treks_share_check check (share in ('private', 'friends', 'public'));
+alter table public.treks add column if not exists lat double precision check (lat between -90 and 90);   -- départ (treks publics)
+alter table public.treks add column if not exists lon double precision check (lon between -180 and 180);
+alter table public.treks add column if not exists line jsonb check (line is null or octet_length(line::text) < 20000);  -- tracé simplifié
+create index if not exists treks_public on public.treks (lat, lon) where share = 'public' and not deleted;
+
+drop policy if exists "treks : partagés par mes amis" on public.treks;
+create policy "treks : partagés par mes amis" on public.treks for select to authenticated
+  using (share in ('friends', 'public') and not deleted and public.is_friend(user_id));
+
+-- Treks publics dans un rayon (km, 200 max) autour d'un point, les plus proches d'abord (40 max).
+create or replace function public.nearby_treks(lat double precision, lon double precision, km double precision default 50)
+returns table (user_id uuid, id text, name text, author text, sum jsonb, status text, line jsonb, dist_km double precision, updated_at timestamptz)
+language sql stable security definer set search_path = '' as $$
+  select * from (
+    select t.user_id, t.id, left(t.data->>'name', 80), coalesce(nullif(p.name, ''), 'Randonneur'), t.data->'sum',
+      coalesce(t.data->>'status', 'todo'), t.line,
+      6371 * 2 * asin(sqrt(power(sin(radians(t.lat - nearby_treks.lat) / 2), 2)
+        + cos(radians(nearby_treks.lat)) * cos(radians(t.lat)) * power(sin(radians(t.lon - nearby_treks.lon) / 2), 2))) as d,
+      t.updated_at
+    from public.treks t left join public.profiles p on p.id = t.user_id
+    where t.share = 'public' and not t.deleted and t.data is not null and t.lat is not null
+      and t.lat between nearby_treks.lat - least(km, 200) / 111.0 and nearby_treks.lat + least(km, 200) / 111.0
+  ) x where x.d <= least(km, 200) order by x.d limit 40;
+$$;
+
+-- Le trek public complet (pour « Copier dans mon carnet ») : sans souvenir écrit ni liste de photos.
+create or replace function public.public_trek(uid uuid, tid text) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select t.data - 'note' - 'pub' - 'share' from public.treks t
+  where t.user_id = uid and t.id = tid and t.share = 'public' and not t.deleted;
+$$;
+revoke all on function public.nearby_treks(double precision, double precision, double precision), public.public_trek(uuid, text) from public;
+grant execute on function public.nearby_treks(double precision, double precision, double precision), public.public_trek(uuid, text) to anon, authenticated;
