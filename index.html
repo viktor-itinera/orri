@@ -566,6 +566,27 @@ footer details.credits[open] summary::after{transform:rotate(-135deg)}
 @media (min-width:900px){#bnav{right:auto;width:var(--side)}#map{bottom:170px}#panel{height:auto;top:0}
   .page.tabpage{bottom:var(--nav)}}
 
+/* --- Finitions (L5) : accueil plus net, pages vides, petites animations --- */
+.wacts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wacts .wcard{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:8px;min-height:96px;padding:14px}
+.wacts .wcard small{font-size:12.5px;line-height:1.3}
+.wacts .wcard b{font-size:15px;line-height:1.2}
+.wacts .wcard .ico{width:24px;height:24px;padding:8px;box-sizing:content-box;border-radius:12px;background:var(--moss)}
+.wacts .wcard.primary{grid-column:1/-1;order:-1;flex-direction:row;align-items:center;min-height:76px;padding:14px 16px}
+.wacts .wcard.primary .ico{background:rgba(255,255,255,.18);color:#fff}
+.wacts .wcard.primary b{font-size:17px}
+.wacts #wGo~#wDraw.primary{order:0}
+.wacts .wcard b{font-weight:700}
+.wacts #wDemo{grid-column:1/-1;flex-direction:row;align-items:center;min-height:68px}
+.empty.illu{text-align:center;padding:18px 12px;line-height:1.5;list-style:none}
+#trekList li:not(.empty),#nList li:not(.empty),.wacts .wcard{animation:fadeUp .35s ease both}
+#trekList li:nth-child(2),#nList li:nth-child(2),.wacts .wcard:nth-child(3){animation-delay:.04s}
+#trekList li:nth-child(3),#nList li:nth-child(3),.wacts .wcard:nth-child(4){animation-delay:.08s}
+#trekList li:nth-child(4),#nList li:nth-child(4),.wacts .wcard:nth-child(5){animation-delay:.12s}
+#trekList li:nth-child(n+5),#nList li:nth-child(n+5),.wacts .wcard:nth-child(n+6){animation-delay:.16s}
+.num,.rlvl{transition:transform .2s var(--ease)}
+#stages li.day.sel .num{transform:scale(1.12)}
+
 /* --- Ordinateur : panneau latéral, profil sous la carte --- */
 @media (min-width:900px){
   #map{left:var(--side);bottom:170px}
@@ -759,11 +780,13 @@ footer details.credits[open] summary::after{transform:rotate(-135deg)}
       <img src="icons/icon-192.png" alt="" class="wlogo">
       <div class="wtitle"><h1>Orri</h1>
       <p class="tag">Prépare ton trek en quelques minutes : étapes, eau, refuges, bivouacs, ravitaillement et gares.</p></div></div>
+      <div class="wacts">
       <div id="wResume" style="display:contents"></div>
       <button class="wcard primary" id="wDraw"><svg class="ico"><use href="#i-pen"/></svg><span><b>Tracer mon itinéraire</b><small>Touche la carte : le tracé suit les sentiers</small></span></button>
       <label class="wcard" for="file" id="wImport"><svg class="ico"><use href="#i-up"/></svg><span><b>Importer un GPX</b><small>Un trek déjà tracé ailleurs</small></span></label>
       <button class="wcard" id="wNear"><svg class="ico"><use href="#i-globe"/></svg><span><b>Randos autour de moi</b><small>Les treks que la communauté partage</small></span></button>
       <button class="wcard" id="wDemo"><svg class="ico"><use href="#i-route"/></svg><span><b>Voir un exemple</b><small>Pyrénées : de Gourette à Luz-Saint-Sauveur</small></span></button>
+      </div>
       <ul class="wpts">
         <li><svg class="ico"><use href="#i-flag"/></svg>Des étapes à ton rythme, qui finissent au refuge ou au bivouac</li>
         <li><svg class="ico"><use href="#i-tap"/></svg>L'eau, le ravitaillement et les gares le long du parcours</li>
@@ -2687,7 +2710,7 @@ function renderProfile() {
   document.querySelectorAll('#tFilter button').forEach(b => b.classList.toggle('on', b.dataset.f === carnet.filter));
   $('#tSort').value = carnet.sort;
   const ul = $('#trekList'); ul.innerHTML = '';
-  if (!treks.list.length) { ul.innerHTML = '<li class="empty">Tes treks enregistrés apparaîtront ici, ceux que tu prépares comme ceux que tu as faits. Ils restent sur cet appareil : pense à les sauvegarder dans un fichier de temps en temps.</li>'; return; }
+  if (!treks.list.length) { ul.innerHTML = '<li class="empty illu">' + EMPTY_ILL + 'Tes treks enregistrés apparaîtront ici, ceux que tu prépares comme ceux que tu as faits. Ils restent sur cet appareil : pense à les sauvegarder dans un fichier de temps en temps.</li>'; return; }
   let L = treks.list.filter(x => carnet.filter === 'all' || (carnet.filter === 'done') === (x.status === 'done'));
   const by = { recent: (a, b) => (b.updated || '').localeCompare(a.updated || ''), date: (a, b) => (trekWhen(b) || '0').localeCompare(trekWhen(a) || '0'),
     km: (a, b) => ((b.sum || {}).km || 0) - ((a.sum || {}).km || 0), name: (a, b) => a.name.localeCompare(b.name, 'fr') };
@@ -3673,6 +3696,7 @@ const PUB_COL = '#8a5fa8', NEAR_KM = [25, 50, 100, 200];
 const near = { km: 50, rows: [], at: null, busy: false, msg: '' };
 try { const k = +localStorage.getItem('orri.near.km'); if (NEAR_KM.includes(k)) near.km = k; } catch (e) { }
 const nearLayer = L.layerGroup().addTo(map);
+const EMPTY_ILL = '<svg class="empty-ill" viewBox="0 0 120 70" aria-hidden="true"><path d="M5 62 38 22l16 18 14-14 47 36Z" fill="#e2ece4" stroke="#2f6650" stroke-width="2" stroke-linejoin="round"/><path d="M14 60c18-8 30-4 44-12s26-6 46 2" fill="none" stroke="#cf6a3c" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round"/></svg>';
 function renderNear() {
   $('#nKm').innerHTML = NEAR_KM.map(k => `<button data-km="${k}" class="${k === near.km ? 'on' : ''}">${k} km</button>`).join('');
   $('#nKm').querySelectorAll('button').forEach(b => b.onclick = () => { near.km = +b.dataset.km; try { localStorage.setItem('orri.near.km', near.km); } catch (e) { } renderNear(); if (near.at) nearSearch(near.at); });
@@ -3684,6 +3708,7 @@ function renderNear() {
     return `<li class="trek${r.status === 'done' ? ' done' : ''}"><button class="tmain" data-i="${i}">${trackSVG(r.line || [], 84, 84, { color: PUB_COL })}<span class="ttx"><b>${escXml(r.name || 'Trek')}</b>
       <span>${s.km ? nf1.format(s.km) + ' km · +' + nf0.format(s.up || 0) + ' m · ' + (s.stages || 1) + ' jour' + (s.stages > 1 ? 's' : '') : ''}</span>
       <small>${acct.s && r.user_id === acct.s.uid ? 'Ton trek' : 'Par ' + escXml(r.author)} · départ à ${r.dist_km < 1 ? 'moins d\'1' : nf0.format(r.dist_km)} km</small></span></button></li>`; }).join('');
+  if (!near.rows.length && !near.busy) $('#nList').innerHTML = `<li class="empty illu">${EMPTY_ILL}${near.at ? 'Personne n\'a encore partagé de rando par ici. Partage la tienne depuis « Souvenirs » : tu seras le premier !' : 'Choisis « Autour de moi » ou « Autour de la carte » pour voir les randos partagées.'}</li>`;
   $('#nList').querySelectorAll('[data-i]').forEach(b => b.onclick = () => openPublicTrek(near.rows[+b.dataset.i]));
 }
 function nearErr(e) {   // message clair : pas de réseau, ou base pas encore mise à jour (schema.sql pas relancé)
@@ -4505,6 +4530,7 @@ function renderWelcome() {
   $('#wDraw b').textContent = has ? 'Nouveau parcours' : 'Tracer mon itinéraire';
   if (has) $('#wGo').onclick = () => { closeWelcome(); showTab('stages'); setTimeout(() => animateRoute(1.4), 250); };
   if (treks.list.length) $('#wTreks').onclick = () => openPage('profile');
+  $('.wpts').hidden = has || treks.list.length > 0;   // la présentation, seulement pour un nouveau venu
 }
 function startDrawing() {
   if (state.start) { treks.cur = null; treks.store(); state.start = null; state.legs = []; state.selStage = -1; S.pins = []; S.over = {}; S.rest = []; changed(); }
