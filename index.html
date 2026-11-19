@@ -527,6 +527,21 @@ footer details.credits summary::-webkit-details-marker{display:none}
 footer details.credits summary::after{content:"";width:7px;height:7px;margin-left:8px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg) translateY(-2px);transition:transform .2s}
 footer details.credits[open] summary::after{transform:rotate(-135deg)}
 
+/* --- Étapes lisibles (L3) : une journée = une carte claire --- */
+.day .dhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.day .dhead .date{font-size:13px;color:var(--muted);font-weight:500;text-transform:capitalize;white-space:nowrap}
+.day .where{font-size:15px;font-weight:600;margin-top:2px;color:var(--ink)}
+.day .where .arr{color:var(--terra);font-weight:700}
+.dnums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.dnums span{display:flex;flex-direction:column;line-height:1.15}
+.dnums b{font-size:18px;font-weight:700;color:var(--forest);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dnums small{font-size:12px;color:var(--muted);white-space:nowrap}
+.spark{display:block;width:100%;height:44px;margin:8px 0 2px}
+.day .w:not(.warnline){display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-top:6px}
+#stages li.day::before{border-left:2px dotted #e0cdb9;left:16px}
+.day .num{width:32px;height:32px;font-size:15px}
+.night .nt b{font-size:14.5px}
+
 /* --- Ordinateur : panneau latéral, profil sous la carte --- */
 @media (min-width:900px){
   #map{left:var(--side);bottom:170px}
@@ -1581,6 +1596,19 @@ function renderSummary() {
   $('#bKeep').onclick = () => { renderProfile(); saveTrek(false); renderSummary(); };
   $('#bAdjust').onclick = () => openPage('adjust');
 }
+// Petit profil d'altitude de la journée (SVG), pour lire la journée d'un coup d'œil
+function daySpark(s, col) {
+  if (!R.zs || s.i1 - s.i0 < 2) return '';
+  const W = 300, H = 44, n = 60, d0 = R.cum[s.i0], d1 = R.cum[s.i1], span = Math.max(1, d1 - d0);
+  let lo = Infinity, hi = -Infinity; for (let i = s.i0; i <= s.i1; i++) { const z = R.zs[i]; if (z < lo) lo = z; if (z > hi) hi = z; }
+  const rng = Math.max(150, hi - lo), base = lo - (rng - (hi - lo)) / 2, pts = [];
+  for (let j = 0, i = s.i0; j <= n; j++) {
+    const t = d0 + span * j / n; while (i < s.i1 && R.cum[i + 1] <= t) i++;
+    pts.push([(W * j / n).toFixed(1), (H - 3 - (H - 8) * (R.zs[i] - base) / rng).toFixed(1)]);
+  }
+  const line = pts.map((p, j) => (j ? 'L' : 'M') + p.join(' ')).join('');
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${line}L${W} ${H}L0 ${H}Z" fill="${col}" opacity=".14"/><path d="${line}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`;
+}
 function renderStages() {
   renderSummary();
   const ul = $('#stages'); ul.innerHTML = '';
@@ -1609,9 +1637,10 @@ function renderStages() {
     } else night = `<div class="night arr"><span class="ni">${I('flag', 'var(--terra)')}</span><div class="nt"><b>Arrivée${b ? ' à ' + escXml(b) : ''}</b><small>${R.stages.length > 1 ? 'bravo, c\'est la fin du trek' : 'fin de la rando'}</small></div></div>`;
     li.innerHTML = `<div class="rail"><span class="num" style="background:${COLORS[k % 2]}">${k + 1}</span></div>
       <div class="body">
-        <div class="t">${title}${date ? ` <span class="date">· ${date}</span>` : ''}${s.pinEnd ? ' ' + I('pin', 'var(--ok)') : ''}</div>
-        ${a || b ? `<div class="where">${escXml(a || '…')} → ${escXml(b || '…')}</div>` : ''}
-        <div class="m">${fKm(s.dist)} · +${fM(s.up)} / −${fM(s.dn)} · ${fH(s.time)} de marche${tm ? ' · arrivée ≈ ' + fT(tm.arr) : ''}</div>
+        <div class="dhead"><span class="t">${title}${s.pinEnd ? ' ' + I('pin', 'var(--ok)') : ''}</span>${date ? `<span class="date">${date}</span>` : ''}</div>
+        ${a || b ? `<div class="where">${escXml(a || '…')} <span class="arr">→</span> ${escXml(b || '…')}</div>` : ''}
+        <div class="dnums"><span><b>${fKm(s.dist)}</b><small>distance</small></span><span><b>+${fM(s.up)}</b><small>−${fM(s.dn)}</small></span><span><b>${fH(s.time)}</b><small>${tm ? 'arrivée ≈ ' + fT(tm.arr) : 'de marche'}</small></span></div>
+        ${daySpark(s, COLORS[k % 2])}
         ${water}${late}${night}${state.selStage === k ? stageDetail(s, k) : `<div class="open">${I('route')}Voir la journée sur la carte</div>`}
       </div>`;
     li.onclick = ev => {
