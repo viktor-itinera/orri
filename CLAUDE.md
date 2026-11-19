@@ -91,6 +91,20 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   textes au tutoiement, simples ; le technique va dans un `<details class="why">`. Animations courtes, coupées si
   `prefers-reduced-motion`. Cibles tactiles ≥ 44 px.
 
+## Compte en ligne (facultatif)
+
+- **Supabase**, offre gratuite, région UE : `SUPA` (URL + clé *publishable*, publique par nature) dans `index.html`. Schéma et règles
+  d'accès (RLS : chacun ne voit que ses données) dans `supabase/schema.sql`, à coller dans le SQL Editor de Supabase (relançable).
+  Pas de bibliothèque : `supa(path, {method, body, auth, prefer})` appelle Auth (`/auth/v1`) et PostgREST (`/rest/v1`) en `fetch`.
+- E-mail + mot de passe, **sans e-mail de confirmation** (le SMTP intégré de Supabase n'envoie qu'à l'équipe). Pas de « mot de passe oublié » pour l'instant.
+  Session sous `orri.account` (rafraîchie par `acctToken`), pseudo dans `profiles.name`.
+- Carte **Mon compte** dans Mon carnet (`renderAcct`, `#acct`) : créer / se connecter, synchroniser, se déconnecter (le carnet reste),
+  **supprimer le compte** (RPC `delete_my_account`, tout part en cascade).
+- Synchro du carnet (`acct.sync`) : table `treks` (`data` = le trek sans `photos` ni clés `_…`, `deleted`, `share` = `private` par défaut).
+  Empreinte `trekHash` + `updated_at` mémorisés sous `orri.sync.v1` ; conflit = le plus récent gagne ; suppression = trace `deleted`.
+  `treks.store()` déclenche une synchro 4 s plus tard (`acct.soon`) ; aussi à l'ouverture, au retour du réseau et au retour sur l'appli.
+  Sans compte, aucun appel réseau. Test : `tests/account_test.mjs` (Supabase simulé, deux appareils).
+
 ## Services externes (tous gratuits, sans clé)
 
 - **BRouter** `brouter.de` (profil `hiking-mountain`, GeoJSON) : tracé qui suit les sentiers. Serveur communautaire : usage modéré.
@@ -142,7 +156,7 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 
 ## Conventions
 
-- Pas de service payant, pas de clé d'API, pas d'étape de build tant qu'elle n'est pas indispensable.
+- Pas de service payant, pas de clé d'API secrète (la clé publique Supabase est faite pour être publique), pas d'étape de build tant qu'elle n'est pas indispensable.
 - Textes de l'interface en français, ton simple ; l'utilisateur principal teste sur Android.
 - Messages de commit en français.
 - Tester avant de publier (ci-dessous) ; après publication, vérifier le site en ligne.
