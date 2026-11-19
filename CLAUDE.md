@@ -103,7 +103,14 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 - Synchro du carnet (`acct.sync`) : table `treks` (`data` = le trek sans `photos` ni clés `_…`, `deleted`, `share` = `private` par défaut).
   Empreinte `trekHash` + `updated_at` mémorisés sous `orri.sync.v1` ; conflit = le plus récent gagne ; suppression = trace `deleted`.
   `treks.store()` déclenche une synchro 4 s plus tard (`acct.soon`) ; aussi à l'ouverture, au retour du réseau et au retour sur l'appli.
-  Sans compte, aucun appel réseau. Test : `tests/account_test.mjs` (Supabase simulé, deux appareils).
+  Sans compte, aucun appel réseau. Test : `tests/account_test.mjs` (Supabase simulé, plusieurs appareils et deux comptes).
+- **Amis** (`friends`, gardé sous `orri.friends.v1`) : code ami `profiles.code` (8 caractères), invitation par lien `?ami=CODE`
+  (retenu sous `orri.invite` jusqu'à la connexion) ou saisi à la main ; RPC `add_friend` (amis des deux côtés : partager son code = accepter),
+  `my_friends`, `remove_friend` ; table `friends (a < b)`. Carte **Mes amis** (`renderFriends`, `#friendsBox`) sous Mon compte.
+  Un trek est **privé par défaut** ; case « Partager avec mes amis » sur la page Souvenirs (`t.share = 'friends'`, colonne `share`,
+  règle RLS `is_friend`). Treks des amis (`friendsRefresh` après chaque synchro, au plus une fois par minute) : en bleu `FRIEND_COL`
+  sur le globe (`globeTreks` → `g.friend`, couches 3D `k = 'ami' | 'ami2'`) et sur la carte (`friendLayer`, case « Voir leurs treks sur la carte »),
+  page `#page-ftrek` (`renderFriendTrek` : lecture seule, « Copier dans mon carnet »). Les photos ne sont pas partagées (C3).
 
 ## Services externes (tous gratuits, sans clé)
 

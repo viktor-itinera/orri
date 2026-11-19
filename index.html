@@ -413,6 +413,20 @@ button:active:not(:disabled),.btn:active,.chip:active,.wcard:active,.fab:active,
 .acct .seg{margin-bottom:10px}
 .acct .who{display:flex;flex-direction:column;gap:2px}.acct .who b{font-family:Fraunces,serif;font-size:19px;font-weight:600}.acct .who small{color:var(--muted)}
 .acct .aerr{color:var(--err);font-size:13px;margin:0 0 8px}
+.flist{list-style:none;margin:0 0 12px;padding:0}
+.friend{padding:8px 0;border-bottom:1px solid var(--line)}.friend:last-child{border-bottom:0}
+.fhead{display:flex;align-items:center;gap:10px}
+.fav{flex:none;width:40px;height:40px;border-radius:50%;background:#dcebf5;color:#2d6f9c;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.ftx{flex:1;min-width:0;display:flex;flex-direction:column}.ftx small{color:var(--muted);font-size:13px}
+.fdel{border:0;background:transparent;color:var(--muted);padding:0 8px}
+.ftreks{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0 50px}
+.ftreks button{min-height:36px;font-size:13.5px;padding:0 10px;border-color:#cfe1ee;color:#2d6f9c}
+.ftreks .ii{width:15px;height:15px}
+.fcode{font-size:16px;letter-spacing:.12em;color:var(--ink)}
+.fmap{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;margin-top:6px}
+.ftby{display:flex;align-items:center;gap:10px;margin:4px 0 12px;font-size:15px}.ftby .fav{width:34px;height:34px;font-size:13px}
+.ftnote{white-space:pre-wrap;background:var(--panel);border-radius:var(--r);padding:12px;margin:0}
+.tshare{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:600;margin-top:6px}
 details.why{margin-top:10px;font-size:13px;color:var(--muted)}
 details.why summary{cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:36px;color:var(--forest-2);font-weight:600;list-style:none}
 details.why summary::-webkit-details-marker{display:none}
@@ -650,6 +664,7 @@ details.why summary::-webkit-details-marker{display:none}
         <select id="gPlace"><option value="both">sur l'accueil et ici</option><option value="welcome">sur l'accueil</option><option value="profile">ici, dans le carnet</option><option value="off">nulle part</option></select></div>
       <h2>Mon compte (facultatif)</h2>
       <div class="card acct" id="acct"></div>
+      <div id="friendsBox"></div>
       <h2>Sauvegarde</h2>
       <div class="row">
         <button id="bBackup" class="grow"><svg class="ico"><use href="#i-down"/></svg>Sauvegarder dans un fichier</button>
@@ -665,6 +680,10 @@ details.why summary::-webkit-details-marker{display:none}
   <div class="page" id="page-trek" role="dialog" aria-label="Souvenirs du trek">
     <header><button class="close back" id="bTrekBack" aria-label="Retour au carnet"><svg class="ico"><use href="#i-back"/></svg></button><h1 id="tdName">Trek</h1></header>
     <div class="pbody" id="tdBody"></div>
+  </div>
+  <div class="page" id="page-ftrek" role="dialog" aria-label="Trek d'un ami">
+    <header><button class="close back" id="bFtBack" aria-label="Retour au carnet"><svg class="ico"><use href="#i-back"/></svg></button><h1 id="ftName">Trek</h1></header>
+    <div class="pbody" id="ftBody"></div>
   </div>
   <div id="story" role="dialog" aria-label="Mes souvenirs" hidden>
     <div id="stBars"></div>
@@ -2523,6 +2542,8 @@ function renderTrekPage(t) {
     <h2>Ce trek, tu l'as…</h2>
     <div class="seg" id="tdStatus"><button data-s="todo" class="${done ? '' : 'on'}">${I('flag')}À faire</button><button data-s="done" class="${done ? 'on' : ''}">${I('check')}Fait</button></div>
     ${done ? `<div class="lim" style="margin-top:10px"><label for="tdDate">Fait le</label><input type="date" id="tdDate" value="${t.doneDate || ''}"></div>` : ''}
+    ${acct.s ? `<label class="tshare"><input type="checkbox" id="tdShare"${t.share === 'friends' ? ' checked' : ''}> Partager avec mes amis</label>
+    <p class="note" style="margin-top:0">${t.share === 'friends' ? 'Tes amis voient ce trek : tracé, étapes, statut et souvenir écrit (pas les photos).' : 'Privé : toi seul le vois.'}</p>` : ''}
     <h2>Mon souvenir</h2>
     <textarea id="tdNote" rows="4" maxlength="4000" placeholder="${done ? 'Le plus beau moment, la météo, avec qui, ce que tu referais…' : 'Pourquoi ce trek, avec qui, quand, ce qu\'il faut préparer…'}">${escXml(t.note || '')}</textarea>
     <h2>Photos ${ph.length ? `<span class="cnt">(${ph.length})</span>` : ''}</h2>
@@ -2540,6 +2561,10 @@ function renderTrekPage(t) {
     if (!was && t.status === 'done') { toast(`Bravo ! « ${t.name} » rejoint tes treks faits`, 'ok'); const st = $('#tdStatus [data-s=done]'); if (st) st.classList.add('pop'); }
     if (typeof globeRefresh === 'function') globeRefresh();
   });
+  if ($('#tdShare')) $('#tdShare').onchange = e => {
+    t.share = e.target.checked ? 'friends' : 'private'; treks.store(); renderTrekPage(t);
+    toast(t.share === 'friends' ? `« ${t.name} » est visible de tes amis` : `« ${t.name} » est de nouveau privé`, 'ok');
+  };
   if ($('#tdDate')) $('#tdDate').onchange = e => { t.doneDate = e.target.value || ''; treks.store(); };
   $('#tdNote').oninput = e => { t.note = e.target.value; clearTimeout(t._nt); t._nt = setTimeout(() => treks.store(), 500); };
   $('#photoIn').onchange = e => { const fs = [...e.target.files]; e.target.value = ''; addPhotos(t, fs); };
@@ -2557,7 +2582,7 @@ function renderTrekPage(t) {
   };
   $('#tdDup').onclick = () => {
     const c = JSON.parse(JSON.stringify(t)); c.id = newId(); c.name = t.name + ' (copie)'; c.created = c.updated = new Date().toISOString();
-    c.status = 'todo'; delete c.doneDate; c.photos = []; c.note = '';
+    c.status = 'todo'; delete c.doneDate; delete c.share; c.photos = []; c.note = '';
     treks.list.splice(treks.list.indexOf(t) + 1, 0, c); treks.store(); toast(`« ${c.name} » créé (sans les photos)`, 'ok'); openTrekPage(c.id);
   };
   $('#tdDel').onclick = () => confirmTap($('#tdDel'), 'Confirmer ?', async () => {
@@ -2567,6 +2592,7 @@ function renderTrekPage(t) {
   });
 }
 $('#bTrekBack').onclick = () => openPage('profile');
+$('#bFtBack').onclick = () => openPage('profile');
 // --- Souvenirs : plusieurs cartes à partager (couverture, carte en relief, chiffres et profil, jour après jour, photos) + survol 3D en vidéo ---
 const SV_W = 1080, SV_H = 1920, SVF = 'Fraunces, Georgia, serif', SVS = 'Figtree, system-ui, sans-serif';
 function svData(t) {
@@ -3151,7 +3177,7 @@ acct.sync = async function (quiet) {
     }
     const put = async (id, data) => {
       const res = await supa('/rest/v1/treks?on_conflict=user_id,id&select=id,updated_at', { method: 'POST', prefer: 'resolution=merge-duplicates,return=representation',
-        body: [{ user_id: this.s.uid, id, data, deleted: !data }] });
+        body: [{ user_id: this.s.uid, id, data, deleted: !data, share: (data && data.share === 'friends') ? 'friends' : 'private' }] });
       return res && res[0] && res[0].updated_at;
     };
     for (const L of up) rows[L.id] = { h: trekHash(L), at: await put(L.id, trekClean(L)) };
@@ -3169,15 +3195,18 @@ acct.sync = async function (quiet) {
     else if (this.s) this.err = acctMsg(e);
   }
   this.save(); this.busy = false; renderAcct();
+  if (this.s && !this.off) friendsRefresh(!quiet);
   if (this.again) { this.again = false; this.soon(); }
 };
 async function acctOut(deleted) {
   if (!deleted) { try { await supa('/auth/v1/logout', { method: 'POST' }); } catch (e) { } }
-  acct.s = null; acct.m = { uid: null, rows: {}, last: 0, touched: 0 }; acct.err = ''; acct.mode = 'in'; acct.save(); renderAcct();
+  friends.clear(); acct.s = null; acct.m = { uid: null, rows: {}, last: 0, touched: 0 }; acct.err = ''; acct.mode = 'in'; acct.save(); renderAcct(); drawFriendLayer();
+  if (typeof globeRefresh === 'function') globeRefresh();
 }
 const agoFr = ms => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? 'à l\'instant' : m < 60 ? `il y a ${m} min` : m < 1440 ? `il y a ${Math.round(m / 60)} h` : 'le ' + new Date(ms).toLocaleDateString('fr-FR'); };
 function renderAcct() {
   const el = $('#acct'); if (!el) return;
+  renderFriends();
   const err = acct.err ? `<p class="aerr" role="alert">${escXml(acct.err)}</p>` : '';
   if (acct.s) {
     const st = acct.busy ? 'Synchronisation…' : acct.off ? 'Hors ligne : la synchro repartira toute seule.' : acct.m.last ? `Carnet synchronisé ${agoFr(acct.m.last)}.` : 'Pas encore synchronisé.';
@@ -3212,11 +3241,163 @@ function renderAcct() {
   $('#aGo').onclick = () => acctSign(up);
   $('#aPw').onkeydown = e => { if (e.key === 'Enter') acctSign(up); };
 }
+/* ================= Amis (C2) =================
+   Code ami (profiles.code) partagé par lien `?ami=CODE` ou à la main : l'utiliser rend amis des deux côtés (RPC add_friend).
+   Un trek du carnet est privé par défaut ; `share: 'friends'` le rend visible des amis (règle RLS de la table treks).
+   Treks des amis : `friends.treks` (tracé simplifié, gardé sous `orri.friends.v1` pour le hors-ligne), dessinés en bleu
+   sur le globe (`globeTreks`) et sur la carte (`friendLayer`) ; page `#page-ftrek` (lecture seule, « Copier dans mon carnet »). */
+const FRIENDS_KEY = 'orri.friends.v1', FRIEND_COL = '#4f9bd0';
+const friends = {
+  list: [], treks: [], code: '', at: 0, busy: false, err: '', onMap: true, open: null,
+  load() {
+    try { const d = JSON.parse(localStorage.getItem(FRIENDS_KEY) || 'null'); if (d && acct.s && d.uid === acct.s.uid) Object.assign(this, { list: d.list || [], treks: d.treks || [], code: d.code || '', onMap: d.onMap !== false }); } catch (e) { }
+  },
+  save() {
+    try { if (!acct.s) return localStorage.removeItem(FRIENDS_KEY);
+      localStorage.setItem(FRIENDS_KEY, JSON.stringify({ uid: acct.s.uid, list: this.list, code: this.code, onMap: this.onMap, treks: this.treks.map(t => Object.assign({}, t, { data: undefined })) })); } catch (e) { }
+  },
+  clear() { this.list = []; this.treks = []; this.code = ''; this.at = 0; this.err = ''; this.save(); }
+};
+const friendName = uid => (friends.list.find(f => f.id === uid) || {}).name || 'Un ami';
+const inviteURL = code => location.origin + location.pathname + '?ami=' + encodeURIComponent(code);
+function friendMsg(e) {
+  const c = e.message || '';
+  if (/code_inconnu/.test(c)) return 'Ce code ne correspond à personne : vérifie-le avec ton ami.';
+  if (/code_perso/.test(c)) return 'C\'est ton propre code : envoie-le à un ami plutôt.';
+  return acctMsg(e);
+}
+async function friendsRefresh(force) {
+  if (!acct.s || friends.busy || (!force && Date.now() - friends.at < 60000)) return;
+  friends.busy = true;
+  try {
+    let p = await supa(`/rest/v1/profiles?select=name,code&id=eq.${acct.s.uid}`);
+    if (!p || !p[0]) {   // profil manquant (compte créé avant le script SQL) : on le crée
+      await supa('/rest/v1/profiles?on_conflict=id', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: [{ id: acct.s.uid, name: acct.s.name || (acct.s.email || '').split('@')[0] }] });
+      p = await supa(`/rest/v1/profiles?select=name,code&id=eq.${acct.s.uid}`);
+    }
+    friends.code = (p && p[0] && p[0].code) || '';
+    const pend = (() => { try { return localStorage.getItem('orri.invite'); } catch (e) { return null; } })();
+    if (pend) {
+      try { localStorage.removeItem('orri.invite'); } catch (e) { }
+      try { const r = await supa('/rest/v1/rpc/add_friend', { method: 'POST', body: { friend_code: pend } }); toast(`Toi et ${(r && r[0] && r[0].name) || 'ton ami'} êtes maintenant amis`, 'ok'); }
+      catch (e) { if (!/code_perso/.test(e.message || '')) toast(friendMsg(e), 'warn'); }
+    }
+    friends.list = (await supa('/rest/v1/rpc/my_friends', { method: 'POST', body: {} })) || [];
+    const rows = friends.list.length ? await supa(`/rest/v1/treks?select=user_id,id,data,updated_at&share=eq.friends&deleted=eq.false&user_id=neq.${acct.s.uid}`) : [];
+    friends.treks = (rows || []).filter(r => r.data && r.data.data).map(r => {
+      const d = r.data;
+      return { uid: r.user_id, id: d.id, name: d.name, status: d.status || 'todo', doneDate: d.doneDate || '', note: d.note || '', sum: d.sum || {},
+        start: (d.data.S || {}).startDate || '', pts: trekPts(d, 300), at: r.updated_at, data: d };
+    }).sort((a, b) => (b.at || '').localeCompare(a.at || ''));
+    friends.at = Date.now(); friends.err = '';
+  } catch (e) { if (!(e instanceof TypeError)) friends.err = friendMsg(e); }
+  friends.busy = false; friends.save(); renderFriends(); drawFriendLayer();
+  if (typeof globeRefresh === 'function') globeRefresh();
+  if (friends.open && $('#page-ftrek').classList.contains('on')) renderFriendTrek();
+}
+async function addFriend(code) {
+  code = (code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length < 6) { friends.err = 'Un code ami fait 8 caractères.'; return renderFriends(); }
+  friends.err = ''; friends.busy = true; renderFriends();
+  try {
+    const r = await supa('/rest/v1/rpc/add_friend', { method: 'POST', body: { friend_code: code } });
+    friends.busy = false; toast(`Toi et ${(r && r[0] && r[0].name) || 'ton ami'} êtes maintenant amis`, 'ok');
+    await friendsRefresh(true);
+  } catch (e) { friends.busy = false; friends.err = friendMsg(e); renderFriends(); }
+}
+async function shareInvite() {
+  if (!friends.code) return toast('Ton code ami arrive, réessaie dans un instant', 'warn');
+  const url = inviteURL(friends.code), text = `Rejoins-moi sur Orri pour suivre nos treks ! Mon code ami : ${friends.code}`;
+  try { if (navigator.share) return await navigator.share({ title: 'Orri', text, url }); } catch (e) { if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(text + '\n' + url); toast('Lien d\'invitation copié : colle-le dans un message', 'ok'); }
+  catch (e) { toast('Ton code ami : ' + friends.code); }
+}
+const initials = n => (n || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+function renderFriends() {
+  const el = $('#friendsBox'); if (!el) return;
+  if (!acct.s) { el.innerHTML = ''; return; }
+  const err = friends.err ? `<p class="aerr" role="alert">${escXml(friends.err)}</p>` : '';
+  const rows = friends.list.map(f => {
+    const ts = friends.treks.filter(t => t.uid === f.id);
+    return `<li class="friend"><div class="fhead"><span class="fav">${escXml(initials(f.name))}</span><span class="ftx"><b>${escXml(f.name || 'Ami')}</b>
+      <small>${ts.length ? ts.length + ' trek' + (ts.length > 1 ? 's' : '') + ' partagé' + (ts.length > 1 ? 's' : '') : 'aucun trek partagé pour l\'instant'}</small></span>
+      <button class="fdel" data-u="${f.id}" aria-label="Retirer ${escXml(f.name || '')} de mes amis">${I('x')}</button></div>
+      ${ts.length ? `<div class="ftreks">${ts.map(t => `<button data-ft="${t.uid}|${t.id}">${t.status === 'done' ? I('check') : I('flag')}${escXml(t.name)}</button>`).join('')}</div>` : ''}</li>`;
+  }).join('');
+  el.innerHTML = `<h2>Mes amis${friends.list.length ? ` (${friends.list.length})` : ''}</h2><div class="card acct">
+    ${friends.list.length ? `<ul class="flist">${rows}</ul>` : '<p>Invite tes proches : vous verrez les treks que chacun choisit de partager, sur le globe et sur la carte.</p>'}
+    <button class="primary" id="fInvite" style="width:100%">${I('user')}Inviter un ami</button>
+    <p class="note" style="margin:8px 0 12px">Ton code ami : <b class="fcode">${escXml(friends.code || '…')}</b></p>
+    <div class="row"><input type="text" id="fCode" placeholder="Code d'un ami" maxlength="12" autocomplete="off" autocapitalize="characters" style="flex:1;margin:0"><button id="fAdd"${friends.busy ? ' disabled' : ''}>Ajouter</button></div>
+    ${err}${friends.list.length ? `<label class="fmap"><input type="checkbox" id="fMap"${friends.onMap ? ' checked' : ''}> Voir leurs treks sur la carte</label>` : ''}
+    <details class="why"><summary>Qui voit quoi</summary><p>Tes treks sont privés. Sur la page d'un trek, « Partager avec mes amis » le rend visible
+    de tes amis seulement : tracé, étapes, statut et souvenir écrit (pas les photos). Envoyer ton code, c'est accepter l'ami qui l'utilise.
+    Tu peux retirer un ami à tout moment : il ne voit plus rien de toi.</p></details></div>`;
+  $('#fInvite').onclick = shareInvite;
+  $('#fAdd').onclick = () => addFriend($('#fCode').value);
+  $('#fCode').onkeydown = e => { if (e.key === 'Enter') addFriend($('#fCode').value); };
+  if ($('#fMap')) $('#fMap').onchange = e => { friends.onMap = e.target.checked; friends.save(); drawFriendLayer(); };
+  el.querySelectorAll('[data-ft]').forEach(b => b.onclick = () => openFriendTrek(...b.dataset.ft.split('|')));
+  el.querySelectorAll('.fdel').forEach(b => b.onclick = () => confirmTap(b, 'Retirer ?', async () => {
+    try { await supa('/rest/v1/rpc/remove_friend', { method: 'POST', body: { other: b.dataset.u } }); toast(`${friendName(b.dataset.u)} n'est plus dans tes amis`); await friendsRefresh(true); }
+    catch (e) { friends.err = friendMsg(e); renderFriends(); }
+  }));
+}
+// --- Page d'un trek d'ami (lecture seule) ---
+function openFriendTrek(uid, id) { friends.open = { uid, id }; openPage('ftrek'); renderFriendTrek(); $('#ftBody').scrollTop = 0; }
+function renderFriendTrek() {
+  const o = friends.open, t = o && friends.treks.find(x => x.uid === o.uid && x.id === o.id);
+  if (!t) { $('#ftName').textContent = 'Trek'; $('#ftBody').innerHTML = '<p class="note">Ce trek n\'est plus partagé.</p>'; return; }
+  const s = t.sum || {}, done = t.status === 'done';
+  $('#ftName').textContent = t.name;
+  $('#ftBody').innerHTML = `<p class="ftby"><span class="fav">${escXml(initials(friendName(t.uid)))}</span>Trek de <b>${escXml(friendName(t.uid))}</b></p>
+    <div class="tdmap">${trackSVG(t.pts, 600, 300, { sw: 4, pad: 22, color: FRIEND_COL })}</div>
+    <p class="tdnums"><b>${s.km ? nf1.format(s.km) + ' km' : '—'}</b> · +${nf0.format(s.up || 0)} m · ${s.stages || 0} jour${s.stages > 1 ? 's' : ''}</p>
+    <p>${done ? `<span class="st done">${I('check')}Fait${t.doneDate ? ' le ' + fDay(t.doneDate) : ''}</span>` : `<span class="st todo">${I('flag')}À faire${t.start ? ' · départ le ' + fDay(t.start) : ''}</span>`}</p>
+    ${t.note ? `<h2>Son souvenir</h2><p class="ftnote">${escXml(t.note)}</p>` : ''}
+    <button class="primary" id="ftMap" style="width:100%;margin-top:14px">${I('route')}Voir sur la carte</button>
+    <button id="ftCopy" style="width:100%;margin-top:8px">${I('plus')}Copier dans mon carnet</button>
+    <p class="note">La copie est à toi : tu peux la modifier et la préparer à ta façon (sans son souvenir ni ses photos).</p>`;
+  $('#ftMap').onclick = () => {
+    if (!friends.onMap) { friends.onMap = true; friends.save(); drawFriendLayer(); }
+    closePage(); if (typeof closeWelcome === 'function') closeWelcome();
+    map.fitBounds(L.latLngBounds(t.pts), fitPad(30));
+  };
+  $('#ftCopy').onclick = async () => {
+    let d = t.data;
+    if (!d) { try { const r = await supa(`/rest/v1/treks?select=data&user_id=eq.${t.uid}&id=eq.${encodeURIComponent(t.id)}`); d = r && r[0] && r[0].data; } catch (e) { } }
+    if (!d) return toast('Copie impossible hors ligne : réessaie avec du réseau', 'warn');
+    const now = new Date().toISOString(), c = { id: newId(), name: d.name, created: now, updated: now, data: JSON.parse(JSON.stringify(d.data)), sum: d.sum, status: 'todo', photos: [], from: friendName(t.uid) };
+    treks.list.unshift(c); treks.store(); toast(`« ${c.name} » copié dans ton carnet`, 'ok'); openTrekPage(c.id);
+  };
+}
+// --- Treks des amis sur la carte principale ---
+const friendLayer = L.layerGroup().addTo(map);
+function drawFriendLayer() {
+  friendLayer.clearLayers();
+  if (!acct.s || !friends.onMap) return;
+  friends.treks.forEach(t => {
+    if (t.pts.length < 2) return;
+    const ln = L.polyline(t.pts, { color: FRIEND_COL, weight: 4, opacity: .85, dashArray: t.status === 'done' ? null : '8 7', interactive: true });
+    ln.bindTooltip(`${escXml(t.name)} · ${escXml(friendName(t.uid))}`, { sticky: true });
+    ln.on('click', e => { L.DomEvent.stopPropagation(e); if (!state.draw) openFriendTrek(t.uid, t.id); });
+    friendLayer.addLayer(ln);
+  });
+}
+// Lien d'invitation : ?ami=CODE
+(() => {
+  try {
+    const sp = new URLSearchParams(location.search), c = sp.get('ami'); if (!c) return;
+    localStorage.setItem('orri.invite', c.toUpperCase());
+    sp.delete('ami'); history.replaceState(null, '', location.pathname + (sp.toString() ? '?' + sp : '') + location.hash);
+  } catch (e) { }
+})();
 const treksStore = treks.store.bind(treks);
 treks.store = function () { const ok = treksStore(); if (ok && acct.s) { acct.m.touched = Date.now(); acct.soon(); } return ok; };
-acct.load();
-renderAcct();
+acct.load(); friends.load();
+renderAcct(); drawFriendLayer();
 if (acct.s) setTimeout(() => acct.sync(true), 1500);
+else if ((() => { try { return localStorage.getItem('orri.invite'); } catch (e) { } })()) setTimeout(() => toast('Un ami t\'invite sur Orri : crée ton compte pour le retrouver', '', { label: 'Créer', fn: () => { closeWelcome(); openPage('profile'); acct.mode = 'up'; renderAcct(); setTimeout(() => $('#acct').scrollIntoView({ block: 'center' }), 300); } }), 1200);
 addEventListener('online', () => acct.sync(true));
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && acct.s && Date.now() - acct.m.last > 120000) acct.sync(true); });
 
@@ -3244,6 +3425,7 @@ function globeTreks() {   // treks du carnet (+ le parcours en cours s'il n'est 
     const st = Math.max(1, Math.floor(R.n / 260)), pts = []; for (let i = 0; i < R.n; i += st) pts.push([R.lat[i], R.lon[i]]);
     out.push({ id: '_cur', name: treks.cur ? (treks.get(treks.cur) || {}).name || 'Parcours en cours' : 'Parcours en cours', done: false, cur: true, pts, photos: [] });
   }
+  if (typeof friends !== 'undefined' && acct.s) friends.treks.forEach(f => out.push({ id: 'f:' + f.uid + ':' + f.id, name: f.name, done: f.status === 'done', friend: f, pts: f.pts, photos: [], t: f }));
   return out.filter(g => g.pts.length > 1);
 }
 /* Relief du globe : texture mondiale carte/relief.jpg (ombrage + teintes d'altitude, tools/build_relief.py) ;
@@ -3434,7 +3616,7 @@ class Globe {
     this.hits = [];
     const showLines = this.zoom > 2.2;
     this.data.forEach(g => {
-      const sel = this.sel && this.sel.id === g.id, col = g.done ? '#cf6a3c' : g.cur ? '#f4c06b' : '#fffaf0';
+      const sel = this.sel && this.sel.id === g.id, col = g.friend ? (g.done ? '#4f9bd0' : '#8cc4ea') : g.done ? '#cf6a3c' : g.cur ? '#f4c06b' : '#fffaf0';
       if (showLines || sel) {
         let ln = g.line;
         if (sel && this.growT0 && !reduceMotion) {   // le trek choisi se dessine pendant le vol
@@ -3448,7 +3630,7 @@ class Globe {
       if (!this.visible(g.c)) return;
       const [x, y] = P(g.c);
       if (!showLines || sel) {
-        c.beginPath(); c.arc(x, y, sel ? 9 : 7, 0, 2 * Math.PI); c.fillStyle = g.done ? '#cf6a3c' : '#173a2c'; c.fill();
+        c.beginPath(); c.arc(x, y, sel ? 9 : 7, 0, 2 * Math.PI); c.fillStyle = g.friend ? '#4f9bd0' : g.done ? '#cf6a3c' : '#173a2c'; c.fill();
         c.lineWidth = 2.5; c.strokeStyle = g.done ? '#fff' : col; c.stroke();
         if (g.done) { c.beginPath(); c.arc(x, y, 2.6, 0, 2 * Math.PI); c.fillStyle = '#fff'; c.fill(); }
       }
@@ -3550,6 +3732,12 @@ function globeCard(G, g) {   // carte du trek touché sur le globe (2D ou 3D)
   if (!g) { G.card.hidden = true; return; }
   const t = g.t, s = (t && t.sum) || {};
   G.card.hidden = false;
+  if (g.friend) {
+    G.card.innerHTML = `<div class="gtx"><b>${escXml(g.name)}</b><small>trek de ${escXml(friendName(g.friend.uid))} · ${s.km ? nf1.format(s.km) + ' km · ' : ''}${g.done ? 'fait' + (t.doneDate ? ' le ' + fDay(t.doneDate) : '') : 'à faire'}</small></div>
+      <button class="primary" data-g="ft">${I('user')}Voir</button>`;
+    G.card.querySelector('[data-g]').onclick = () => openFriendTrek(g.friend.uid, g.friend.id);
+    return;
+  }
   G.card.innerHTML = `<div class="gtx"><b>${escXml(g.name)}</b><small>${g.cur ? 'en préparation, pas encore dans ton carnet' : (s.km ? nf1.format(s.km) + ' km · ' + s.stages + ' jour' + (s.stages > 1 ? 's' : '') + ' · ' : '') + (g.done ? 'fait' + (t.doneDate ? ' le ' + fDay(t.doneDate) : '') : 'à faire')}${g.photos.length ? ' · ' + g.photos.length + ' photo' + (g.photos.length > 1 ? 's' : '') : ''}</small></div>
     ${g.cur ? '' : `<button data-g="memo">${I('book')}Souvenirs</button>`}<button class="primary" data-g="map">${I('route')}${g.done ? 'Carte' : 'Préparer'}</button>`;
   G.card.querySelectorAll('[data-g]').forEach(b => b.onclick = () => {
@@ -3599,10 +3787,10 @@ function globeStyle() {
       { id: 'ombre', type: 'hillshade', source: 'dem', paint: { 'hillshade-method': 'multidirectional', 'hillshade-exaggeration': ['interpolate', ['linear'], ['zoom'], 2, 0.3, 9, 0.55], 'hillshade-shadow-color': 'rgba(18,38,30,0.6)', 'hillshade-highlight-color': 'rgba(255,250,235,0.4)' } },
       { id: 'frontieres', type: 'line', source: 'borders', paint: { 'line-color': '#fffaf0', 'line-width': 0.7, 'line-opacity': ['interpolate', ['linear'], ['zoom'], 1, 0.45, 6, 0] } },
       { id: 'tcase', type: 'line', source: 'treks', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#173a2c', 'line-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0, 5, 0.6], 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 4, 12, 8] } },
-      { id: 'tline', type: 'line', source: 'treks', filter: ['!=', ['get', 'k'], 'todo'], layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': ['match', ['get', 'k'], 'cur', '#f4c06b', '#e07a45'], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0, 5, 1], 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 2.4, 12, 4.5] } },
-      { id: 'tline2', type: 'line', source: 'treks', filter: ['==', ['get', 'k'], 'todo'], layout: { 'line-join': 'round' }, paint: { 'line-color': '#fffaf0', 'line-dasharray': [1.6, 1.2], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0, 5, 1], 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 2.4, 12, 4.5] } },
-      { id: 'sline', type: 'line', source: 'sel', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': ['match', ['get', 'k'], 'cur', '#f4c06b', 'todo', '#fffaf0', '#e07a45'], 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 4, 12, 6.5] } },
-      { id: 'tpt', type: 'circle', source: 'tpts', paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 5, 4, 8], 'circle-color': ['match', ['get', 'k'], 'done', '#e07a45', '#173a2c'], 'circle-stroke-width': 2.5, 'circle-stroke-color': ['match', ['get', 'k'], 'cur', '#f4c06b', '#fffaf0'], 'circle-opacity': ['interpolate', ['linear'], ['zoom'], 4.5, 1, 6, 0], 'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'], 4.5, 1, 6, 0], 'circle-pitch-alignment': 'map' } }
+      { id: 'tline', type: 'line', source: 'treks', filter: ['!', ['in', ['get', 'k'], ['literal', ['todo', 'ami2']]]], layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': ['match', ['get', 'k'], 'cur', '#f4c06b', 'ami', '#4f9bd0', '#e07a45'], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0, 5, 1], 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 2.4, 12, 4.5] } },
+      { id: 'tline2', type: 'line', source: 'treks', filter: ['in', ['get', 'k'], ['literal', ['todo', 'ami2']]], layout: { 'line-join': 'round' }, paint: { 'line-color': ['match', ['get', 'k'], 'ami2', '#8cc4ea', '#fffaf0'], 'line-dasharray': [1.6, 1.2], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0, 5, 1], 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 2.4, 12, 4.5] } },
+      { id: 'sline', type: 'line', source: 'sel', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': ['match', ['get', 'k'], 'cur', '#f4c06b', 'todo', '#fffaf0', 'ami', '#4f9bd0', '#e07a45'], 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 4, 12, 6.5] } },
+      { id: 'tpt', type: 'circle', source: 'tpts', paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 5, 4, 8], 'circle-color': ['match', ['get', 'k'], 'done', '#e07a45', 'ami', '#4f9bd0', 'ami2', '#4f9bd0', '#173a2c'], 'circle-stroke-width': 2.5, 'circle-stroke-color': ['match', ['get', 'k'], 'cur', '#f4c06b', '#fffaf0'], 'circle-opacity': ['interpolate', ['linear'], ['zoom'], 4.5, 1, 6, 0], 'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'], 4.5, 1, 6, 0], 'circle-pitch-alignment': 'map' } }
     ]
   };
 }
@@ -3648,7 +3836,7 @@ class Globe3D {
   }
   apply() {
     if (!this.ready) return;
-    const k = g => g.cur ? 'cur' : g.done ? 'done' : 'todo';
+    const k = g => g.friend ? (g.done ? 'ami' : 'ami2') : g.cur ? 'cur' : g.done ? 'done' : 'todo';
     this.map.getSource('treks').setData({ type: 'FeatureCollection', features: this.data.map(g => ({ type: 'Feature', properties: { id: g.id, k: k(g) }, geometry: g.line })) });
     this.map.getSource('tpts').setData({ type: 'FeatureCollection', features: this.data.map(g => ({ type: 'Feature', properties: { id: g.id, k: k(g) }, geometry: { type: 'Point', coordinates: g.c } })) });
     this.marks.forEach(mk => mk.remove()); this.marks = [];
@@ -3693,7 +3881,7 @@ class Globe3D {
   }
   growSel(now) {   // le trek choisi se dessine pendant le vol
     const g = this.sel; if (!g || !this.ready) { this.ready && this.map.getSource('sel').setData({ type: 'FeatureCollection', features: [] }); return; }
-    const src = this.map.getSource('sel'), k = g.cur ? 'cur' : g.done ? 'done' : 'todo', t0 = performance.now(), cs = g.line.coordinates;
+    const src = this.map.getSource('sel'), k = g.friend ? 'ami' : g.cur ? 'cur' : g.done ? 'done' : 'todo', t0 = performance.now(), cs = g.line.coordinates;
     const step = () => {
       if (this.sel !== g) return;
       const p = now || reduceMotion ? 1 : Math.min(1, (performance.now() - t0) / 2600);
