@@ -40,6 +40,7 @@ html,body{margin:0;height:100%;overflow:hidden;font:15.5px/1.45 Figtree,system-u
 #searchBox{flex:1;position:relative;min-width:0}
 .searchbar{display:flex;align-items:center;gap:8px;height:48px;padding:0 6px 0 6px;background:var(--panel);border-radius:24px;box-shadow:var(--shadow)}
 .searchbar img{width:36px;height:36px;border-radius:50%;flex:none}
+#bHome{flex:none;width:44px;height:44px;min-height:44px;padding:0;border:0;border-radius:50%;background:transparent;display:grid;place-items:center;box-shadow:none}
 #q{flex:1;min-width:0;height:44px;border:0;background:transparent;font:inherit;font-size:16px;color:var(--ink);outline:none;padding:0 4px}
 #q::placeholder{color:var(--muted)}
 #results{list-style:none;margin:6px 0 0;padding:4px 0;background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);display:none;max-height:50vh;overflow:auto}
@@ -56,7 +57,7 @@ html,body{margin:0;height:100%;overflow:hidden;font:15.5px/1.45 Figtree,system-u
 /* --- Pastilles de catégories --- */
 #chips{position:absolute;z-index:1050;top:68px;left:0;right:0;display:none;gap:8px;padding:0 12px 6px;overflow-x:auto;scrollbar-width:none}
 #chips::-webkit-scrollbar{display:none}
-.has-route #chips{display:flex}
+#chips{display:flex} body:not(.has-route) #chips .chip:not(.cnear){display:none}
 .chip{flex:none;min-height:40px;padding:0 14px 0 12px;border-radius:20px;border:0;background:var(--panel);box-shadow:0 2px 8px rgba(28,58,46,.18);font-size:14px;font-weight:600;color:var(--muted);gap:6px}
 .chip .sw{width:10px;height:10px;background:transparent;box-shadow:inset 0 0 0 2px var(--c)}
 #chips .chip.on{background:var(--panel);color:var(--ink);border-color:transparent} .chip .cb{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#d9d4c8;color:#fff;margin-left:-6px;transition:background-color .2s}
@@ -529,7 +530,7 @@ details.why summary::-webkit-details-marker{display:none}
   <div id="top">
     <div id="searchBox">
       <div class="searchbar">
-        <img src="icons/apple-touch-icon.png" alt="Orri">
+        <button id="bHome" title="Accueil" aria-label="Revenir à l'accueil"><img src="icons/apple-touch-icon.png" alt=""></button>
         <input id="q" type="search" placeholder="Où veux-tu marcher ?" autocomplete="off" enterkeyhint="search">
         <button id="bProfile" class="avatar" title="Mon carnet : mes treks et souvenirs" aria-label="Mon carnet"><svg class="ico"><use href="#i-user"/></svg></button>
       </div>
@@ -1417,9 +1418,11 @@ function buildPoiRows() {
     `<div class="poi-row"><input type="checkbox" id="show_${k}"><label for="show_${k}"><span class="sw" style="background:${c.color}"></span> ${CI(k)} ${c.label}</label><span class="c" id="cnt_${k}">—</span></div>`).join('');
   Object.keys(CAT).forEach(k => $('#show_' + k).addEventListener('change', e => setShow(k, e.target.checked)));
   const SHORT = { water: 'Eau', hut: 'Refuges', bivouac: 'Bivouac', shop: 'Ravito', train: 'Gares' };
-  $('#chips').innerHTML = Object.entries(CAT).map(([k, c]) =>
+  $('#chips').innerHTML = `<button class="chip cnear" id="chNear" style="--c:#8a5fa8" aria-pressed="false"><span class="cb">${I('globe')}</span>Randos publiques<em id="chc_near"></em></button>` + Object.entries(CAT).map(([k, c]) =>
     `<button class="chip" data-k="${k}" style="--c:${c.color}"><span class="cb">${I(c.ico)}</span>${SHORT[k]}<em id="chc_${k}"></em></button>`).join('');
-  document.querySelectorAll('#chips .chip').forEach(b => b.onclick = () => setShow(b.dataset.k, !S.show[b.dataset.k]));
+  document.querySelectorAll('#chips .chip[data-k]').forEach(b => b.onclick = () => setShow(b.dataset.k, !S.show[b.dataset.k]));
+  $('#chNear').onclick = () => { setNearMap(!near.onMap); if (near.onMap) toast('En violet : les randos que la communauté partage. Touche-en une pour la voir.'); };
+  nearChip();
 }
 // Afficher / masquer une catégorie de points (pastilles sur la carte et cases de l'onglet Préparer)
 function setShow(k, on) {
@@ -3560,11 +3563,39 @@ function drawNear(rows) {
   });
 }
 function showNearOnMap(rows) {
-  drawNear(rows); closePage(); if (typeof closeWelcome === 'function') closeWelcome();
+  setNearMap(true, true); drawNear(rows); closePage(); if (typeof closeWelcome === 'function') closeWelcome();
   map.fitBounds(L.latLngBounds(rows.flatMap(r => r.line)), fitPad(30));
-  toast(rows.length > 1 ? 'En violet : les randos publiques trouvées' : 'En violet : la rando publique');
+  toast((rows.length > 1 ? 'En violet : les randos publiques' : 'En violet : la rando publique') + '. La pastille « Randos publiques » les masque.');
 }
 $('#nAll').onclick = () => showNearOnMap(near.rows);
+// Pastille « Randos publiques » sur la carte : à cocher / décocher à tout moment, la liste suit la zone affichée
+try { near.onMap = localStorage.getItem('orri.near.map') === '1'; } catch (e) { }
+function nearChip() {
+  const b = $('#chNear'); if (!b) return;
+  b.classList.toggle('on', !!near.onMap); b.setAttribute('aria-pressed', near.onMap ? 'true' : 'false');
+  $('#chc_near').textContent = near.onMap && near.mapRows ? String(near.mapRows.length) : '';
+}
+function setNearMap(on, quiet) {
+  near.onMap = !!on; near.mapAt = null; try { localStorage.setItem('orri.near.map', on ? '1' : '0'); } catch (e) { }
+  if (!on) { nearLayer.clearLayers(); near.mapRows = null; }
+  nearChip(); if (on && !quiet) refreshNearMap(true);
+}
+async function refreshNearMap(force) {
+  if (!near.onMap) return;
+  const c = map.getCenter(), r = Math.min(200, Math.max(10, c.distanceTo(map.getBounds().getNorthEast()) / 1000)), at = near.mapAt;
+  if (!force && at && c.distanceTo(at.c) / 1000 < at.r / 3 && r < at.r * 1.5 && r > at.r / 2) return;
+  near.mapAt = { c, r }; const seq = (near.seq = (near.seq || 0) + 1);
+  try {
+    const rows = ((await supa('/rest/v1/rpc/nearby_treks', { method: 'POST', auth: false, body: { lat: c.lat, lon: c.lng, km: Math.round(r) } })) || []).filter(x => (x.line || []).length > 1);
+    if (seq !== near.seq || !near.onMap) return;
+    near.mapRows = rows; drawNear(rows); nearChip();
+    if (force && !rows.length) toast('Aucune rando publique dans cette zone pour l\'instant');
+  } catch (e) { near.mapAt = null; if (force) toast(e instanceof TypeError ? 'Pas de réseau : les randos publiques s\'afficheront plus tard' : 'Randos publiques indisponibles pour le moment', 'warn'); }
+}
+let nearMoveT = 0;
+map.on('moveend', () => { if (!near.onMap) return; clearTimeout(nearMoveT); nearMoveT = setTimeout(() => refreshNearMap(false), 700); });
+if (near.onMap) setTimeout(() => refreshNearMap(true), 1500);
+$('#bHome').onclick = () => openPage('welcome');
 function openPublicTrek(r) { friends.open = { pub: r }; openPage('ftrek'); renderFriendTrek(); $('#ftBody').scrollTop = 0; }
 function renderPubTrek(r) {
   const s = r.sum || {}, mine = acct.s && r.user_id === acct.s.uid;

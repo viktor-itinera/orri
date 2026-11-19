@@ -133,6 +133,9 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   (`renderNear`, `nearSearch`, carte `#wNear` à l'accueil) → RPC `nearby_treks(lat, lon, km)` (rayon 25/50/100/200 km, 40 résultats,
   clé publique seule), autour de soi (position au toucher) ou du centre de la carte. Détail dans `#page-ftrek` (`friends.open.pub`,
   `renderPubTrek`), en violet `PUB_COL` sur la carte (`nearLayer`), « Copier dans mon carnet » via RPC `public_trek` (sans `note` ni `pub`).
+  Pastille **« Randos publiques »** (`#chNear`, première des `#chips`, visible même sans parcours, `orri.near.map`) : à cocher à tout moment,
+  `refreshNearMap` cherche autour du centre de la carte (rayon = demi-diagonale de la vue, 10 à 200 km) à chaque `moveend` (700 ms)
+  quand la zone change assez. Retour à l'accueil : logo de la barre de recherche (`#bHome`).
   Jamais publics : e-mail, souvenir écrit, photos, « Je suis ici ».
 - La synchro ne lit que ses propres lignes (`user_id=eq.<moi>`) : la règle RLS laisse aussi passer les treks partagés des amis.
 
