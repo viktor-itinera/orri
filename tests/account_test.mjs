@@ -123,7 +123,7 @@ async function device(seed) {
   const pg = await ctx.newPage(); pg.on('pageerror', e => errors.push(String(e)));
   await pg.goto(URL + '?globe=off'); await pg.evaluate(s => { localStorage.clear(); if (s) localStorage.setItem('orri.treks.v1', JSON.stringify({ v: 1, list: s })); }, seed);
   await pg.reload(); await pg.waitForTimeout(600);
-  await pg.evaluate(() => openPage('profile')); await pg.waitForTimeout(200);
+  await pg.evaluate(() => openPage('amis')); await pg.waitForTimeout(200);
   return pg;
 }
 const until = async (pg, js, ms = 8000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await pg.evaluate(js)) return true; await pg.waitForTimeout(150); } return false; };
@@ -149,7 +149,9 @@ await B.fill('#aPw', 'motdepasse1'); await B.click('#aGo');
 check(await until(B, () => !!acct.s && !acct.busy && treks.list.length === 2), 'connexion sur B : le trek de A arrive');
 check(await B.evaluate(() => acct.s.name) === 'Viktor', 'pseudo récupéré à la connexion');
 check(db.treks.filter(r => !r.deleted).length === 2, 'le trek de B est envoyé en ligne');
+await B.evaluate(() => openPage('profile'));
 check(await B.evaluate(() => (treks.get('t1').photos || []).length === 0 && document.querySelectorAll('#trekList li').length === 2), 'B affiche les 2 treks (photos de A restées sur A)');
+await B.evaluate(() => openPage('amis'));
 
 // A : modification sur B → arrive sur A, en gardant les photos locales
 await B.evaluate(() => { const t = treks.get('t1'); t.status = 'done'; t.doneDate = '2026-11-10'; t.note = 'Superbe'; treks.store(); });
@@ -180,7 +182,7 @@ const D = await (async () => {
 })();
 check(await D.evaluate(() => localStorage.getItem('orri.invite')) === code && !(await D.evaluate(() => location.search.includes('ami='))), 'lien d\'invitation retenu, retiré de l\'adresse');
 check((await D.textContent('#status')).includes('invite'), 'message « un ami t\'invite » sans compte');
-await D.evaluate(() => openPage('profile')); await D.fill('#aName', 'Léa'); await D.fill('#aMail', 'lea@exemple.fr'); await D.fill('#aPw', 'motdepasse2'); await D.click('#aGo');
+await D.evaluate(() => openPage('amis')); await D.fill('#aName', 'Léa'); await D.fill('#aMail', 'lea@exemple.fr'); await D.fill('#aPw', 'motdepasse2'); await D.click('#aGo');
 check(await until(D, () => friends.list.length === 1 && friends.treks.length === 1), 'Léa inscrite : amie avec Viktor, voit son trek partagé');
 check(isFriend('u1', 'u2'), 'amitié enregistrée des deux côtés');
 check(await D.evaluate(() => globeTreks().some(g => g.friend && g.name === 'GR10 étape 1')), 'trek de Viktor dans le globe de Léa');
@@ -205,7 +207,7 @@ check(await A.isVisible('#vShare') && (await A.textContent('#vShare')).includes(
 await A.click('#vShare');
 check(await until(A, () => (treks.get('t1').pub || []).length === 1 && $('#vShare').textContent.includes('Partagée')) && !!db.files['u1/p1.jpg'] && !!db.files['u1/p1_t.jpg'], 'photo envoyée (grande + vignette) et notée partagée');
 check(await until(A, () => !acct.busy && acct.m.rows.t1.h === trekHash(treks.get('t1')), 9000) && (db.treks.find(r => r.id === 't1').data.pub || []).length === 1, 'liste des photos partagées synchronisée');
-await A.evaluate(() => { closeViewer(); openPage('profile'); });
+await A.evaluate(() => { closeViewer(); openPage('amis'); });
 await A.context().grantPermissions(['geolocation']); await A.context().setGeolocation({ latitude: 42.91, longitude: 0.12 });
 await A.click('#fHere');
 check(await until(A, () => !!friends.me) && db.checkins.u1 && Math.abs(db.checkins.u1.lat - 42.91) < 1e-6, '« Je suis ici » : position enregistrée');
@@ -213,7 +215,7 @@ await D.evaluate(() => friendsRefresh(true));
 check(await until(D, () => friends.treks.length === 1 && friends.treks[0].photos.length === 1 && friends.pos.length === 1), 'Léa reçoit la photo partagée et la position de Viktor');
 check(await D.evaluate(() => /En route : jour 1 sur 3/.test($('#friendsBox').textContent)), 'chez Léa : « En route : jour 1 sur 3 »');
 check(await D.evaluate(() => friendLayer.getLayers().length === 2 && globeTreks().some(g => g.checkin) && globeTreks().find(g => g.friend && !g.checkin).photos.length === 1), 'carte : trek + point de position ; globe : position et photo géolocalisée');
-await D.evaluate(() => openPage('profile')); await D.click('[data-ft]');
+await D.evaluate(() => openPage('amis')); await D.click('[data-ft]');
 check(await until(D, () => { const im = $('#ftBody .ph img'); return im && im.src.startsWith('blob:'); }), 'page du trek : photo de Viktor téléchargée');
 check((await D.textContent('#ftBody')).includes('jour 1 sur 3'), 'page du trek : jour en cours');
 await D.click('#ftBody .ph');
@@ -221,7 +223,7 @@ check(await until(D, () => !$('#viewer').hidden && $('#vImg').src.startsWith('bl
 await D.evaluate(() => closeViewer());
 await A.evaluate(() => { openTrekPage('t1'); return viewPhoto(treks.get('t1'), 0); }); await A.click('#vShare');
 check(await until(A, () => !(treks.get('t1').pub || []).length) && !db.files['u1/p1.jpg'], 'photo retirée du partage : effacée du serveur');
-await A.evaluate(() => { closeViewer(); openPage('profile'); }); await A.click('#fOff');
+await A.evaluate(() => { closeViewer(); openPage('amis'); }); await A.click('#fOff');
 check(await until(A, () => !friends.me) && !db.checkins.u1, 'position effacée');
 // C4 : points, badges, classement
 await A.evaluate(() => { const t = treks.get('t1'); t.status = 'done'; t.doneDate = new Date().toISOString().slice(0, 10); t.sum.prof = [900, 2150, 1200]; treks.store(); renderProfile(); });
@@ -235,17 +237,17 @@ check(await until(D, () => { const t = $('#friendsBox .lb'); return t && /Viktor
 check(await D.evaluate(() => $('#friendsBox .lb li').textContent.includes('Viktor')), 'Viktor premier du classement');
 await D.evaluate(() => acct.sync()); await D.waitForTimeout(600);
 check(await D.evaluate(() => !treks.get('t1') && treks.list.length === 1), 'après synchro, les treks de Viktor n\'entrent pas dans le carnet de Léa');
-await D.evaluate(() => openPage('profile')); await D.click('#lbMet [data-v=up]');
+await D.evaluate(() => openPage('amis')); await D.click('#lbMet [data-v=up]');
 check(await D.evaluate(() => /500 m/.test($('#friendsBox .lb').textContent)), 'classement au dénivelé');
 
-await D.evaluate(() => openPage('profile')); await D.fill('#fCode', 'ZZZZ9999'); await D.click('#fAdd');
+await D.evaluate(() => openPage('amis')); await D.fill('#fCode', 'ZZZZ9999'); await D.click('#fAdd');
 check(await until(D, () => /ne correspond/.test($('#friendsBox').textContent)), 'code inconnu : message clair');
 await A.evaluate(() => openTrekPage('t1')); await A.click('#tdShare [data-sh=private]');
 for (let i = 0; i < 60 && db.treks.find(r => r.id === 't1').share !== 'private'; i++) await A.waitForTimeout(150);
 check(db.treks.find(r => r.id === 't1').share === 'private', '« Moi seul » : trek de nouveau privé en ligne');
 await D.evaluate(() => friendsRefresh(true));
 check(await until(D, () => friends.treks.length === 0 && friendLayer.getLayers().length === 0), 'trek redevenu privé : disparaît chez Léa');
-await D.evaluate(() => openPage('profile')); await D.click('.fdel'); await D.click('.fdel');
+await D.evaluate(() => openPage('amis')); await D.click('.fdel'); await D.click('.fdel');
 check(await until(D, () => friends.list.length === 0) && !isFriend('u1', 'u2'), 'Léa retire Viktor de ses amis');
 
 // Randos publiques « autour de moi »
@@ -305,7 +307,7 @@ await B.click('#aOut'); await B.click('#aOut');
 check(await until(B, () => !acct.s && treks.list.length === 1 && !!$('#aGo')), 'déconnexion : carnet gardé sur l\'appareil');
 
 // Suppression du compte depuis A
-await A.evaluate(() => openPage('profile')); await A.click('#acct summary'); await A.click('#aDel'); await A.click('#aDel');
+await A.evaluate(() => openPage('amis')); await A.click('#acct summary'); await A.click('#aDel'); await A.click('#aDel');
 check(await until(A, () => !acct.s), 'compte supprimé depuis A');
 check(!db.users.some(u => u.id === 'u1') && !db.treks.some(r => r.user_id === 'u1') && !db.profiles.u1, 'plus rien de Viktor en ligne après suppression');
 check(await A.evaluate(() => treks.list.length === 1 && !localStorage.getItem('orri.account')), 'carnet de A gardé, session effacée');
