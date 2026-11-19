@@ -408,6 +408,11 @@ button:active:not(:disabled),.btn:active,.chip:active,.wcard:active,.fab:active,
 .more div{background:var(--sand)}
 .stg{border-radius:12px;font-size:12px}
 .toast{background:var(--forest)}
+.acct p{margin:0 0 10px;font-size:14px}
+.acct input[type=email],.acct input[type=password],.acct input[type=text]{display:block;width:100%;font:inherit;font-size:16px;border:1px solid var(--line);border-radius:var(--r);padding:0 12px;min-height:44px;background:#fff;color:var(--ink);margin-bottom:8px}
+.acct .seg{margin-bottom:10px}
+.acct .who{display:flex;flex-direction:column;gap:2px}.acct .who b{font-family:Fraunces,serif;font-size:19px;font-weight:600}.acct .who small{color:var(--muted)}
+.acct .aerr{color:var(--err);font-size:13px;margin:0 0 8px}
 details.why{margin-top:10px;font-size:13px;color:var(--muted)}
 details.why summary{cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:36px;color:var(--forest-2);font-weight:600;list-style:none}
 details.why summary::-webkit-details-marker{display:none}
@@ -609,7 +614,7 @@ details.why summary::-webkit-details-marker{display:none}
         <li><svg class="ico"><use href="#i-tap"/></svg>L'eau, le ravitaillement et les gares le long du parcours</li>
         <li><svg class="ico"><use href="#i-doc"/></svg>Une fiche à emporter, lisible sans réseau</li>
       </ul>
-      <p class="note" style="text-align:center">Gratuit, sans compte. Tes parcours restent sur ton téléphone.</p>
+      <p class="note" style="text-align:center">Gratuit, sans compte obligatoire. Tes parcours restent sur ton téléphone.</p>
     </div>
   </div>
 
@@ -643,6 +648,8 @@ details.why summary::-webkit-details-marker{display:none}
       <h2>Mon globe</h2>
       <div class="lim"><label for="gPlace">Afficher le globe de mes treks</label>
         <select id="gPlace"><option value="both">sur l'accueil et ici</option><option value="welcome">sur l'accueil</option><option value="profile">ici, dans le carnet</option><option value="off">nulle part</option></select></div>
+      <h2>Mon compte (facultatif)</h2>
+      <div class="card acct" id="acct"></div>
       <h2>Sauvegarde</h2>
       <div class="row">
         <button id="bBackup" class="grow"><svg class="ico"><use href="#i-down"/></svg>Sauvegarder dans un fichier</button>
@@ -650,7 +657,7 @@ details.why summary::-webkit-details-marker{display:none}
         <input id="restoreFile" type="file" accept=".json,application/json" hidden>
       </div>
       <button id="bWelcome" class="linkbtn">Revenir à l'accueil</button>
-      <p class="note">Tes treks et tes photos sont gardés dans ce navigateur, sur cet appareil, sans compte. Ils disparaissent si tu effaces les données du navigateur : garde une sauvegarde dans un fichier (par exemple sur ton drive). Les photos ne sont pas dans la sauvegarde : garde aussi les originaux dans ta galerie.</p>
+      <p class="note">Sans compte, tes treks et tes photos sont gardés dans ce navigateur, sur cet appareil. Ils disparaissent si tu effaces les données du navigateur : garde une sauvegarde dans un fichier (par exemple sur ton drive). Les photos ne sont pas dans la sauvegarde : garde aussi les originaux dans ta galerie.</p>
     </div>
   </div>
 
@@ -3016,6 +3023,202 @@ $('#bSheetDl').onclick = () => {
 };
 $('#bSheetPrint').onclick = () => { try { $('#sheetFrame').contentWindow.print(); } catch (e) { toast('Impression indisponible : télécharge la fiche', 'warn'); } };
 treks.load();
+
+/* ================= Compte en ligne (facultatif) =================
+   Supabase, offre gratuite (voir supabase/schema.sql) : e-mail + mot de passe, sans e-mail de confirmation.
+   Sans compte, rien ne change. Avec un compte, le carnet se synchronise entre les appareils (sans les images) :
+   `acct.sync()` compare l'empreinte de chaque trek (`trekHash`) et la date serveur (`updated_at`) à celles de la
+   dernière synchro (`acct.m.rows`, gardé sous `orri.sync.v1`) ; en cas de conflit, la modification la plus récente gagne.
+   Un trek supprimé laisse une trace (`deleted`) pour que les autres appareils le suppriment aussi.
+   La clé « publishable » est faite pour être publique : la sécurité vient des règles RLS de la base. */
+const SUPA = { url: 'https://ndgckzbtlzmezwsytioe.supabase.co', key: 'sb_publishable_OY8bVQK6AKjK2hfGuxZzGQ_8TAM6pJZ' };
+const ACCT_KEY = 'orri.account', SYNC_KEY = 'orri.sync.v1';
+const trekClean = t => { const o = {}; for (const k in t) if (k[0] !== '_' && k !== 'photos') o[k] = t[k]; return o; };
+const strHash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36) + '.' + s.length.toString(36); };
+const trekHash = t => strHash(JSON.stringify(trekClean(t)));
+const acct = {
+  s: null,                                   // session : {at, rt, exp, uid, email, name}
+  m: { uid: null, rows: {}, last: 0, touched: 0 },
+  mode: 'up', busy: false, again: false, err: '', off: false, timer: null,
+  load() {
+    try { this.s = JSON.parse(localStorage.getItem(ACCT_KEY) || 'null'); } catch (e) { this.s = null; }
+    try { const m = JSON.parse(localStorage.getItem(SYNC_KEY) || 'null'); if (m && this.s && m.uid === this.s.uid) this.m = m; } catch (e) { }
+  },
+  save() {
+    try {
+      if (this.s) localStorage.setItem(ACCT_KEY, JSON.stringify(this.s)); else localStorage.removeItem(ACCT_KEY);
+      if (this.s) localStorage.setItem(SYNC_KEY, JSON.stringify(this.m)); else localStorage.removeItem(SYNC_KEY);
+    } catch (e) { }
+  },
+  setSession(j, name) {
+    const u = j.user || {};
+    this.s = { at: j.access_token, rt: j.refresh_token, exp: j.expires_at || Math.floor(Date.now() / 1000) + (j.expires_in || 3600),
+      uid: u.id, email: u.email, name: name != null ? name : (this.s && this.s.name) || ((u.user_metadata || {}).name) || '' };
+    if (this.m.uid !== u.id) this.m = { uid: u.id, rows: {}, last: 0, touched: Date.now() };
+    this.save();
+  },
+  soon() { if (!this.s) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.sync(true), 4000); }
+};
+async function supa(path, o = {}) {
+  const h = { apikey: SUPA.key, 'Content-Type': 'application/json' };
+  if (o.auth !== false) { await acctToken(); h.Authorization = 'Bearer ' + acct.s.at; }
+  if (o.prefer) h.Prefer = o.prefer;
+  const r = await fetch(SUPA.url + path, { method: o.method || 'GET', headers: h, body: o.body == null ? undefined : JSON.stringify(o.body) });
+  const txt = await r.text(); let j = null; try { j = txt ? JSON.parse(txt) : null; } catch (e) { }
+  if (!r.ok) {
+    const e = new Error((j && (j.msg || j.message || j.error_description || j.error)) || ('HTTP ' + r.status));
+    e.status = r.status; e.code = (j && (j.error_code || j.code)) || ''; throw e;
+  }
+  return j;
+}
+async function acctToken() {
+  if (!acct.s) throw Object.assign(new Error('déconnecté'), { status: 401, code: 'no_session' });
+  if (acct.s.exp - 60 > Date.now() / 1000) return;
+  try { acct.setSession(await supa('/auth/v1/token?grant_type=refresh_token', { method: 'POST', auth: false, body: { refresh_token: acct.s.rt } })); }
+  catch (e) {
+    if (e.status >= 400 && e.status < 500) { acct.s = null; acct.save(); renderAcct(); toast('Ta session a expiré : reconnecte-toi dans Mon carnet', 'warn'); }
+    throw e;
+  }
+}
+function acctMsg(e) {
+  const c = (e.code || '') + ' ' + (e.message || '');
+  if (e instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(c)) return 'Pas de réseau : réessaie quand tu es connecté.';
+  if (/invalid_credentials|Invalid login/i.test(c)) return 'E-mail ou mot de passe incorrect.';
+  if (/user_already_exists|already registered|email_exists/i.test(c)) return 'Un compte existe déjà avec cet e-mail : touche « Me connecter ».';
+  if (/weak_password|at least/i.test(c)) return 'Mot de passe trop faible : 8 caractères au moins.';
+  if (/email_address_invalid|invalid.*email|validate email/i.test(c)) return 'Cette adresse e-mail n\'est pas valide.';
+  if (e.status === 429 || /rate_limit/i.test(c)) return 'Trop d\'essais : réessaie dans quelques minutes.';
+  if (/email_not_confirmed|confirm/i.test(c)) return 'Ce compte attend une confirmation par e-mail, désactivée chez Orri : réessaie plus tard.';
+  return 'Le serveur n\'a pas répondu comme prévu (' + (e.message || e.status) + ').';
+}
+async function acctSign(up) {
+  const email = ($('#aMail').value || '').trim(), pw = $('#aPw').value || '', name = up ? ($('#aName').value || '').trim().slice(0, 40) : null;
+  if (up && !name) { acct.err = 'Choisis un prénom ou un pseudo : c\'est ce que verront tes amis.'; return renderAcct(); }
+  if (!/^\S+@\S+\.\S+$/.test(email)) { acct.err = 'Écris ton adresse e-mail.'; return renderAcct(); }
+  if (pw.length < 8) { acct.err = 'Mot de passe : 8 caractères au moins.'; return renderAcct(); }
+  acct.err = ''; acct.busy = true; renderAcct();
+  try {
+    if (up) {
+      const j = await supa('/auth/v1/signup', { method: 'POST', auth: false, body: { email, password: pw, data: { name } } });
+      if (!j || !j.access_token) throw Object.assign(new Error('confirm'), { code: 'email_not_confirmed' });
+      acct.setSession(j, name);
+      await supa('/rest/v1/profiles?on_conflict=id', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: [{ id: acct.s.uid, name }] });
+    } else {
+      acct.setSession(await supa('/auth/v1/token?grant_type=password', { method: 'POST', auth: false, body: { email, password: pw } }));
+      try { const p = await supa(`/rest/v1/profiles?select=name&id=eq.${acct.s.uid}`); if (p && p[0] && p[0].name) { acct.s.name = p[0].name; acct.save(); } } catch (e) { }
+    }
+    acct.busy = false;
+    toast(up ? `Bienvenue ${name} ! Ton carnet est maintenant gardé en ligne` : `Re-bonjour ${acct.s.name || ''} ! Je récupère ton carnet`, 'ok');
+    await acct.sync();
+  } catch (e) { acct.busy = false; acct.err = acctMsg(e); renderAcct(); }
+}
+acct.sync = async function (quiet) {
+  if (!this.s) return;
+  if (this.busy) { this.again = true; return; }
+  this.busy = true; this.err = ''; renderAcct();
+  let changedLocal = false;
+  try {
+    const remote = await supa('/rest/v1/treks?select=id,updated_at,deleted');
+    const rem = new Map(remote.map(r => [r.id, r])), loc = new Map(treks.list.map(t => [t.id, t])), rows = this.m.rows;
+    const ids = new Set([...rem.keys(), ...loc.keys(), ...Object.keys(rows)]);
+    const up = [], down = [], tomb = [], drop = [];
+    for (const id of ids) {
+      const L = loc.get(id), r = rem.get(id), k = rows[id];
+      const lCh = !!L && (!k || k.h !== trekHash(L)), rCh = !!r && (!k || k.at !== r.updated_at);
+      if (L && r) {
+        if (r.deleted) { if (rCh && !(lCh && k)) drop.push(L); else up.push(L); }
+        else if (rCh && lCh) (this.m.touched > Date.parse(r.updated_at) ? up : down).push(id);
+        else if (rCh) down.push(id); else if (lCh) up.push(L);
+      } else if (L) up.push(L);
+      else if (r) {
+        if (r.deleted) rows[id] = { h: '', at: r.updated_at };
+        else if (k && !rCh) tomb.push(id); else down.push(id);
+      } else delete rows[id];
+    }
+    for (let i = 0; i < down.length; i += 20) {
+      const part = down.slice(i, i + 20);
+      for (const r of await supa(`/rest/v1/treks?select=id,data,updated_at&id=in.(${part.join(',')})`)) {
+        if (!r.data || !r.data.id) continue;
+        let t = treks.get(r.id);   // modifié sur place : la page Souvenirs ouverte garde le bon objet
+        if (t) { for (const k in t) if (k[0] !== '_' && k !== 'photos' && !(k in r.data)) delete t[k]; Object.assign(t, r.data); }
+        else { t = Object.assign({}, r.data, { photos: [] }); treks.list.push(t); }
+        rows[r.id] = { h: trekHash(t), at: r.updated_at }; changedLocal = true;
+      }
+    }
+    for (const L of drop) {
+      treks.list = treks.list.filter(x => x !== L); if (treks.cur === L.id) treks.cur = null;
+      await delPhotos(L); rows[L.id] = { h: '', at: rem.get(L.id).updated_at }; changedLocal = true;
+    }
+    const put = async (id, data) => {
+      const res = await supa('/rest/v1/treks?on_conflict=user_id,id&select=id,updated_at', { method: 'POST', prefer: 'resolution=merge-duplicates,return=representation',
+        body: [{ user_id: this.s.uid, id, data, deleted: !data }] });
+      return res && res[0] && res[0].updated_at;
+    };
+    for (const L of up) rows[L.id] = { h: trekHash(L), at: await put(L.id, trekClean(L)) };
+    for (const id of tomb) rows[id] = { h: '', at: await put(id, null) };
+    this.m.last = Date.now(); this.off = false;
+    if (changedLocal) {
+      treks.list.sort((a, b) => (b.updated || '').localeCompare(a.updated || ''));
+      treksStore();
+      if ($('#page-profile').classList.contains('on')) renderProfile();
+      if (typeof globeRefresh === 'function') globeRefresh();
+      if (!quiet && down.length) toast(`${down.length} trek${down.length > 1 ? 's' : ''} récupéré${down.length > 1 ? 's' : ''} depuis ton compte`, 'ok');
+    }
+  } catch (e) {
+    if (e instanceof TypeError || /fetch|network/i.test(e.message || '')) this.off = true;
+    else if (this.s) this.err = acctMsg(e);
+  }
+  this.save(); this.busy = false; renderAcct();
+  if (this.again) { this.again = false; this.soon(); }
+};
+async function acctOut(deleted) {
+  if (!deleted) { try { await supa('/auth/v1/logout', { method: 'POST' }); } catch (e) { } }
+  acct.s = null; acct.m = { uid: null, rows: {}, last: 0, touched: 0 }; acct.err = ''; acct.mode = 'in'; acct.save(); renderAcct();
+}
+const agoFr = ms => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? 'à l\'instant' : m < 60 ? `il y a ${m} min` : m < 1440 ? `il y a ${Math.round(m / 60)} h` : 'le ' + new Date(ms).toLocaleDateString('fr-FR'); };
+function renderAcct() {
+  const el = $('#acct'); if (!el) return;
+  const err = acct.err ? `<p class="aerr" role="alert">${escXml(acct.err)}</p>` : '';
+  if (acct.s) {
+    const st = acct.busy ? 'Synchronisation…' : acct.off ? 'Hors ligne : la synchro repartira toute seule.' : acct.m.last ? `Carnet synchronisé ${agoFr(acct.m.last)}.` : 'Pas encore synchronisé.';
+    el.innerHTML = `<p class="who"><b>${escXml(acct.s.name || 'Mon compte')}</b><small>${escXml(acct.s.email || '')}</small></p>${err}
+      <p class="note" id="aState" style="margin:0 0 10px">${st}</p>
+      <div class="row"><button class="grow" id="aSync"${acct.busy ? ' disabled' : ''}>${I('up')}Synchroniser</button><button class="grow" id="aOut">Me déconnecter</button></div>
+      <details class="why"><summary>Ce qui est en ligne, et pour qui</summary><p>Tes treks (tracé, étapes, souvenirs écrits) sont gardés sur un serveur en Europe (Supabase), visibles par toi seul.
+      Tes photos restent sur ce téléphone. Tes amis ne verront que les treks que tu choisiras de partager, quand cette fonction arrivera.
+      En te déconnectant, ton carnet reste sur cet appareil.</p>
+      <button class="danger" id="aDel" style="width:100%">${I('trash')}Supprimer mon compte</button></details>`;
+    $('#aSync').onclick = () => acct.sync();
+    $('#aOut').onclick = () => confirmTap($('#aOut'), 'Touche encore pour te déconnecter', () => acctOut().then(() => toast('Déconnecté : ton carnet reste sur cet appareil')));
+    $('#aDel').onclick = () => confirmTap($('#aDel'), 'Tout effacer en ligne ? Touche encore', async () => {
+      try { await supa('/rest/v1/rpc/delete_my_account', { method: 'POST', body: {} }); await acctOut(true); toast('Compte supprimé, avec tout ce qui était en ligne. Ton carnet reste sur cet appareil', 'ok'); }
+      catch (e) { acct.err = acctMsg(e); renderAcct(); }
+    });
+    return;
+  }
+  const up = acct.mode === 'up';
+  el.innerHTML = `<p>Avec un compte, tu retrouves ton carnet sur tous tes appareils. Bientôt : tes amis et leurs treks. Sans compte, Orri marche pareil.</p>
+    <div class="seg" id="aMode"><button data-m="up" class="${up ? 'on' : ''}">Créer un compte</button><button data-m="in" class="${up ? '' : 'on'}">Me connecter</button></div>
+    ${up ? '<input type="text" id="aName" placeholder="Ton prénom ou pseudo" maxlength="40" autocomplete="nickname">' : ''}
+    <input type="email" id="aMail" placeholder="E-mail" autocomplete="email" inputmode="email">
+    <input type="password" id="aPw" placeholder="Mot de passe (8 caractères au moins)" autocomplete="${up ? 'new-password' : 'current-password'}">
+    ${err}<button class="primary" id="aGo" style="width:100%"${acct.busy ? ' disabled' : ''}>${acct.busy ? 'Un instant…' : up ? 'Créer mon compte' : 'Me connecter'}</button>
+    <details class="why"><summary>Ce qui est gardé en ligne</summary><p>Ton e-mail (pour te connecter, jamais montré), ton pseudo et tes treks, sur un serveur
+    en Europe (Supabase), visibles par toi seul. Tes photos restent sur ce téléphone. Tu peux supprimer ton compte à tout moment, en un geste.
+    Mot de passe oublié : pas encore possible, garde-le bien.</p></details>`;
+  const keep = { aName: acct._n, aMail: acct._e }; for (const k in keep) if ($('#' + k) && keep[k]) $('#' + k).value = keep[k];
+  el.querySelectorAll('input').forEach(i => i.oninput = () => { acct._n = ($('#aName') || {}).value; acct._e = $('#aMail').value; });
+  el.querySelectorAll('#aMode button').forEach(b => b.onclick = () => { acct.mode = b.dataset.m; acct.err = ''; renderAcct(); });
+  $('#aGo').onclick = () => acctSign(up);
+  $('#aPw').onkeydown = e => { if (e.key === 'Enter') acctSign(up); };
+}
+const treksStore = treks.store.bind(treks);
+treks.store = function () { const ok = treksStore(); if (ok && acct.s) { acct.m.touched = Date.now(); acct.soon(); } return ok; };
+acct.load();
+renderAcct();
+if (acct.s) setTimeout(() => acct.sync(true), 1500);
+addEventListener('online', () => acct.sync(true));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && acct.s && Date.now() - acct.m.last > 120000) acct.sync(true); });
 
 /* ================= Globe souvenir =================
    La Terre dessinée aux couleurs d'Orri (d3-geo, projection orthographique, terres Natural Earth de carte/monde.json),
