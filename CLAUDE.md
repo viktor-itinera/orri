@@ -91,6 +91,43 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   textes au tutoiement, simples ; le technique va dans un `<details class="why">`. Animations courtes, coupées si
   `prefers-reduced-motion`. Cibles tactiles ≥ 44 px.
 
+## Compte en ligne (facultatif)
+
+- **Supabase**, offre gratuite, région UE : `SUPA` (URL + clé *publishable*, publique par nature) dans `index.html`. Schéma et règles
+  d'accès (RLS : chacun ne voit que ses données) dans `supabase/schema.sql`, à coller dans le SQL Editor de Supabase (relançable).
+  Pas de bibliothèque : `supa(path, {method, body, auth, prefer})` appelle Auth (`/auth/v1`) et PostgREST (`/rest/v1`) en `fetch`.
+- E-mail + mot de passe, **sans e-mail de confirmation** (le SMTP intégré de Supabase n'envoie qu'à l'équipe). Pas de « mot de passe oublié » pour l'instant.
+  Session sous `orri.account` (rafraîchie par `acctToken`), pseudo dans `profiles.name`.
+- Carte **Mon compte** dans Mon carnet (`renderAcct`, `#acct`) : créer / se connecter, synchroniser, se déconnecter (le carnet reste),
+  **supprimer le compte** (RPC `delete_my_account`, tout part en cascade).
+- Synchro du carnet (`acct.sync`) : table `treks` (`data` = le trek sans `photos` ni clés `_…`, `deleted`, `share` = `private` par défaut).
+  Empreinte `trekHash` + `updated_at` mémorisés sous `orri.sync.v1` ; conflit = le plus récent gagne ; suppression = trace `deleted`.
+  `treks.store()` déclenche une synchro 4 s plus tard (`acct.soon`) ; aussi à l'ouverture, au retour du réseau et au retour sur l'appli.
+  Sans compte, aucun appel réseau. Test : `tests/account_test.mjs` (Supabase simulé, plusieurs appareils et deux comptes).
+- **Amis** (`friends`, gardé sous `orri.friends.v1`) : code ami `profiles.code` (8 caractères), invitation par lien `?ami=CODE`
+  (retenu sous `orri.invite` jusqu'à la connexion) ou saisi à la main ; RPC `add_friend` (amis des deux côtés : partager son code = accepter),
+  `my_friends`, `remove_friend` ; table `friends (a < b)`. Carte **Mes amis** (`renderFriends`, `#friendsBox`) sous Mon compte.
+  Un trek est **privé par défaut** ; case « Partager avec mes amis » sur la page Souvenirs (`t.share = 'friends'`, colonne `share`,
+  règle RLS `is_friend`). Treks des amis (`friendsRefresh` après chaque synchro, au plus une fois par minute) : en bleu `FRIEND_COL`
+  sur le globe (`globeTreks` → `g.friend`, couches 3D `k = 'ami' | 'ami2'`) et sur la carte (`friendLayer`, case « Voir leurs treks sur la carte »),
+  page `#page-ftrek` (`renderFriendTrek` : lecture seule, « Copier dans mon carnet »).
+- **Suivi partagé** (C3) : photos partagées **une par une** depuis la visionneuse (`#vShare`, seulement sur un trek partagé) : `sharePhoto`
+  envoie la photo 1600 px et la vignette dans le stockage privé `photos/<uid>/<id>.jpg` (+ `_t.jpg`, règles RLS : l'auteur et ses amis),
+  la liste dans `t.pub` (synchronisée, maintenue à la main, jamais déduite des photos locales). Chez l'ami, id `f/<uid>/<id>` :
+  `photoURL` → `storageGet`, donc globe, grille et visionneuse marchent pareil (Supprimer / Partager cachés). Retirer / supprimer une photo
+  ou un trek efface les fichiers (`unsharePaths`) ; supprimer le compte vide d'abord le dossier (`deleteAllPhotos`).
+  **« Je suis ici »** (`checkIn` / `checkOut`, table `checkins`, une ligne par compte) : point bleu à étiquette sur la carte des amis
+  (`friendLayer`) et sur leur globe (`g.checkin`), 7 jours max. **« En route : jour X sur N »** (`trekProgress`, `friendProg` : date de
+  départ, étapes + jours de repos) dans la liste d'amis, la page du trek et la carte du globe.
+- **Profil de randonneur** (C4, avec ou sans compte, `#rando` en haut de Mon carnet, `renderRando`) : tout est calculé depuis les treks
+  « faits » (`randoStats`). Points = 1 par km + 1 par 100 m de montée (`trekPoints`) ; grades `GRADES` ; 12 badges `BADGES`
+  (`[id, nom, description, icône, test]`, point culminant tiré de `sum.prof`) ; défi du mois `challengeOf(AAAA-MM)` (rotation sur `CHALLENGES`,
+  réussi d'après les treks faits ce mois-là, `doneDate`). Nouveau grade / badge : message de fête (`randoCheck` dans `treks.store`,
+  déjà vus sous `orri.rando.seen`, premier passage silencieux). Avec un compte : totaux publiés dans la table `stats` (`publishStats`,
+  dans `friendsRefresh`), **classement** entre amis dans Mes amis (`renderBoard` : mois / année × km / dénivelé, `friends.lb`).
+  Classement de toute la communauté : pas encore (il faudra un accord explicite de chacun pour apparaître).
+- La synchro ne lit que ses propres lignes (`user_id=eq.<moi>`) : la règle RLS laisse aussi passer les treks partagés des amis.
+
 ## Services externes (tous gratuits, sans clé)
 
 - **BRouter** `brouter.de` (profil `hiking-mountain`, GeoJSON) : tracé qui suit les sentiers. Serveur communautaire : usage modéré.
@@ -142,7 +179,7 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 
 ## Conventions
 
-- Pas de service payant, pas de clé d'API, pas d'étape de build tant qu'elle n'est pas indispensable.
+- Pas de service payant, pas de clé d'API secrète (la clé publique Supabase est faite pour être publique), pas d'étape de build tant qu'elle n'est pas indispensable.
 - Textes de l'interface en français, ton simple ; l'utilisateur principal teste sur Android.
 - Messages de commit en français.
 - Tester avant de publier (ci-dessous) ; après publication, vérifier le site en ligne.
