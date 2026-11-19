@@ -78,7 +78,7 @@ html,body{margin:0;height:100%;overflow:hidden;font:15.5px/1.45 Figtree,system-u
 #panel{position:absolute;z-index:1000;left:0;right:0;bottom:0;height:calc(100% - 72px);display:flex;flex-direction:column;
   background:var(--panel);border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(28,58,46,.18);
   transform:translateY(var(--hidden));transition:transform .28s cubic-bezier(.2,.8,.2,1);will-change:transform}
-#panel.dragging{transition:none}
+#panel.dragging,.dragging~#fabs{transition:none}
 .grab{flex:none;padding:8px 16px 4px;touch-action:none;cursor:grab;user-select:none}
 .handle{width:40px;height:5px;border-radius:3px;background:#cfc9bb;margin:0 auto 8px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center}
@@ -507,13 +507,32 @@ footer{font-size:11.5px;opacity:.85}
 .chip:not(.on) .cb{background:var(--sand);color:var(--muted)}
 #tdStatus button.on[data-s=done]{background:var(--ok)!important;color:#fff!important}#tdStatus button.on[data-s=todo]{background:var(--terra)!important;color:#fff!important}
 
+/* --- Carte d'abord (L2) : tiroir compact, boutons de carte sur le côté --- */
+#fabs{position:absolute;z-index:1050;display:flex;gap:10px}
+@media (max-width:899px){
+  #fabs{right:12px;bottom:calc(var(--sheetv,140px) + 12px);flex-direction:column;transition:bottom .28s cubic-bezier(.2,.8,.2,1),opacity .2s}
+  .sheet-full #fabs,.paged #fabs,.varmode #fabs{opacity:0;pointer-events:none}
+  #fabs .fab{width:44px;height:44px}
+  .grab{padding:6px 16px 2px}
+  .handle{margin-bottom:6px}
+  .stat b{font-size:16.5px;line-height:1.15}
+  .stat span{font-size:11px;line-height:1.1}
+  .tabs{padding:2px 12px 6px}
+  .tabs button{height:40px}
+  #profile{height:96px}
+}
+@media (min-width:900px){#fabs{top:16px;right:16px}}
+footer details.credits summary{cursor:pointer;min-height:40px;display:inline-flex;align-items:center;color:var(--forest-2);font-weight:600;font-size:13px;list-style:none}
+footer details.credits summary::-webkit-details-marker{display:none}
+footer details.credits summary::after{content:"";width:7px;height:7px;margin-left:8px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg) translateY(-2px);transition:transform .2s}
+footer details.credits[open] summary::after{transform:rotate(-135deg)}
+
 /* --- Ordinateur : panneau latéral, profil sous la carte --- */
 @media (min-width:900px){
   #map{left:var(--side);bottom:170px}
   .leaflet-control-zoom{display:block}
   #top{left:calc(var(--side) + 16px);right:16px;top:16px}
   #searchBox{max-width:440px}
-  #top label.fab{margin-left:auto}
   #status{left:calc(var(--side) + 16px);top:124px}
   #chips{left:var(--side);top:72px;padding:0 16px 6px}
   #panel{right:auto;top:0;width:var(--side);height:auto;border-radius:0;transform:none;box-shadow:1px 0 0 var(--line)}
@@ -580,6 +599,8 @@ footer{font-size:11.5px;opacity:.85}
       </div>
       <ul id="results"></ul>
     </div>
+  </div>
+  <div id="fabs">
     <label class="fab" title="Fond de carte">
       <svg class="ico"><use href="#i-layers"/></svg>
       <select id="base" aria-label="Fond de carte">
@@ -682,7 +703,7 @@ footer{font-size:11.5px;opacity:.85}
         <div id="poiRows"></div>
         <p class="note" id="poiStatus"></p>
 
-        <footer>Itinéraires : BRouter (serveur public communautaire, usage modéré) sur données © contributeurs OpenStreetMap. Carte Orri : OpenFreeMap, © OpenMapTiles, © contributeurs OpenStreetMap ; relief : Mapzen, AWS Terrain Tiles (SRTM et autres sources publiques). Images satellite du survol 3D : Esri World Imagery (Esri, Maxar, Earthstar Geographics) et Sentinel-2 cloudless 2016 by EOX IT Services (CC BY 4.0, données Copernicus modifiées). Plan IGN, photos, altitudes et noms de lieux : © IGN. Eau, refuges, bivouacs, commerces et gares : © contributeurs OpenStreetMap (ODbL), extraits chaque mois pour la France, l'Espagne, l'Andorre, la Norvège, la Suisse et l'Italie. Ton brouillon est gardé dans ce navigateur.</footer>
+        <footer><details class="credits"><summary>Sources et crédits</summary>Itinéraires : BRouter (serveur public communautaire, usage modéré) sur données © contributeurs OpenStreetMap. Carte Orri : OpenFreeMap, © OpenMapTiles, © contributeurs OpenStreetMap ; relief : Mapzen, AWS Terrain Tiles (SRTM et autres sources publiques). Images satellite du survol 3D : Esri World Imagery (Esri, Maxar, Earthstar Geographics) et Sentinel-2 cloudless 2016 by EOX IT Services (CC BY 4.0, données Copernicus modifiées). Plan IGN, photos, altitudes et noms de lieux : © IGN. Eau, refuges, bivouacs, commerces et gares : © contributeurs OpenStreetMap (ODbL), extraits chaque mois pour la France, l'Espagne, l'Andorre, la Norvège, la Suisse et l'Italie. Ton brouillon est gardé dans ce navigateur.</details></footer>
       </section>
     </div>
   </aside>
@@ -4445,7 +4466,7 @@ const sheet = {
   pos(snap) {               // décalage vers le bas (px) pour chaque hauteur
     const H = this.el.offsetHeight, vh = window.innerHeight;
     if (snap === 'full') return 0;
-    if (snap === 'mid') return Math.max(0, H - Math.round(vh * 0.55));
+    if (snap === 'mid') return Math.max(0, H - Math.round(vh * 0.46));
     return Math.max(0, H - this.peekH());
   },
   set(snap) { this.snap = snap; this.el.dataset.snap = snap; document.body.classList.toggle('sheet-full', snap === 'full'); this.layout(); },
@@ -4469,6 +4490,7 @@ function fitPad(p) { return { paddingTopLeft: [p, 70], paddingBottomRight: [p, d
     const dy = e.clientY - y0; if (Math.abs(dy) > 6) moved = true;
     sheet.y = Math.min(sheet.pos('peek'), Math.max(0, start + dy));
     document.documentElement.style.setProperty('--hidden', sheet.y + 'px');
+    document.documentElement.style.setProperty('--sheetv', (sheet.el.offsetHeight - sheet.y) + 'px');
   });
   const end = e => {
     if (y0 == null) return;
