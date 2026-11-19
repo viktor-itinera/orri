@@ -26,8 +26,8 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 @font-face{font-family:Figtree;src:url(fonts/figtree.woff2) format('woff2');font-weight:300 900;font-display:swap}
 @font-face{font-family:Fraunces;src:url(fonts/fraunces.woff2) format('woff2');font-weight:600 700;font-display:swap}
-html,body{margin:0;height:100%;overflow:hidden;font:15.5px/1.45 Figtree,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
-#app{position:relative;height:100%;height:100dvh;overflow:hidden}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;font:15.5px/1.45 Figtree,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+#app{position:fixed;inset:0;overflow:hidden}   /* fixe : suit la barre d'adresse d'Android qui se cache, pas de bande vide en bas */
 .ico{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* --- Carte --- */
