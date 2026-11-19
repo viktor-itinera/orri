@@ -11,7 +11,7 @@ const URL = process.env.ORRI_URL || 'http://localhost:8765/';
 const NM = path.join(path.dirname(fileURLToPath(import.meta.url)), 'node_modules/');
 
 // ---- Faux Supabase ----
-const db = { users: [], profiles: {}, treks: [], friends: [], files: {}, checkins: {}, tick: 0 };
+const db = { users: [], profiles: {}, treks: [], friends: [], files: {}, checkins: {}, stats: {}, tick: 0 };
 const isFriend = (x, y) => db.friends.some(f => (f.a === x && f.b === y) || (f.a === y && f.b === x));
 const now = () => new Date(Date.UTC(2026, 10, 19, 8, 0, 0) + ++db.tick).toISOString();
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*' };
@@ -51,6 +51,10 @@ async function supa(route) {
     if (p === '/storage/v1/object/photos' && m === 'DELETE') { body.prefixes.forEach(k => { if (own(k)) delete db.files[k]; }); return send(200, []); }
     if (p.startsWith('/storage/v1/object/photos/') && m === 'POST') { const k = p.slice(26); if (!own(k)) return send(403, { message: 'RLS' }); db.files[k] = rq.postDataBuffer(); return send(200, { Key: k }); }
     if (p.startsWith('/storage/v1/object/authenticated/photos/')) { const k = p.slice(40); return see(k) && db.files[k] ? route.fulfill({ status: 200, headers: CORS, contentType: 'image/jpeg', body: db.files[k] }) : send(400, { message: 'not found' }); }
+  }
+  if (p === '/rest/v1/stats') {
+    if (m === 'POST') { body.forEach(r => { if (r.user_id === me.id) db.stats[me.id] = r; }); return send(201); }
+    return send(200, Object.values(db.stats).filter(c => c.user_id === me.id || isFriend(me.id, c.user_id)));
   }
   if (p === '/rest/v1/checkins') {
     if (m === 'POST') { body.forEach(r => { if (r.user_id === me.id) db.checkins[me.id] = r; }); return send(201); }
@@ -204,6 +208,20 @@ await A.evaluate(() => { openTrekPage('t1'); return viewPhoto(treks.get('t1'), 0
 check(await until(A, () => !(treks.get('t1').pub || []).length) && !db.files['u1/p1.jpg'], 'photo retirée du partage : effacée du serveur');
 await A.evaluate(() => { closeViewer(); openPage('profile'); }); await A.click('#fOff');
 check(await until(A, () => !friends.me) && !db.checkins.u1, 'position effacée');
+// C4 : points, badges, classement
+await A.evaluate(() => { const t = treks.get('t1'); t.status = 'done'; t.doneDate = new Date().toISOString().slice(0, 10); t.sum.prof = [900, 2150, 1200]; treks.store(); renderProfile(); });
+check(await until(A, () => /badges? : .*Au-dessus de 2/.test($('#status').textContent)), 'trek fait : message « Nouveau badge »');
+check(await A.evaluate(() => /Promeneur/.test($('#rando').textContent) && /17 points/.test($('#rando').textContent) && document.querySelectorAll('#rando .badge.on').length >= 3), 'profil : grade, 17 points (12 km + 500 m), badges gagnés');
+check(await A.evaluate(() => /Défi d.novembre|Défi de /.test($('#rando').textContent)), 'défi du mois affiché');
+await A.evaluate(() => friendsRefresh(true));
+check(await until(A, () => true) && db.stats.u1 && db.stats.u1.m_km === 12 && db.stats.u1.points === 17, 'totaux publiés pour le classement');
+await D.evaluate(() => friendsRefresh(true));
+check(await until(D, () => { const t = $('#friendsBox .lb'); return t && /Viktor/.test(t.textContent) && /12,0 km/.test(t.textContent); }), 'classement chez Léa : Viktor 12 km ce mois-ci');
+check(await D.evaluate(() => $('#friendsBox .lb li').textContent.includes('Viktor')), 'Viktor premier du classement');
+await D.evaluate(() => acct.sync()); await D.waitForTimeout(600);
+check(await D.evaluate(() => !treks.get('t1') && treks.list.length === 1), 'après synchro, les treks de Viktor n\'entrent pas dans le carnet de Léa');
+await D.evaluate(() => openPage('profile')); await D.click('#lbMet [data-v=up]');
+check(await D.evaluate(() => /500 m/.test($('#friendsBox .lb').textContent)), 'classement au dénivelé');
 
 await D.evaluate(() => openPage('profile')); await D.fill('#fCode', 'ZZZZ9999'); await D.click('#fAdd');
 check(await until(D, () => /ne correspond/.test($('#friendsBox').textContent)), 'code inconnu : message clair');

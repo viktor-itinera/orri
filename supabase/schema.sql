@@ -144,3 +144,22 @@ create policy "position : celle de mes amis" on public.checkins for select to au
   using (public.is_friend(user_id));
 revoke all on public.checkins from anon;
 grant select, insert, update, delete on public.checkins to authenticated;
+
+-- ================= C4 : profil de randonneur =================
+-- Chacun publie ses totaux (calculés dans l'appli à partir des treks marqués « faits ») pour le classement entre amis.
+create table if not exists public.stats (
+  user_id uuid primary key default auth.uid() references auth.users(id) on delete cascade,
+  month text not null default '', m_km real not null default 0, m_up integer not null default 0,
+  year text not null default '', y_km real not null default 0, y_up integer not null default 0,
+  points integer not null default 0, grade smallint not null default 0, badges smallint not null default 0,
+  updated_at timestamptz not null default now()
+);
+alter table public.stats enable row level security;
+drop policy if exists "stats : les miennes" on public.stats;
+create policy "stats : les miennes" on public.stats for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+drop policy if exists "stats : celles de mes amis" on public.stats;
+create policy "stats : celles de mes amis" on public.stats for select to authenticated
+  using (public.is_friend(user_id));
+revoke all on public.stats from anon;
+grant select, insert, update, delete on public.stats to authenticated;
