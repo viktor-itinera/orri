@@ -430,11 +430,29 @@ button:active:not(:disabled),.btn:active,.chip:active,.wcard:active,.fab:active,
 .vbar .vsh{width:auto;padding:0 14px;gap:6px;font-size:14px}.vbar .vsh.on{background:#4f9bd0}
 .friend .live{color:#2d6f9c;font-weight:600}
 .ftlive{display:flex;align-items:center;gap:8px;font-weight:650;color:#2d6f9c;margin:0 0 8px}
-.ftlive .dot{width:10px;height:10px;border-radius:50%;background:#4f9bd0;box-shadow:0 0 0 0 rgba(79,155,208,.6);animation:pulse 1.8s infinite}
-@keyframes pulse{70%{box-shadow:0 0 0 10px rgba(79,155,208,0)}100%{box-shadow:0 0 0 0 rgba(79,155,208,0)}}
+.ftlive .dot{width:10px;height:10px;border-radius:50%;background:#4f9bd0;box-shadow:0 0 0 0 rgba(79,155,208,.6);animation:fpulse 1.8s infinite}
+@keyframes fpulse{70%{box-shadow:0 0 0 10px rgba(79,155,208,0)}100%{box-shadow:0 0 0 0 rgba(79,155,208,0)}}
 @media (prefers-reduced-motion:reduce){.ftlive .dot{animation:none}}
 .fhere{margin:0 0 12px}
 .fposTip{background:#2d6f9c;color:#fff;border:0;font-weight:600;font-size:12px;padding:2px 8px;border-radius:10px;box-shadow:none}.fposTip::before{border-top-color:#2d6f9c!important}
+.rcard{background:linear-gradient(135deg,var(--forest),#2c5a45);color:#fff;border-radius:18px;padding:14px;margin:10px 0}
+.rhead{display:flex;align-items:center;gap:12px}.rhead b{display:block;font-family:Fraunces,serif;font-size:21px;font-weight:600}.rhead small{opacity:.85;font-size:13px}
+.rlvl{flex:none;width:46px;height:46px;border-radius:50%;background:var(--terra);display:grid;place-items:center;font-family:Fraunces,serif;font-size:22px;font-weight:700;box-shadow:0 0 0 3px rgba(255,255,255,.25)}
+.rbar{height:8px;border-radius:4px;background:rgba(0,0,0,.12);overflow:hidden;margin:10px 0 2px}.rbar i{display:block;height:100%;background:var(--terra);border-radius:4px;transition:width .6s var(--ease)}
+.rcard .rbar{background:rgba(255,255,255,.2)}.rcard .note,.rcard details.why,.rcard details.why summary{color:#fff;opacity:.9}
+.rdefi b{display:block;font-size:16px}.rdefi small{color:var(--muted);font-size:13px}.rdefi .rlab{text-transform:uppercase;letter-spacing:.05em;font-weight:650;font-size:11.5px}
+.rdefi.won{box-shadow:inset 0 0 0 2px var(--terra)}
+.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.badge{background:var(--panel);border-radius:14px;padding:10px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px;opacity:.5;filter:grayscale(1)}
+.badge.on{opacity:1;filter:none;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.badge .bico{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--sand);color:var(--forest);margin-bottom:4px}
+.badge.on .bico{background:var(--terra);color:#fff}.badge .bico .ii{width:22px;height:22px;margin:0}
+.badge b{font-size:13px;line-height:1.2}.badge small{font-size:11.5px;color:var(--muted);line-height:1.25}
+.board{margin:4px 0 14px}.board h3{font-family:Fraunces,serif;font-size:17px;margin:4px 0 8px}
+.lb{list-style:none;margin:10px 0 0;padding:0}.lb li{display:flex;align-items:center;gap:10px;padding:6px 0}
+.lb li.me{background:#fbeadf;border-radius:12px;padding:6px 8px;margin:0 -8px}
+.lbr{width:22px;text-align:center;font-weight:700;color:var(--muted)}.lb li:first-child .lbr{color:var(--terra)}
+.lbv{font-family:Fraunces,serif;font-size:16px;color:var(--forest);white-space:nowrap}
 .tshare{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:600;margin-top:6px}
 details.why{margin-top:10px;font-size:13px;color:var(--muted)}
 details.why summary{cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:36px;color:var(--forest-2);font-weight:600;list-style:none}
@@ -471,6 +489,7 @@ details.why summary::-webkit-details-marker{display:none}
   <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></symbol>
   <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></symbol>
   <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 22V4"/><path d="M4 4h13l-2 4 2 4H4"/></symbol>
+  <symbol id="i-peak" viewBox="0 0 24 24"><path d="M2 20 9 8l4 6 2.5-4L22 20Z"/><path d="m7.4 10.8 1.6 1.2 1.6-1.2"/></symbol>
   <symbol id="i-pack" viewBox="0 0 24 24"><path d="M6 8a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2Z"/><path d="M9 4V2h6v2"/><path d="M8 13h8v5H8z"/></symbol>
   <symbol id="i-tap" viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
   <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></symbol>
@@ -648,6 +667,7 @@ details.why summary::-webkit-details-marker{display:none}
     <div class="pbody">
       <div id="globeSlotProfile"></div>
       <div class="cstats" id="cStats"></div>
+      <div id="rando"></div>
       <h2>Parcours en cours</h2>
       <div class="card">
         <input id="trekName" type="text" placeholder="Nom du parcours" maxlength="80" autocomplete="off">
@@ -2510,7 +2530,7 @@ function renderProfile() {
   $('#bSaveTrek span').textContent = t ? 'Mettre à jour' : 'Enregistrer';
   $('#bSaveCopy').style.display = t ? '' : 'none';
   $('#nTreks').textContent = treks.list.length ? `(${treks.list.length})` : '';
-  renderStatsCarnet();
+  renderStatsCarnet(); renderRando();
   document.querySelectorAll('#tFilter button').forEach(b => b.classList.toggle('on', b.dataset.f === carnet.filter));
   $('#tSort').value = carnet.sort;
   const ul = $('#trekList'); ul.innerHTML = '';
@@ -3273,13 +3293,13 @@ const FRIENDS_KEY = 'orri.friends.v1', FRIEND_COL = '#4f9bd0';
 const friends = {
   list: [], treks: [], code: '', at: 0, busy: false, err: '', onMap: true, open: null,
   load() {
-    try { const d = JSON.parse(localStorage.getItem(FRIENDS_KEY) || 'null'); if (d && acct.s && d.uid === acct.s.uid) Object.assign(this, { list: d.list || [], treks: d.treks || [], code: d.code || '', onMap: d.onMap !== false, pos: d.pos || [], me: d.me || null }); } catch (e) { }
+    try { const d = JSON.parse(localStorage.getItem(FRIENDS_KEY) || 'null'); if (d && acct.s && d.uid === acct.s.uid) Object.assign(this, { list: d.list || [], treks: d.treks || [], code: d.code || '', onMap: d.onMap !== false, pos: d.pos || [], me: d.me || null, stats: d.stats || [], lb: d.lb || null }); } catch (e) { }
   },
   save() {
     try { if (!acct.s) return localStorage.removeItem(FRIENDS_KEY);
-      localStorage.setItem(FRIENDS_KEY, JSON.stringify({ uid: acct.s.uid, list: this.list, code: this.code, onMap: this.onMap, pos: this.pos, me: this.me, treks: this.treks.map(t => Object.assign({}, t, { data: undefined })) })); } catch (e) { }
+      localStorage.setItem(FRIENDS_KEY, JSON.stringify({ uid: acct.s.uid, list: this.list, code: this.code, onMap: this.onMap, pos: this.pos, me: this.me, stats: this.stats, lb: this.lb, treks: this.treks.map(t => Object.assign({}, t, { data: undefined })) })); } catch (e) { }
   },
-  clear() { this.list = []; this.treks = []; this.pos = []; this.me = null; this.code = ''; this.at = 0; this.err = ''; this.save(); }
+  clear() { this.list = []; this.treks = []; this.pos = []; this.me = null; this.stats = []; this.pubKey = null; this.code = ''; this.at = 0; this.err = ''; this.save(); }
 };
 const friendName = uid => (friends.list.find(f => f.id === uid) || {}).name || 'Un ami';
 const inviteURL = code => location.origin + location.pathname + '?ami=' + encodeURIComponent(code);
@@ -3313,6 +3333,7 @@ async function friendsRefresh(force) {
         start: (d.data.S || {}).startDate || '', rest: ((d.data.S || {}).rest || []).length, pts: trekPts(d, 300), at: r.updated_at, data: d,
         photos: (d.pub || []).map(p => Object.assign({}, p, { id: 'f/' + r.user_id + '/' + p.id })) };
     }).sort((a, b) => (b.at || '').localeCompare(a.at || ''));
+    try { await publishStats(); friends.stats = (await supa('/rest/v1/stats?select=user_id,month,m_km,m_up,year,y_km,y_up,points,grade,badges')) || []; } catch (e) { }
     const cks = (await supa('/rest/v1/checkins?select=user_id,lat,lon,at')) || [];
     friends.me = cks.find(c => c.user_id === acct.s.uid) || null;
     friends.pos = cks.filter(c => c.user_id !== acct.s.uid && Date.now() - Date.parse(c.at) < 7 * 864e5);
@@ -3354,7 +3375,7 @@ function renderFriends() {
       ${ts.length ? `<div class="ftreks">${ts.map(t => `<button data-ft="${t.uid}|${t.id}">${t.status === 'done' ? I('check') : I('flag')}${escXml(t.name)}</button>`).join('')}</div>` : ''}</li>`;
   }).join('');
   el.innerHTML = `<h2>Mes amis${friends.list.length ? ` (${friends.list.length})` : ''}</h2><div class="card acct">
-    ${friends.list.length ? `<ul class="flist">${rows}</ul>` : '<p>Invite tes proches : vous verrez les treks que chacun choisit de partager, sur le globe et sur la carte.</p>'}
+    ${friends.list.length ? `<ul class="flist">${rows}</ul>${renderBoard()}` : '<p>Invite tes proches : vous verrez les treks que chacun choisit de partager, sur le globe et sur la carte.</p>'}
     <button class="primary" id="fInvite" style="width:100%">${I('user')}Inviter un ami</button>
     <p class="note" style="margin:8px 0 12px">Ton code ami : <b class="fcode">${escXml(friends.code || '…')}</b></p>
     <div class="fhere">${friends.me ? `<p class="note" style="margin:0 0 8px">Ta position est partagée avec tes amis (mise à jour ${agoFr(Date.parse(friends.me.at))}).</p>` : ''}
@@ -3365,6 +3386,8 @@ function renderFriends() {
     de tes amis seulement : tracé, étapes, statut, souvenir écrit et les photos que tu choisis. « Je suis ici » montre ta position du moment à tous tes amis, jusqu'à ce que tu l'effaces (elle disparaît de leur carte après 7 jours). Envoyer ton code, c'est accepter l'ami qui l'utilise.
     Tu peux retirer un ami à tout moment : il ne voit plus rien de toi.</p></details></div>`;
   $('#fInvite').onclick = shareInvite;
+  el.querySelectorAll('#lbPer button').forEach(b => b.onclick = () => { friends.lb.per = b.dataset.v; friends.save(); renderFriends(); });
+  el.querySelectorAll('#lbMet button').forEach(b => b.onclick = () => { friends.lb.met = b.dataset.v; friends.save(); renderFriends(); });
   $('#fHere').onclick = checkIn; if ($('#fOff')) $('#fOff').onclick = checkOut;
   el.querySelectorAll('[data-pos]').forEach(b => b.onclick = () => { const ps = friendPos(b.dataset.pos); if (!ps) return; if (!friends.onMap) { friends.onMap = true; friends.save(); drawFriendLayer(); } closePage(); if (typeof closeWelcome === 'function') closeWelcome(); map.setView([ps.lat, ps.lon], 13); });
   $('#fAdd').onclick = () => addFriend($('#fCode').value);
@@ -3496,9 +3519,107 @@ async function checkOut() {
   catch (e) { toast(acctMsg(e), 'err'); }
   renderFriends();
 }
+/* ================= Profil de randonneur (C4) =================
+   Tout est calculé dans l'appli à partir des treks marqués « faits » (avec ou sans compte) :
+   points = 1 par km + 1 par 100 m de montée (`trekPoints`) ; grades `GRADES` ; badges `BADGES` ; défi du mois `challengeOf`
+   (rotation sur `CHALLENGES`, réussi d'après les treks faits ce mois-là). Nouveau badge ou grade : un message de fête
+   (`randoCheck`, déjà vus sous `orri.rando.seen`). Avec un compte, les totaux sont publiés dans la table `stats` pour le
+   classement entre amis (`publishStats`, `renderBoard`). « Fait » est déclaré à la main : le classement repose sur la confiance. */
+const GRADES = [[0, 'Promeneur'], [50, 'Randonneur'], [200, 'Marcheur des crêtes'], [500, 'Montagnard'], [1000, 'Trekkeur'], [2500, 'Grand voyageur'], [5000, 'Légende des sentiers']];
+const CHALLENGES = [{ k: 'n', n: 1, t: 'Termine un trek' }, { k: 'km', n: 50, t: 'Marche 50 km' }, { k: 'up', n: 3000, t: 'Grimpe 3 000 m' },
+  { k: 'n', n: 2, t: 'Termine 2 treks' }, { k: 'km', n: 100, t: 'Marche 100 km' }, { k: 'up', n: 5000, t: 'Grimpe 5 000 m' }];
+const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const trekPoints = t => Math.round(((t.sum || {}).km || 0) + ((t.sum || {}).up || 0) / 100);
+const ymOf = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+const deMois = m => (/^[ao]/.test(MONTHS[m]) ? 'd\'' : 'de ') + MONTHS[m];
+function challengeOf(ym) { const [y, m] = ym.split('-').map(Number); return CHALLENGES[(y * 12 + m - 1) % CHALLENGES.length]; }
+function randoStats() {
+  const d = treks.list.filter(t => t.status === 'done'), km = t => (t.sum || {}).km || 0, up = t => (t.sum || {}).up || 0;
+  const S_ = (a, f) => a.reduce((x, t) => x + f(t), 0), ym = ymOf(new Date()), y = ym.slice(0, 4);
+  const inM = d.filter(t => (t.doneDate || '').startsWith(ym)), inY = d.filter(t => (t.doneDate || '').startsWith(y));
+  const pts = S_(d, trekPoints); let g = 0; GRADES.forEach((x, i) => { if (pts >= x[0]) g = i; });
+  const months = {}; d.forEach(t => { const k = (t.doneDate || '').slice(0, 7); if (!k) return; const o = months[k] || (months[k] = { km: 0, up: 0, n: 0 }); o.km += km(t); o.up += up(t); o.n++; });
+  const defis = Object.keys(months).filter(k => { const c = challengeOf(k); return months[k][c.k] >= c.n; }).sort();
+  const max = Math.max(0, ...d.map(t => (t.sum && t.sum.prof && t.sum.prof.length) ? Math.max(...t.sum.prof) : 0));
+  return { d, pts, g, ym, y, km: S_(d, km), up: S_(d, up), max, defis, ph: S_(treks.list, t => (t.photos || []).length),
+    m: months[ym] || { km: 0, up: 0, n: 0 }, yr: { km: S_(inY, km), up: S_(inY, up) }, mPts: S_(inM, trekPoints) };
+}
+const BADGES = [
+  ['premier', 'Premier pas', 'Un premier trek fait', 'flag', s => s.d.length >= 1],
+  ['km100', '100 km', '100 km parcourus', 'route', s => s.km >= 100],
+  ['everest', 'Un Everest', '8 849 m de montée cumulée', 'peak', s => s.up >= 8849],
+  ['semaine', 'Une semaine dehors', 'Un trek de 7 jours ou plus', 'tent', s => s.d.some(t => ((t.sum || {}).stages || 0) >= 7)],
+  ['m2000', 'Au-dessus de 2 000 m', 'Un trek qui passe 2 000 m', 'peak', s => s.max >= 2000],
+  ['gr', 'GR bouclé', 'Un GR marqué « fait »', 'check', s => s.d.some(t => /\bGR\s?\d/i.test(t.name || ''))],
+  ['defi', 'Défi relevé', 'Un défi du mois réussi', 'cal', s => s.defis.length >= 1],
+  ['km1000', '1 000 km', '1 000 km parcourus', 'globe', s => s.km >= 1000],
+  ['long', 'Au long cours', 'Un trek de 30 jours ou plus', 'pack', s => s.d.some(t => ((t.sum || {}).stages || 0) >= 30)],
+  ['m3000', 'Haute montagne', 'Un trek qui passe 3 000 m', 'peak', s => s.max >= 3000],
+  ['photo', 'Œil du randonneur', '20 photos dans ton carnet', 'camera', s => s.ph >= 20],
+  ['cordee', 'Cordée', 'Un premier ami sur Orri', 'user', () => !!acct.s && friends.list.length >= 1],
+];
+const earned = s => BADGES.filter(b => b[4](s)).map(b => b[0]);
+function renderRando() {
+  const el = $('#rando'); if (!el) return;
+  const s = randoStats(), g = GRADES[s.g], nx = GRADES[s.g + 1], pc = nx ? Math.round(100 * (s.pts - g[0]) / (nx[0] - g[0])) : 100;
+  const now = new Date(), c = challengeOf(s.ym), cv = s.m[c.k], cp = Math.min(100, Math.round(100 * cv / c.n));
+  const left = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
+  const unit = c.k === 'km' ? ' km' : c.k === 'up' ? ' m' : ' trek' + (c.n > 1 ? 's' : ''), fmt = v => nf0.format(Math.floor(v));
+  const got = new Set(earned(s));
+  el.innerHTML = `<div class="rcard"><div class="rhead"><span class="rlvl" aria-label="Niveau">${s.g + 1}</span><div><b>${g[1]}</b>
+      <small>${nf0.format(s.pts)} point${s.pts > 1 ? 's' : ''}${nx ? ` · encore ${nf0.format(nx[0] - s.pts)} pour devenir ${nx[1]}` : ' · le plus haut grade'}</small></div></div>
+    <div class="rbar"><i style="width:${pc}%"></i></div>
+    ${s.d.length ? '' : '<p class="note" style="margin-top:8px">Marque un trek « fait » (page Souvenirs) pour gagner tes premiers points.</p>'}
+    <details class="why"><summary>Comment gagner des points</summary><p>Chaque trek marqué « fait » rapporte 1 point par kilomètre et 1 point par 100 m de montée.
+    Les grades : ${GRADES.map(x => `${x[1]} (${nf0.format(x[0])})`).join(', ')}. Tout est déclaré par toi : c'est un jeu de confiance entre amis.</p></details></div>
+    <div class="card rdefi${cv >= c.n ? ' won' : ''}"><small class="rlab">Défi ${deMois(now.getMonth())}</small><b>${c.t}</b>
+      <div class="rbar"><i style="width:${cp}%"></i></div>
+      <small>${cv >= c.n ? 'Réussi, bravo !' : `${fmt(cv)} / ${nf0.format(c.n)}${unit} · ${left ? 'plus que ' + left + ' jour' + (left > 1 ? 's' : '') : 'dernier jour'}`}${s.defis.length ? ` · ${s.defis.length} défi${s.defis.length > 1 ? 's' : ''} réussi${s.defis.length > 1 ? 's' : ''}` : ''}</small></div>
+    <h2>Badges <span class="cnt">(${got.size} / ${BADGES.length})</span></h2>
+    <div class="badges">${BADGES.map(b => `<div class="badge${got.has(b[0]) ? ' on' : ''}"><span class="bico">${I(b[3])}</span><b>${b[1]}</b><small>${b[2]}</small></div>`).join('')}</div>`;
+}
+function randoCheck() {   // fête un nouveau badge ou un nouveau grade
+  const s = randoStats(), e = earned(s); let seen = null;
+  try { seen = JSON.parse(localStorage.getItem('orri.rando.seen') || 'null'); } catch (err) { }
+  const save = () => { try { localStorage.setItem('orri.rando.seen', JSON.stringify({ b: e, g: s.g })); } catch (err) { } };
+  if (!seen) return save();
+  const nb = e.filter(id => !seen.b.includes(id));
+  if (s.g > seen.g) toast(`Nouveau grade : tu es maintenant ${GRADES[s.g][1]} !`, 'ok');
+  const nm = id => BADGES.find(b => b[0] === id)[1];
+  if (nb.length) setTimeout(() => toast(nb.length === 1 ? `Nouveau badge : ${nm(nb[0])}` : `${nb.length} nouveaux badges : ${nb.map(nm).join(', ')}`, 'ok'), s.g > seen.g ? 700 : 0);
+  if (nb.length || s.g !== seen.g) save();
+}
+async function publishStats() {
+  if (!acct.s) return;
+  const s = randoStats(), row = { user_id: acct.s.uid, month: s.ym, m_km: Math.round(s.m.km * 10) / 10, m_up: Math.round(s.m.up), year: s.y,
+    y_km: Math.round(s.yr.km * 10) / 10, y_up: Math.round(s.yr.up), points: s.pts, grade: s.g, badges: earned(s).length };
+  const k = JSON.stringify(row); if (friends.pubKey === k) return;
+  await supa('/rest/v1/stats?on_conflict=user_id', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: [Object.assign({ updated_at: new Date().toISOString() }, row)] });
+  friends.pubKey = k;
+}
+function boardRows() {
+  const lb = friends.lb || (friends.lb = { per: 'm', met: 'km' }), s = randoStats(), ym = s.ym, y = s.y;
+  const me = { id: acct.s.uid, name: 'Toi', me: true, v: lb.per === 'm' ? s.m[lb.met] : s.yr[lb.met], g: s.g };
+  const rows = friends.list.map(f => {
+    const st = (friends.stats || []).find(x => x.user_id === f.id) || {};
+    const v = lb.per === 'm' ? (st.month === ym ? st['m_' + lb.met] : 0) : (st.year === y ? st['y_' + lb.met] : 0);
+    return { id: f.id, name: f.name, v: v || 0, g: st.grade || 0 };
+  });
+  return [me, ...rows].sort((a, b) => b.v - a.v || (a.me ? -1 : 1));
+}
+function renderBoard() {
+  if (!acct.s || !friends.list.length) return '';
+  const lb = friends.lb || (friends.lb = { per: 'm', met: 'km' }), now = new Date();
+  const rows = boardRows(), fmt = v => lb.met === 'km' ? nf1.format(v) + ' km' : nf0.format(v) + ' m';
+  return `<div class="board"><h3>Classement ${lb.per === 'm' ? deMois(now.getMonth()) : now.getFullYear()}</h3>
+    <div class="row"><div class="seg grow" id="lbPer"><button data-v="m" class="${lb.per === 'm' ? 'on' : ''}">Mois</button><button data-v="y" class="${lb.per === 'y' ? 'on' : ''}">Année</button></div>
+    <div class="seg grow" id="lbMet"><button data-v="km" class="${lb.met === 'km' ? 'on' : ''}">Km</button><button data-v="up" class="${lb.met === 'up' ? 'on' : ''}">Dénivelé</button></div></div>
+    <ol class="lb">${rows.map((r, i) => `<li class="${r.me ? 'me' : ''}"><span class="lbr">${i + 1}</span><span class="fav">${escXml(initials(r.me ? (acct.s.name || 'Moi') : r.name))}</span>
+      <span class="ftx"><b>${escXml(r.name || 'Ami')}</b><small>${GRADES[Math.min(r.g, GRADES.length - 1)][1]}</small></span><b class="lbv">${fmt(r.v)}</b></li>`).join('')}</ol></div>`;
+}
 const treksStore = treks.store.bind(treks);
-treks.store = function () { const ok = treksStore(); if (ok && acct.s) { acct.m.touched = Date.now(); acct.soon(); } return ok; };
-acct.load(); friends.load();
+treks.store = function () { const ok = treksStore(); if (ok) randoCheck(); if (ok && acct.s) { acct.m.touched = Date.now(); acct.soon(); } return ok; };
+acct.load(); friends.load(); randoCheck();
 renderAcct(); drawFriendLayer();
 if (acct.s) setTimeout(() => acct.sync(true), 1500);
 else if ((() => { try { return localStorage.getItem('orri.invite'); } catch (e) { } })()) setTimeout(() => toast('Un ami t\'invite sur Orri : crée ton compte pour le retrouver', '', { label: 'Créer', fn: () => { closeWelcome(); openPage('profile'); acct.mode = 'up'; renderAcct(); setTimeout(() => $('#acct').scrollIntoView({ block: 'center' }), 300); } }), 1200);

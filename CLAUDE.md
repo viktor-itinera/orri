@@ -119,6 +119,14 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   **« Je suis ici »** (`checkIn` / `checkOut`, table `checkins`, une ligne par compte) : point bleu à étiquette sur la carte des amis
   (`friendLayer`) et sur leur globe (`g.checkin`), 7 jours max. **« En route : jour X sur N »** (`trekProgress`, `friendProg` : date de
   départ, étapes + jours de repos) dans la liste d'amis, la page du trek et la carte du globe.
+- **Profil de randonneur** (C4, avec ou sans compte, `#rando` en haut de Mon carnet, `renderRando`) : tout est calculé depuis les treks
+  « faits » (`randoStats`). Points = 1 par km + 1 par 100 m de montée (`trekPoints`) ; grades `GRADES` ; 12 badges `BADGES`
+  (`[id, nom, description, icône, test]`, point culminant tiré de `sum.prof`) ; défi du mois `challengeOf(AAAA-MM)` (rotation sur `CHALLENGES`,
+  réussi d'après les treks faits ce mois-là, `doneDate`). Nouveau grade / badge : message de fête (`randoCheck` dans `treks.store`,
+  déjà vus sous `orri.rando.seen`, premier passage silencieux). Avec un compte : totaux publiés dans la table `stats` (`publishStats`,
+  dans `friendsRefresh`), **classement** entre amis dans Mes amis (`renderBoard` : mois / année × km / dénivelé, `friends.lb`).
+  Classement de toute la communauté : pas encore (il faudra un accord explicite de chacun pour apparaître).
+- La synchro ne lit que ses propres lignes (`user_id=eq.<moi>`) : la règle RLS laisse aussi passer les treks partagés des amis.
 
 ## Services externes (tous gratuits, sans clé)
 
