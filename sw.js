@@ -1,6 +1,6 @@
 // Orri — service worker : l'application s'ouvre même sans réseau.
 // (Les cartes et données hors ligne du trek arriveront en semaine 7.)
-const VERSION = 'orri-v1.17.0';
+const VERSION = 'orri-v1.18.0';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/favicon-32.png', './fonts/figtree.woff2', './fonts/fraunces.woff2', './carte/orri-style.json', './carte/monde.json', './carte/relief.jpg'
