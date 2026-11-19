@@ -28,10 +28,14 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 - Mobile d'abord : carte plein écran, barre de recherche flottante, **tiroir** (`sheet` : `peek` / `mid` / `full`) avec
   3 onglets **Tracer / Étapes / Préparer**. Le profil est dans le tiroir sur mobile, sous la carte à partir de 900 px
   (panneau latéral, `placeProfile`). Recentrer la carte avec `fitPad(p)` pour ne pas cacher le tracé sous le tiroir.
+- **Barre du bas** (`#bnav`, `navSync`) : **Carte · Carnet · Amis**. Carnet (`#page-profile`) et Amis (`#page-amis`) sont des
+  `.page.tabpage` qui s'arrêtent au-dessus de la barre (`--nav`) ; les autres pages la recouvrent. Le carnet a 3 parties
+  (`#cSec`, `carnetSec`) : Mes treks / Profil (`#rando`) / Réglages (globe, sauvegarde). Amis : Randos autour de moi, Mon compte, Mes amis.
+- `#app` est en `position: fixed; inset: 0` : il suit la barre d'adresse d'Android quand elle se cache (sinon bande vide en bas).
 - Pastilles de catégories sur la carte (`#chips`, `setShow`) synchronisées avec les cases de l'onglet Préparer (`S.show`).
 - Recherche : IGN + Photon en parallèle (IGN d'abord si la carte est en France), suggestions dès 3 lettres ;
   bouton « me localiser » (la position n'est demandée qu'au toucher).
-- **Mes parcours** (profil sans compte, bouton rond dans la barre de recherche) : `treks`, gardés dans `localStorage`
+- **Mes parcours** (profil sans compte, onglet Carnet de la barre du bas) : `treks`, gardés dans `localStorage`
   sous `orri.treks.v1` (`{v, list:[{id, name, created, updated, data, sum}]}`) et `orri.current` (parcours ouvert).
   `data` = `draftData()` (même format que le brouillon `trekplanner.v0`). Sauvegarde/restauration en fichier JSON
   (`app: 'orri'`, fusion par `id`). Actions sensibles : 2e touche (`confirmTap`), jamais de boîte de dialogue du navigateur.
@@ -99,7 +103,7 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   Pas de bibliothèque : `supa(path, {method, body, auth, prefer})` appelle Auth (`/auth/v1`) et PostgREST (`/rest/v1`) en `fetch`.
 - E-mail + mot de passe, **sans e-mail de confirmation** (le SMTP intégré de Supabase n'envoie qu'à l'équipe). Pas de « mot de passe oublié » pour l'instant.
   Session sous `orri.account` (rafraîchie par `acctToken`), pseudo dans `profiles.name`.
-- Carte **Mon compte** dans Mon carnet (`renderAcct`, `#acct`) : créer / se connecter, synchroniser, se déconnecter (le carnet reste),
+- Carte **Mon compte** dans la page Amis (`renderAcct`, `#acct`) : créer / se connecter, synchroniser, se déconnecter (le carnet reste),
   **supprimer le compte** (RPC `delete_my_account`, tout part en cascade).
 - Synchro du carnet (`acct.sync`) : table `treks` (`data` = le trek sans `photos` ni clés `_…`, `deleted`, `share` = `private` par défaut).
   Empreinte `trekHash` + `updated_at` mémorisés sous `orri.sync.v1` ; conflit = le plus récent gagne ; suppression = trace `deleted`.

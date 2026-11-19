@@ -542,6 +542,30 @@ footer details.credits[open] summary::after{transform:rotate(-135deg)}
 .day .num{width:32px;height:32px;font-size:15px}
 .night .nt b{font-size:14.5px}
 
+/* --- Barre du bas (L4) : Carte · Carnet · Amis --- */
+:root{--nav:calc(62px + env(safe-area-inset-bottom))}
+#bnav{position:fixed;z-index:1950;left:0;right:0;bottom:0;height:var(--nav);padding:4px 8px env(safe-area-inset-bottom);display:flex;background:var(--panel);box-shadow:0 -1px 0 var(--line),0 -6px 20px rgba(31,70,54,.08)}
+#bnav button{flex:1;flex-direction:column;gap:2px;border:0;background:transparent;min-height:54px;padding:0;border-radius:16px;color:var(--muted);font-size:12.5px;font-weight:600;box-shadow:none}
+#bnav button .ico{width:24px;height:24px;padding:2px 14px;box-sizing:content-box;border-radius:14px;transition:background-color .2s}
+#bnav button.on{color:var(--forest)}
+#bnav button.on .ico{background:var(--moss)}
+#bnav button:active:not(:disabled){transform:scale(.95)}
+#map{bottom:calc(var(--peek) - 18px + var(--nav))}
+#panel{bottom:var(--nav);height:calc(100% - 72px - var(--nav))}
+@media (max-width:899px){#fabs{bottom:calc(var(--sheetv,140px) + var(--nav) + 12px)}
+  #status,body:not(.paged) #status,.paged #status{bottom:calc(var(--nav) + 12px)}
+  .paged:not(.tabpaged) #status{bottom:calc(16px + env(safe-area-inset-bottom))}}
+.page.tabpage{z-index:1900;bottom:var(--nav);animation:none}
+.tabpaged #fabs,.tabpaged #chips,.tabpaged #top{visibility:hidden}
+.page header.thead{flex-wrap:wrap;padding:12px 16px 10px;gap:10px}
+.page header.thead h1{flex:1 0 100%;font-size:24px}
+.page header.thead .seg{flex:1}
+.csec{display:none}.csec.on{display:block;animation:fadeUp .25s ease both}
+#page-amis .pbody>.wcard{margin-top:14px}
+#page-profile .csec[data-sec=profil]>#rando{margin-top:14px}
+@media (min-width:900px){#bnav{right:auto;width:var(--side)}#map{bottom:170px}#panel{height:auto;top:0}
+  .page.tabpage{bottom:var(--nav)}}
+
 /* --- Ordinateur : panneau latéral, profil sous la carte --- */
 @media (min-width:900px){
   #map{left:var(--side);bottom:170px}
@@ -574,6 +598,7 @@ footer details.credits[open] summary::after{transform:rotate(-135deg)}
   <symbol id="i-pack" viewBox="0 0 24 24"><path d="M6 8a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2Z"/><path d="M9 4V2h6v2"/><path d="M8 13h8v5H8z"/></symbol>
   <symbol id="i-tap" viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
   <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M15.5 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/></symbol>
   <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
   <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
   <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h8M8 9h2"/></symbol>
@@ -610,7 +635,6 @@ footer details.credits[open] summary::after{transform:rotate(-135deg)}
       <div class="searchbar">
         <button id="bHome" title="Accueil" aria-label="Revenir à l'accueil"><img src="icons/apple-touch-icon.png" alt=""></button>
         <input id="q" type="search" placeholder="Où veux-tu marcher ?" autocomplete="off" enterkeyhint="search">
-        <button id="bProfile" class="avatar" title="Mon carnet : mes treks et souvenirs" aria-label="Mon carnet"><svg class="ico"><use href="#i-user"/></svg></button>
       </div>
       <ul id="results"></ul>
     </div>
@@ -629,6 +653,11 @@ footer details.credits[open] summary::after{transform:rotate(-135deg)}
     <button class="fab" id="bLocate" title="Me localiser" aria-label="Me localiser"><svg class="ico"><use href="#i-locate"/></svg></button>
   </div>
   <div id="chips" aria-label="Points affichés sur la carte"></div>
+  <nav id="bnav" aria-label="Navigation">
+    <button data-nav="map" class="on"><svg class="ico"><use href="#i-route"/></svg><span>Carte</span></button>
+    <button data-nav="profile"><svg class="ico"><use href="#i-book"/></svg><span>Carnet</span></button>
+    <button data-nav="amis"><svg class="ico"><use href="#i-users"/></svg><span>Amis</span></button>
+  </nav>
   <div id="status"><div id="busy" class="toast">Calcul de l'itinéraire…</div></div>
   <div id="varBar" hidden></div>
   <div id="profileMain"></div>
@@ -745,13 +774,13 @@ footer details.credits[open] summary::after{transform:rotate(-135deg)}
   </div>
 
   <!-- ===== Profil : Mon carnet (treks faits / à faire, souvenirs) ===== -->
-  <div class="page" id="page-profile" role="dialog" aria-label="Mon carnet">
-    <header><button class="close" aria-label="Fermer"><svg class="ico"><use href="#i-x"/></svg></button><h1>Mon carnet</h1>
-      <button id="bToMap" class="hbtn" title="Retour à la carte"><svg class="ico"><use href="#i-route"/></svg>Carte</button></header>
+  <div class="page tabpage" id="page-profile" role="dialog" aria-label="Mon carnet">
+    <header class="thead"><h1>Mon carnet</h1>
+      <div class="seg" id="cSec" role="tablist"><button data-sec="treks" class="on">Mes treks</button><button data-sec="profil">Profil</button><button data-sec="reglages">Réglages</button></div></header>
     <div class="pbody">
+      <section class="csec on" data-sec="treks">
       <div id="globeSlotProfile"></div>
       <div class="cstats" id="cStats"></div>
-      <div id="rando"></div>
       <h2>Parcours en cours</h2>
       <div class="card">
         <input id="trekName" type="text" placeholder="Nom du parcours" maxlength="80" autocomplete="off">
@@ -772,12 +801,12 @@ footer details.credits[open] summary::after{transform:rotate(-135deg)}
         </select></label>
       </div>
       <ul id="trekList"></ul>
+      </section>
+      <section class="csec" data-sec="profil"><div id="rando"></div></section>
+      <section class="csec" data-sec="reglages">
       <h2>Mon globe</h2>
       <div class="lim"><label for="gPlace">Afficher le globe de mes treks</label>
         <select id="gPlace"><option value="both">sur l'accueil et ici</option><option value="welcome">sur l'accueil</option><option value="profile">ici, dans le carnet</option><option value="off">nulle part</option></select></div>
-      <h2>Mon compte (facultatif)</h2>
-      <div class="card acct" id="acct"></div>
-      <div id="friendsBox"></div>
       <h2>Sauvegarde</h2>
       <div class="row">
         <button id="bBackup" class="grow"><svg class="ico"><use href="#i-down"/></svg>Sauvegarder dans un fichier</button>
@@ -786,6 +815,18 @@ footer details.credits[open] summary::after{transform:rotate(-135deg)}
       </div>
       <button id="bWelcome" class="linkbtn">Revenir à l'accueil</button>
       <p class="note">Sans compte, tes treks et tes photos sont gardés dans ce navigateur, sur cet appareil. Ils disparaissent si tu effaces les données du navigateur : garde une sauvegarde dans un fichier (par exemple sur ton drive). Les photos ne sont pas dans la sauvegarde : garde aussi les originaux dans ta galerie.</p>
+      </section>
+    </div>
+  </div>
+
+  <!-- ===== Amis : compte facultatif, amis, classement, randos publiques ===== -->
+  <div class="page tabpage" id="page-amis" role="dialog" aria-label="Amis">
+    <header class="thead"><h1>Amis</h1></header>
+    <div class="pbody">
+      <button class="wcard" id="aNear"><svg class="ico"><use href="#i-globe"/></svg><span><b>Randos autour de moi</b><small>Les treks que la communauté partage</small></span></button>
+      <h2>Mon compte (facultatif)</h2>
+      <div class="card acct" id="acct"></div>
+      <div id="friendsBox"></div>
     </div>
   </div>
 
@@ -2673,7 +2714,6 @@ function renderProfile() {
 }
 document.querySelectorAll('#tFilter button').forEach(b => b.onclick = () => { carnet.filter = b.dataset.f; storeCarnet(); renderProfile(); });
 $('#tSort').onchange = e => { carnet.sort = e.target.value; storeCarnet(); renderProfile(); };
-$('#bToMap').onclick = () => closePage();
 // --- Page d'un trek : statut, date, souvenir, photos ---
 function openTrekPage(id) { const t = treks.get(id); if (!t) return; carnet.open = id; openPage('trek'); renderTrekPage(t); $('#tdBody').scrollTop = 0; }
 function renderTrekPage(t) {
@@ -3163,16 +3203,31 @@ function openPage(name) {
   if (name === 'sheet') renderSheet();
   if (name === 'adjust') renderAdjLive();
   if (name === 'welcome') renderWelcome();
+  if (name === 'amis') renderAcct();
   if (name === 'welcome' || name === 'profile') requestAnimationFrame(() => mountGlobe(name));
+  navSync();
 }
-function closePage() { document.querySelectorAll('.page').forEach(p => p.classList.remove('on')); document.body.classList.remove('paged'); }
+function closePage() { document.querySelectorAll('.page').forEach(p => p.classList.remove('on')); document.body.classList.remove('paged'); navSync(); }
 document.querySelectorAll('.page .close:not(.back)').forEach(b => b.onclick = closePage);
 function renderAdjLive() {   // dans « Ajuster », on voit tout de suite l'effet des réglages
   const el = $('#adjLive'); if (!el) return;
   el.innerHTML = R && R.n > 1 ? `${I('flag')}Avec ces réglages : <b>${R.stages.length} jour${R.stages.length > 1 ? 's' : ''}</b>, ${fKm(R.dist)}, ${fH(R.time)} de marche au total.` : 'Trace un itinéraire pour voir tes journées.';
 }
 $('#bAdjDone').onclick = () => { closePage(); showTab('stages'); };
-$('#bProfile').onclick = () => openPage('profile');
+// Barre du bas : Carte · Carnet · Amis
+function navSync() {
+  const on = $('#page-profile').classList.contains('on') ? 'profile' : $('#page-amis').classList.contains('on') ? 'amis' : 'map';
+  document.querySelectorAll('#bnav button').forEach(b => b.classList.toggle('on', b.dataset.nav === on));
+  document.body.classList.toggle('tabpaged', on !== 'map');
+}
+document.querySelectorAll('#bnav button').forEach(b => b.onclick = () => { if (b.dataset.nav === 'map') closePage(); else openPage(b.dataset.nav); });
+function carnetSec(k) {
+  document.querySelectorAll('#cSec button').forEach(b => b.classList.toggle('on', b.dataset.sec === k));
+  document.querySelectorAll('#page-profile .csec').forEach(x => x.classList.toggle('on', x.dataset.sec === k));
+  $('#page-profile .pbody').scrollTop = 0;
+}
+document.querySelectorAll('#cSec button').forEach(b => b.onclick = () => carnetSec(b.dataset.sec));
+$('#aNear').onclick = () => openNear();
 $('#bSheet').onclick = () => { if (!R || R.n < 2) return toast('Trace ou importe un itinéraire d\'abord', 'warn'); openPage('sheet'); };
 document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (!$('#viewer').hidden) return closeViewer(); if (document.body.classList.contains('paged')) closePage(); });
 
@@ -3886,7 +3941,7 @@ treks.store = function () { const ok = treksStore(); if (ok) randoCheck(); if (o
 acct.load(); friends.load(); randoCheck();
 renderAcct(); drawFriendLayer();
 if (acct.s) setTimeout(() => acct.sync(true), 1500);
-else if ((() => { try { return localStorage.getItem('orri.invite'); } catch (e) { } })()) setTimeout(() => toast('Un ami t\'invite sur Orri : crée ton compte pour le retrouver', '', { label: 'Créer', fn: () => { closeWelcome(); openPage('profile'); acct.mode = 'up'; renderAcct(); setTimeout(() => $('#acct').scrollIntoView({ block: 'center' }), 300); } }), 1200);
+else if ((() => { try { return localStorage.getItem('orri.invite'); } catch (e) { } })()) setTimeout(() => toast('Un ami t\'invite sur Orri : crée ton compte pour le retrouver', '', { label: 'Créer', fn: () => { closeWelcome(); openPage('amis'); acct.mode = 'up'; renderAcct(); setTimeout(() => $('#acct').scrollIntoView({ block: 'center' }), 300); } }), 1200);
 addEventListener('online', () => acct.sync(true));
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && acct.s && Date.now() - acct.m.last > 120000) acct.sync(true); });
 

@@ -216,11 +216,11 @@ with sync_playwright() as p:
     check(x.count("<trk>") == 12 and "<wpt" in x, "export GPX : 12 traces + points")
 
     # Mes parcours : enregistrer, fiche, effacer puis rouvrir
-    pg.click("#bProfile"); pg.wait_for_timeout(300)
+    pg.click("#bnav [data-nav=profile]"); pg.wait_for_timeout(300)
     pg.fill("#trekName", "Traversée test"); pg.click("#bSaveTrek"); pg.wait_for_timeout(300)
     check(J(pg, "() => treks.list.length === 1 && treks.list[0].name === 'Traversée test' && !treks.dirty()"), "parcours enregistré dans Mes parcours")
     check(J(pg, "() => JSON.parse(localStorage.getItem('orri.treks.v1')).list.length") == 1, "parcours gardé dans le navigateur")
-    pg.click("#page-profile .close"); pg.click("#tabs button[data-tab=prep]"); pg.click("#bSheet"); pg.wait_for_timeout(800)
+    pg.click("#bnav [data-nav=map]"); pg.click("#tabs button[data-tab=prep]"); pg.click("#bSheet"); pg.wait_for_timeout(800)
     fiche = pg.frame_locator("#sheetFrame").locator("body").inner_text()
     check("Traversée test" in fiche and "Jour 12" in fiche and "Nuit" in fiche, "fiche du trek générée (12 étapes)")
     with pg.expect_download() as dl2:
@@ -228,7 +228,7 @@ with sync_playwright() as p:
     check("<svg" in open(dl2.value.path(), encoding="utf-8").read(), "fiche téléchargeable (HTML autonome)")
     pg.click("#page-sheet .close"); pg.click("#tabs button[data-tab=trace]")
     pg.click("#bClear"); pg.click("#bClear"); pg.wait_for_timeout(300)
-    pg.click("#bProfile"); pg.wait_for_timeout(300)
+    pg.click("#bnav [data-nav=profile]"); pg.wait_for_timeout(300)
     pg.click("#trekList .trek .tmain"); pg.wait_for_timeout(1500)
     check(J(pg, "() => R.n > 100 && R.stages.length === 12 && treks.cur === treks.list[0].id"), "parcours rouvert depuis Mes parcours")
 
@@ -239,7 +239,7 @@ with sync_playwright() as p:
     ex[0x0132] = "2026:08:12 14:30:00"
     gps = ex.get_ifd(0x8825); gps[1] = "N"; gps[2] = (42.0, 52.0, 30.0); gps[3] = "W"; gps[4] = (0.0, 20.0, 0.0)
     photo = os.path.join(tempfile.gettempdir(), "orri-test-photo.jpg"); im.save(photo, "JPEG", exif=ex)
-    pg.click("#bProfile"); pg.wait_for_timeout(300)
+    pg.click("#bnav [data-nav=profile]"); pg.wait_for_timeout(300)
     pg.click("#trekList .trek [data-a=memo]"); pg.wait_for_timeout(300)
     check(pg.is_visible("#page-trek") and "Traversée test" in pg.text_content("#tdName"), "carnet : page souvenirs du trek")
     pg.click("#tdStatus [data-s=done]"); pg.wait_for_timeout(200)
@@ -288,7 +288,7 @@ with sync_playwright() as p:
         check(pg.is_visible("#globeSlotProfile .gcard") and J(pg, "() => globes.profile.zoom") > 5, "globe : toucher un trek zoome dessus et affiche sa carte")
         pg.wait_for_function("globes.profile.region", timeout=10000)
         check(J(pg, "() => !!globes.profile.tex && globes.profile.region.W > 0"), "globe : relief mondial et relief détaillé de près")
-    pg.click("#page-profile .close"); pg.click("#bProfile"); pg.click("#bWelcome"); pg.wait_for_function("globes.welcome && globes.welcome.w > 0", timeout=10000)
+    pg.click("#bnav [data-nav=map]"); pg.click("#bnav [data-nav=profile]"); pg.evaluate("() => $('#bWelcome').click()"); pg.wait_for_function("globes.welcome && globes.welcome.w > 0", timeout=10000)
     check(pg.is_visible("#globeSlotWelcome canvas") and pg.is_visible("#wDraw"), "globe sur l'accueil, boutons de préparation visibles")
     J(pg, "() => { $('#gPlace').value = 'profile'; $('#gPlace').onchange({ target: $('#gPlace') }); }"); pg.wait_for_timeout(300)
     check(not pg.is_visible("#globeSlotWelcome canvas"), "réglage : globe dans le carnet seulement")
@@ -305,7 +305,7 @@ with sync_playwright() as p:
 
     # Exemple de l'accueil : 4 villages reliés par BRouter
     pg.click("#bClear"); pg.click("#bClear"); pg.wait_for_timeout(300)
-    pg.click("#bProfile"); pg.click("#bWelcome"); pg.wait_for_timeout(300); c0 = calls["brouter"]
+    pg.click("#bnav [data-nav=profile]"); pg.evaluate("() => $('#bWelcome').click()"); pg.wait_for_timeout(300); c0 = calls["brouter"]
     pg.click("#wDemo")
     pg.wait_for_function("state.legs.length === 3 && R.n > 1", timeout=30000); pg.wait_for_timeout(800)
     check(calls["brouter"] - c0 == 3 and J(pg, "() => S.endType === 'both' && R.stages.length >= 1"), "accueil : exemple calculé (3 tronçons)")
@@ -314,7 +314,7 @@ with sync_playwright() as p:
     n0 = J(pg, "() => R.n")
     pg.click("#wGo"); pg.wait_for_timeout(300)
     check(not pg.is_visible("#page-welcome") and J(pg, "() => R.n") == n0 and n0 > 1, "« Reprendre » rouvre le parcours en cours")
-    pg.click("#bProfile"); pg.click("#bWelcome"); pg.wait_for_timeout(300)
+    pg.click("#bnav [data-nav=profile]"); pg.evaluate("() => $('#bWelcome').click()"); pg.wait_for_timeout(300)
     # le globe 3D de l'accueil plonge et tourne : en WebGL logiciel (test), chaque image bloque la page plusieurs secondes,
     # plus que les 3,5 s de la 2e touche. On le met au repos pour ce contrôle.
     J(pg, "() => { const G = globes.welcome; if (G && G.is3d) { clearTimeout(G.diveT); G.idleAt = Infinity; G.map.stop(); } }"); pg.wait_for_timeout(1500)
