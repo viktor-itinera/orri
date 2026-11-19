@@ -203,6 +203,28 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
 .globe-welcome .wbody h1{margin-top:-4px;font-size:28px}
 .globe-welcome .wbody .tag{font-size:15px;margin-bottom:4px}
 #globeSlotWelcome .globe{height:min(42vh,360px)}
+/* Globe 3D : vrai relief (MapLibre 5), dans un écrin sombre ; sur l'accueil, en grand, sous le titre */
+.whero,.wtitle{display:contents}
+.g3d .gmap{position:absolute;inset:0}
+.globe.g3d{background:radial-gradient(120% 75% at 50% 42%,#2a5446 0%,#13342a 48%,#0a1d17 100%);border-radius:20px;overflow:hidden}
+.globe.g3d::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;background-image:radial-gradient(1px 1px at 12% 18%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 78% 12%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 88% 46%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 22% 72%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 64% 84%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 40% 8%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 6% 52%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 94% 78%,#fff 50%,transparent 51%)}
+.globe.g3d .gmap canvas{outline:none}
+.g3d .gzoom{top:10px;bottom:auto;right:10px;z-index:2}
+.g3d .gzoom button{background:rgba(10,29,23,.55);color:#fffaf0;box-shadow:none;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,250,240,.18)}
+.g3d .ghint{z-index:2;left:12px;right:60px;bottom:10px;text-align:left;color:rgba(255,250,240,.78);text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.g3d .gph{width:42px;height:42px;padding:0;min-height:0;border-radius:50%;border:3px solid #fff;background:#efe7d8 center/cover;box-shadow:0 3px 10px rgba(0,0,0,.4);display:none}
+.g3d.near .gph{display:block}
+.whero.g3d{display:block;position:relative;margin:-4px -20px 0}
+.whero.g3d #globeSlotWelcome .globe{height:min(64vh,560px);border-radius:0 0 28px 28px}
+.whero.g3d .wlogo{display:none}
+.whero.g3d .wtitle{display:block;position:absolute;left:0;right:0;bottom:0;padding:60px 20px 34px;border-radius:0 0 28px 28px;background:linear-gradient(180deg,rgba(10,29,23,0),rgba(10,29,23,.78));pointer-events:none;transition:opacity .3s}
+.whero.g3d .wtitle h1{color:#fffaf0;text-align:left;font-size:44px;margin:0;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.whero.g3d .wtitle .tag{color:rgba(255,250,240,.88);text-align:left;font-size:15px;margin:2px 0 0;max-width:330px}
+.whero.g3d .ghint{bottom:auto;top:14px;left:14px;right:auto;padding:5px 12px;border-radius:14px;background:rgba(10,29,23,.55);color:#fffaf0;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.whero.g3d .ghint:empty{display:none}
+.whero.g3d.sel .wtitle{opacity:0}
+.whero.g3d .gcard{position:absolute;left:12px;right:12px;bottom:16px;z-index:3;margin:0}
+.globe-welcome .whero.g3d + *{margin-top:6px}
 /* Mon carnet */
 .cstats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0 4px}
 .cstats div{background:var(--panel);border-radius:14px;padding:10px 4px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.05)}
@@ -230,6 +252,7 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
 #tdStatus button.on[data-s=done]{background:var(--ok);color:#fff}
 #tdStatus button.on[data-s=todo]{background:var(--terra);color:#fff}
 #tdStatus .pop{animation:pop .5s var(--ease)}
+@keyframes popIn{0%{opacity:0}100%{opacity:1}}
 @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:scale(1)}}
 #tdNote{width:100%;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;font:inherit;font-size:15px;background:#fff;resize:vertical}
 .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
@@ -240,7 +263,28 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
 .ph.add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--forest);font-weight:600;font-size:14px;border:2px dashed #d9cdb6;background:transparent;cursor:pointer}
 .ph.add .ii{width:26px;height:26px;margin:0}
 #viewer{position:fixed;inset:0;z-index:3000;background:#101512;display:flex;flex-direction:column}
-#viewer[hidden]{display:none}
+#viewer[hidden],#story[hidden],#stFly[hidden],#stImg[hidden],#story button[hidden]{display:none}
+#story{position:fixed;inset:0;z-index:3000;background:#0a1612;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#stBars{display:flex;gap:4px;padding:10px 60px 6px 12px}
+#stBars i{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.25)}
+#stBars i.on{background:#fffaf0}
+#stBars i.fly{flex:1.3;background:rgba(244,192,107,.35)}#stBars i.fly.on{background:#f4c06b}
+#stClose{position:absolute;top:calc(env(safe-area-inset-top) + 2px);right:6px;width:48px;min-height:48px;padding:0;background:none;border:0;color:#fffaf0;z-index:2}
+.stview{flex:1;min-height:0;position:relative;margin:4px 10px}
+#stImg{width:100%;height:100%;object-fit:contain;border-radius:14px;animation:fadeIn .25s both}
+#stFly{position:absolute;inset:0;border-radius:14px;overflow:hidden;background:#13342a}
+#stFly .flymap{position:absolute;inset:0}
+#stFly .flyhud{position:absolute;left:0;right:0;top:0;padding:16px 18px 40px;background:linear-gradient(180deg,rgba(0,0,0,.55),transparent);color:#fffaf0;pointer-events:none}
+#stFly .flyhud b{display:block;font-family:Fraunces,Georgia,serif;font-size:22px}
+#stFly .flyhud span{color:#f4c06b;font-weight:600}
+#stFly .stmsg{color:#fffaf0;text-align:center;padding:40% 30px 0}
+#stPrev,#stNext{position:absolute;top:0;bottom:0;width:32%;background:none;border:0;padding:0;min-height:0}
+#stPrev{left:0}#stNext{right:0}
+.stbar{display:flex;gap:8px;padding:10px 12px 14px;justify-content:center}
+.stbar button{min-height:46px;padding:0 16px;gap:6px;border-radius:23px;font-weight:600;background:rgba(255,250,240,.12);color:#fffaf0;border:1px solid rgba(255,250,240,.2)}
+.stbar .pcb{width:auto;padding:0 16px;gap:6px;background:var(--terra);font-weight:600;border-color:var(--terra);color:#fff}
+#stRec.on{background:#b33;border-color:#b33}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 #viewer img{flex:1;min-height:0;width:100%;object-fit:contain}
 .vbar{display:flex;align-items:center;gap:6px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));color:#fff}
 .vbar span{flex:1;font-size:14px}
@@ -345,6 +389,17 @@ button:active:not(:disabled),.btn:active,.chip:active,.wcard:active,.fab:active,
 .pact button{min-height:38px;padding:0 10px;border-radius:19px;font-size:13px;font-weight:600;background:var(--terra);border-color:var(--terra);color:#fff}
 .pact button+button{background:#fff;color:var(--forest);border-color:var(--line)}
 .pact .ii{width:15px;height:15px}
+#varBar{position:absolute;z-index:1500;top:70px;left:12px;right:12px;max-width:460px;margin:0 auto;background:var(--panel);border-radius:18px;padding:12px 14px;box-shadow:var(--shadow);animation:slideUp .25s var(--ease) both}
+#varBar[hidden]{display:none}
+.varmode #chips{display:none}
+#varBar .vt b{display:block;font-family:Fraunces,Georgia,serif;color:var(--forest);font-size:17px}
+#varBar .vt small{color:var(--muted);font-size:13px}
+#varBar .vact{display:flex;gap:8px;margin-top:10px}#varBar .vact button{flex:1;min-height:44px;border-radius:22px;font-weight:600}
+.vtab{margin-top:8px;font-size:13.5px}
+.vrow{display:grid;grid-template-columns:72px 1fr 1fr 1fr;gap:4px;padding:5px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.vrow.h{border:0;color:var(--muted);font-size:12px}.vrow.b b{color:#7a4cc2}.vrow.d{color:var(--muted)}
+.vwp{background:#7a4cc2;color:#fff;border-radius:50%;border:2px solid #fff;display:grid!important;place-items:center;font-weight:700;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+@media (min-width:900px){#varBar{left:calc(var(--side) + 16px);top:76px}}
 .toast .tact-btn{pointer-events:auto;margin-left:10px;min-height:32px;padding:0 12px;border-radius:16px;border:0;background:rgba(255,255,255,.22);color:#fff;font-weight:700;font-size:13.5px}
 #stages li.restday{cursor:default;border:0;box-shadow:none;display:flex;align-items:center;gap:8px;margin:0 0 12px 44px;padding:8px 12px;border-radius:12px;background:var(--moss);font-size:13.5px;color:var(--forest)}
 .day .open{font-size:13px;color:var(--forest-2);margin-top:8px;font-weight:500}
@@ -445,6 +500,7 @@ details.why summary::-webkit-details-marker{display:none}
   </div>
   <div id="chips" aria-label="Points affichés sur la carte"></div>
   <div id="status"><div id="busy" class="toast">Calcul de l'itinéraire…</div></div>
+  <div id="varBar" hidden></div>
   <div id="profileMain"></div>
 
   <aside id="panel" data-snap="peek">
@@ -540,10 +596,10 @@ details.why summary::-webkit-details-marker{display:none}
   <!-- ===== Accueil (premier lancement) ===== -->
   <div class="page" id="page-welcome" role="dialog" aria-label="Bienvenue sur Orri">
     <div class="wbody">
-      <div id="globeSlotWelcome"></div>
+      <div class="whero"><div id="globeSlotWelcome"></div>
       <img src="icons/icon-192.png" alt="" class="wlogo">
-      <h1>Orri</h1>
-      <p class="tag">Prépare ton trek en quelques minutes : étapes, eau, refuges, bivouacs, ravitaillement et gares.</p>
+      <div class="wtitle"><h1>Orri</h1>
+      <p class="tag">Prépare ton trek en quelques minutes : étapes, eau, refuges, bivouacs, ravitaillement et gares.</p></div></div>
       <div id="wResume" style="display:contents"></div>
       <button class="wcard primary" id="wDraw"><svg class="ico"><use href="#i-pen"/></svg><span><b>Tracer mon itinéraire</b><small>Touche la carte : le tracé suit les sentiers</small></span></button>
       <label class="wcard" for="file" id="wImport"><svg class="ico"><use href="#i-up"/></svg><span><b>Importer un GPX</b><small>Un trek déjà tracé ailleurs</small></span></label>
@@ -602,6 +658,15 @@ details.why summary::-webkit-details-marker{display:none}
   <div class="page" id="page-trek" role="dialog" aria-label="Souvenirs du trek">
     <header><button class="close back" id="bTrekBack" aria-label="Retour au carnet"><svg class="ico"><use href="#i-back"/></svg></button><h1 id="tdName">Trek</h1></header>
     <div class="pbody" id="tdBody"></div>
+  </div>
+  <div id="story" role="dialog" aria-label="Mes souvenirs" hidden>
+    <div id="stBars"></div>
+    <button id="stClose" aria-label="Fermer"><svg class="ico"><use href="#i-x"/></svg></button>
+    <div class="stview"><img id="stImg" alt="Souvenir du trek"><div id="stFly" hidden></div>
+      <button id="stPrev" aria-label="Carte précédente"></button><button id="stNext" aria-label="Carte suivante"></button></div>
+    <div class="stbar"><button id="stAll"><svg class="ico"><use href="#i-up"/></svg>Tout partager</button>
+      <button id="stShare" class="pcb"><svg class="ico"><use href="#i-up"/></svg>Partager cette carte</button>
+      <button id="stRec" class="pcb" hidden><svg class="ico"><use href="#i-camera"/></svg>Enregistrer la vidéo</button></div>
   </div>
   <div id="viewer" role="dialog" aria-label="Photo" hidden>
     <img id="vImg" alt="">
@@ -708,6 +773,7 @@ const CAT = {
 const END_CATS = { refuge: ['hut'], bivouac: ['bivouac', 'water'], both: ['hut', 'bivouac', 'water'] };
 const END_LABEL = { refuge: 'refuge', bivouac: 'bivouac', both: 'refuge ou bivouac' };
 const $ = s => document.querySelector(s);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ================= Géométrie & calculs (fonctions pures) ================= */
 function hav(a, b) {
@@ -1154,8 +1220,24 @@ function focusPOI(id) {
 }
 $('#base').onchange = e => { map.removeLayer(base); base = BASES[e.target.value].addTo(map); try { localStorage.setItem('orri.base', e.target.value); } catch (err) {} };
 
+const routeLines = [];
+// Le tracé se dessine du départ à l'arrivée (ouverture d'un trek, reprise, import, exemple)
+function animateRoute(dur) {
+  if (reduceMotion) return;
+  const els = routeLines.map(l => l._path).filter(Boolean), lens = els.map(e => { try { return e.getTotalLength(); } catch (err) { return 0; } });
+  const tot = lens.reduce((a, b) => a + b, 0); if (!tot) return;
+  dur = dur || 1.8; let acc = 0;
+  els.forEach((e, i) => {
+    const L0 = lens[i], d = dur * L0 / tot, dl = dur * acc / tot; acc += L0;
+    e.style.transition = 'none'; e.style.strokeDasharray = L0 + ' ' + L0; e.style.strokeDashoffset = L0;
+    e.getBoundingClientRect();
+    e.style.transition = `stroke-dashoffset ${d.toFixed(2)}s linear ${dl.toFixed(2)}s`; e.style.strokeDashoffset = '0';
+    setTimeout(() => { e.style.strokeDasharray = ''; e.style.strokeDashoffset = ''; e.style.transition = ''; }, (dl + d) * 1000 + 80);
+  });
+  document.querySelectorAll('.leaflet-marker-icon.stg').forEach((m, k) => { m.style.animation = `popIn .35s var(--ease) ${(0.3 + dur * (k + 1) / (R.stages.length || 1)).toFixed(2)}s both`; });
+}
 function render() {
-  routeLayer.clearLayers(); markLayer.clearLayers();
+  routeLayer.clearLayers(); markLayer.clearLayers(); routeLines.length = 0;
   if (R && R.n > 1) R.stages.forEach((s, k) => {
     const sel = state.selStage === k, col = COLORS[k % 2];
     // morceaux de même nature (sentier / ligne droite) dans l'étape
@@ -1164,7 +1246,8 @@ function render() {
       if (i > s.i1 || R.kind[i] !== rk) {
         const ll = []; for (let j = r0; j <= i - 1; j++) ll.push([R.lat[j], R.lon[j]]);
         L.polyline(ll, { color: '#fff', weight: sel ? 9 : 7, opacity: .85, interactive: false }).addTo(routeLayer);
-        L.polyline(ll, { color: col, weight: sel ? 6 : 4, opacity: .95, dashArray: rk === 'line' ? '7 7' : null }).addTo(routeLayer);
+        const pl = L.polyline(ll, { color: col, weight: sel ? 6 : 4, opacity: .95, dashArray: rk === 'line' ? '7 7' : null }).addTo(routeLayer);
+        if (rk !== 'line') routeLines.push(pl);
         r0 = i - 1; rk = R.kind[i];
       }
     }
@@ -1320,6 +1403,7 @@ function stageDetail(s, k) {
   });
   if (!list.length) h += `<div class="info" style="color:var(--muted)">${poiState === 'loading' ? I('clock') + 'Recherche des points en cours…' : poiState === 'error' ? I('alert') + 'Points indisponibles (serveur OpenStreetMap).' : 'Aucun point d\'eau, refuge ou commerce trouvé dans OpenStreetMap sur cette étape.'}</div>`;
   h += `<div class="prow end" data-i="${s.i1}"><span class="km">km ${kmS(s.i1)}</span><span>${I('flag')}Arrivée${placeName(s.i1) ? ' : ' + escXml(placeName(s.i1)) : ''} · ${nf0.format(Math.round(R.zs ? R.zs[s.i1] : 0))} m</span></div>`;
+  if (S.mode !== 'gpx') h += `<button class="linkbtn" data-var="1">${I('route')}Comparer avec une variante</button>`;
   return `<div class="detail">${h}</div></div>`;
 }
 function nightOf(s) {          // comment se termine la journée : icône, titre, détail
@@ -1408,6 +1492,7 @@ function renderStages() {
       if (ad) { ev.stopPropagation(); adjustDay(k, +ad.dataset.adj); return; }
       if (ev.target.closest('[data-free]')) { ev.stopPropagation(); freeNight(k); return; }
       if (ev.target.closest('[data-rest]')) { ev.stopPropagation(); toggleRest(k); return; }
+      if (ev.target.closest('[data-var]')) { ev.stopPropagation(); startVariant(k); return; }
       if (ev.target.closest('.detail, .sleep')) return;
       selectStage(state.selStage === k ? -1 : k);
     };
@@ -1573,6 +1658,75 @@ map.on('popupopen', e => {
     else enqueue(() => passBy(p));
   });
 });
+/* ===== Variante d'une journée : tracer un autre chemin entre le départ et l'arrivée du jour, comparer, garder ===== */
+let variant = null;   // { k, wps: [[lat, lon]], marks: L.layerGroup, line, res }
+const varLayer = L.layerGroup().addTo(map);
+function trackStats(pts) {   // distance, dénivelé et temps d'un tracé [[lat, lon, ele]] (mêmes calculs que compute)
+  const n = pts.length, cum = new Float64Array(n);
+  for (let i = 1; i < n; i++) cum[i] = cum[i - 1] + hav(pts[i - 1], pts[i]);
+  const zr = interpNulls(pts.map(p => p[2] == null ? null : p[2])), zs = zr ? smoothByDist(zr, cum, CFG.smoothWindow) : null;
+  const gl = zs ? gainLoss(zs, 0, n - 1, CFG.gainThreshold) : { up: 0, dn: 0 }, T = cumulativeTime(cum, zs, n, S.pace);
+  return { dist: cum[n - 1], up: gl.up, dn: gl.dn, time: T[n - 1] };
+}
+function startVariant(k) {
+  const s = R.stages[k]; if (!s || S.mode === 'gpx') return;
+  variant = { k, wps: [] }; varLayer.clearLayers();
+  L.polyline(R.lat.slice(s.i0, s.i1 + 1).map((la, j) => [la, R.lon[s.i0 + j]]), { color: '#fff', weight: 10, opacity: .6, interactive: false }).addTo(varLayer);
+  document.body.classList.add('varmode'); if (!desk.matches) sheet.set('peek');
+  selectStage(k); renderVarBar();
+}
+function variantAdd(q) {
+  if (variant.res) return;
+  if (variant.wps.length >= 4) return toast('4 points de passage au plus', 'warn');
+  variant.wps.push(q);
+  L.marker(q, { icon: L.divIcon({ className: 'vwp', html: String(variant.wps.length), iconSize: [24, 24] }), interactive: false }).addTo(varLayer);
+  renderVarBar();
+}
+function endVariant() { variant = null; varLayer.clearLayers(); document.body.classList.remove('varmode'); $('#varBar').hidden = true; }
+async function compareVariant() {
+  const v = variant, s = R.stages[v.k]; if (!v.wps.length) return;
+  const pts = [[R.lat[s.i0], R.lon[s.i0]], ...v.wps, [R.lat[s.i1], R.lon[s.i1]]], legs = [];
+  busy(true);
+  try { for (let i = 0; i + 1 < pts.length; i++) legs.push(await computeLeg(pts[i], pts[i + 1], 'route')); } finally { busy(false); }
+  if (variant !== v) return;
+  const all = []; legs.forEach((l, i) => all.push(...(i ? l.pts.slice(1) : l.pts)));
+  v.legs = legs; v.res = trackStats(all);
+  L.polyline(all.map(p => [p[0], p[1]]), { color: '#7a4cc2', weight: 5, opacity: .95, dashArray: '2 9', lineCap: 'round', interactive: false }).addTo(varLayer);
+  renderVarBar();
+}
+function renderVarBar() {
+  const v = variant, bar = $('#varBar'); if (!v) return;
+  const s = R.stages[v.k], cur = { dist: s.dist, up: s.up, dn: s.dn, time: s.time };
+  const row = (t, x, cls) => `<div class="vrow ${cls}"><span>${t}</span><b>${fKm(x.dist)}</b><b>+${fM(x.up)}</b><b>${fH(x.time)}</b></div>`;
+  const dlt = (a, b, f, unit) => { const d = b - a; return Math.abs(d) < (unit || 1e-9) ? '=' : (d > 0 ? '+' : '−') + f(Math.abs(d)); };
+  bar.hidden = false;
+  bar.innerHTML = !v.res ? `<div class="vt"><b>Variante du jour ${v.k + 1}</b><small>${v.wps.length ? v.wps.length + ' point' + (v.wps.length > 1 ? 's' : '') + ' de passage. Ajoute-en ou compare.' : 'Touche la carte là où tu veux passer (1 à 4 points).'}</small></div>
+      <div class="vact"><button data-v="cancel">Annuler</button><button class="primary" data-v="cmp"${v.wps.length ? '' : ' disabled'}>Comparer</button></div>`
+    : `<div class="vt"><b>Jour ${v.k + 1} : actuel ou variante ?</b></div>
+      <div class="vtab"><div class="vrow h"><span></span><span>distance</span><span>montée</span><span>marche</span></div>${row('Actuel', cur, 'a')}${row('Variante', v.res, 'b')}
+      <div class="vrow d"><span>Écart</span><span>${dlt(cur.dist, v.res.dist, fKm, 50)}</span><span>${dlt(cur.up, v.res.up, fM, 10)}</span><span>${dlt(cur.time, v.res.time, fDur, 0.05)}</span></div></div>
+      <div class="vact"><button data-v="cancel">Garder l'actuel</button><button class="primary" data-v="keep">Garder la variante</button></div>`;
+  bar.querySelectorAll('[data-v]').forEach(b => b.onclick = () => {
+    const a = b.dataset.v;
+    if (a === 'cancel') return endVariant();
+    if (a === 'cmp') return enqueue(compareVariant);
+    if (a === 'keep') return keepVariant();
+  });
+}
+// Remplace le morceau de tracé de la journée par la variante (le reste ne bouge pas)
+function keepVariant() {
+  const v = variant, s = R.stages[v.k]; if (!v || !v.legs) return;
+  remember(); freezeBefore(v.k + 1);
+  const i0 = s.i0, i1 = s.i1, li0 = Math.max(0, R.legOf[i0]), p0 = R.legOf[i0] < 0 ? 0 : R.posOf[i0], li1 = R.legOf[i1], p1 = R.posOf[i1];
+  const A = state.legs[li0], Z = state.legs[li1], out = state.legs.slice(0, li0);
+  if (R.legOf[i0] >= 0 && p0 > 0) out.push({ to: [A.pts[p0][0], A.pts[p0][1]], pts: A.pts.slice(0, p0 + 1), kind: A.kind, name: A.name || '', stageBreak: false });
+  v.legs.forEach((l, j) => { const e = l.pts[l.pts.length - 1]; out.push({ to: [e[0], e[1]], pts: l.pts, kind: l.kind, name: '', stageBreak: false }); });
+  if (p1 < Z.pts.length - 1) out.push({ to: Z.to, pts: Z.pts.slice(p1), kind: Z.kind, name: Z.name || '', stageBreak: !!Z.stageBreak });
+  else if (out.length) out[out.length - 1].stageBreak = !!Z.stageBreak;
+  out.push(...state.legs.slice(li1 + 1));
+  state.legs = out; const k = v.k; endVariant(); state.selStage = k; changed();
+  toast(`Jour ${k + 1} : variante gardée`, 'ok', { label: 'Annuler', fn: undoLast });
+}
 function selectStage(k) {
   state.selStage = k;
   render();
@@ -1790,7 +1944,8 @@ function importTracks(tracks) {
   state.selStage = -1; S.pins = []; S.over = {}; S.rest = [];
   if (tracks.length > 1) S.mode = 'gpx';
   changed();
-  map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), fitPad(20));
+  map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), fitPad(20), { animate: false });
+  animateRoute();
   toast(`GPX importé : ${tracks.length} trace${tracks.length > 1 ? 's' : ''}, ${fKm(R.dist)}`, 'ok');
 }
 function toGPX() {
@@ -1991,7 +2146,24 @@ function toast(msg, kind, act) {
   if (act) { const b = document.createElement('button'); b.className = 'tact-btn'; b.textContent = act.label; b.onclick = () => { el.remove(); act.fn(); }; el.appendChild(b); }
   $('#status').appendChild(el); setTimeout(() => el.remove(), act ? 8000 : 4500);
 }
-map.on('click', e => { if (state.draw) enqueue(() => addPoint([e.latlng.lat, e.latlng.lng])); });
+map.on('click', e => {
+  if (variant) return variantAdd([e.latlng.lat, e.latlng.lng]);
+  if (state.draw) enqueue(() => addPoint([e.latlng.lat, e.latlng.lng]));
+});
+// Appui long (ou clic droit) sur la carte : dormir ici, ou faire passer le tracé ici
+map.on('contextmenu', e => {
+  if (!R || R.n < 2 || S.mode === 'gpx' || variant) return;
+  const q = [e.latlng.lat, e.latlng.lng], nr = nearestIdx(R, q[0], q[1]);
+  if (nr.m > 5000) return toast('Trop loin du tracé (plus de 5 km)', 'warn');
+  const p = { id: 'u' + newId(), lat: q[0], lon: q[1], name: '', kind: 'Lieu choisi sur la carte', cat: 'bivouac', idx: nr.i, d: nr.m };
+  const html = `<b>${I('tap')} Ici</b><br>${nr.m < 50 ? 'sur le tracé' : 'à ' + fM(nr.m) + ' du tracé'} · km ${nf1.format(R.cum[nr.i] / 1000)}<div class="pact"><button data-ua="sleep">${I('moon')}Dormir ici</button>${nr.m >= 40 ? `<button data-ua="via">${I('route')}Passer par ici</button>` : ''}</div>`;
+  const pop = L.popup().setLatLng(e.latlng).setContent(html).openOn(map), el = pop.getElement();
+  el.querySelectorAll('[data-ua]').forEach(b => b.onclick = () => {
+    map.closePopup();
+    if (b.dataset.ua === 'sleep') { const k = nightFor(p); enqueue(() => chooseNight(k, Object.assign(p, { name: 'Ta nuit, choisie sur la carte' }))); }
+    else enqueue(() => passBy(Object.assign(p, { name: 'ce point' })));
+  });
+});
 $('#bDraw').onclick = () => { state.draw = !state.draw; $('#bDraw').classList.toggle('on', state.draw); map.getContainer().style.cursor = state.draw ? 'crosshair' : ''; };
 $('#mRoute').onclick = () => { state.mode = 'route'; $('#mRoute').classList.add('on'); $('#mLine').classList.remove('on'); };
 $('#mLine').onclick = () => { state.mode = 'line'; $('#mLine').classList.add('on'); $('#mRoute').classList.remove('on'); };
@@ -2114,7 +2286,14 @@ const treks = {
   get(id) { return this.list.find(t => t.id === id); },
   dirty() { const t = this.cur && this.get(this.cur); return t ? JSON.stringify(t.data) !== JSON.stringify(draftData()) : !!state.start; },
   summary() {
-    return R && R.n > 1 ? { km: Math.round(R.dist / 100) / 10, up: Math.round(R.up), stages: R.stages.length, start: S.startDate || '' } : { km: 0, up: 0, stages: 0, start: '' };
+    if (!(R && R.n > 1)) return { km: 0, up: 0, stages: 0, start: '' };
+    const r1 = v => Math.round(v * 10) / 10, r5 = v => Math.round(v * 1e5) / 1e5, o = { km: Math.round(R.dist / 100) / 10, up: Math.round(R.up), stages: R.stages.length, start: S.startDate || '' };
+    // pour les souvenirs : chaque journée, son point d'arrivée, sa nuit, et le profil du trek
+    o.dn = Math.round(R.dn || 0); o.h = r1(R.stages.reduce((x, st) => x + (st.time || 0), 0));
+    o.days = R.stages.map(st => ({ km: r1(st.dist / 1000), up: Math.round(st.up || 0), dn: Math.round(st.dn || 0), h: r1(st.time || 0), end: [r5(R.lat[st.i1]), r5(R.lon[st.i1])], to: placeName(st.i1) || '',
+      night: st.endPoi ? { n: st.endPoi.name || st.endPoi.kind, c: st.endPoi.cat } : null }));
+    if (R.zs) { const N = 160, pr = []; let j = 0; for (let k = 0; k <= N; k++) { const d = R.dist * k / N; while (j < R.n - 1 && R.cum[j] < d) j++; pr.push(Math.round(R.zs[j])); } o.prof = pr; }
+    return o;
   }
 };
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -2137,7 +2316,7 @@ function openTrek(id) {
   state.start = t.data.start; state.legs = JSON.parse(JSON.stringify(t.data.legs || [])); state.selStage = -1;
   treks.cur = id; treks.store();
   changed(); closePage();
-  if (R.n > 1) map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), fitPad(20));
+  if (R.n > 1) { map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), fitPad(20), { animate: false }); animateRoute(); }
   toast(`« ${t.name} » ouvert`, 'ok');
 }
 function newTrek() {
@@ -2344,7 +2523,7 @@ function renderTrekPage(t) {
       <label class="ph add" for="photoIn">${I('camera')}<span>Ajouter</span></label></div>
     <input type="file" id="photoIn" accept="image/*" multiple hidden>
     <p class="note">Les photos restent sur ce téléphone (réduites pour prendre peu de place). Celles qui ont une position GPS se placent sur le tracé et sur ton globe.</p>
-    <button class="primary" id="tdOpen" style="width:100%;margin-top:14px">${I('route')}Ouvrir sur la carte</button>
+    <div class="row" style="margin-top:14px"><button class="primary grow" id="tdOpen">${I('route')}Ouvrir sur la carte</button><button class="grow" id="tdCard">${I('camera')}Souvenirs</button></div>
     <div class="row" style="margin-top:8px"><button class="grow" id="tdRen">${I('pen')}Renommer</button><button class="grow" id="tdDup">Dupliquer</button><button class="grow danger" id="tdDel">${I('trash')}Supprimer</button></div>`;
   fillThumbs($('#tdBody'));
   document.querySelectorAll('#tdStatus button').forEach(b => b.onclick = () => {
@@ -2358,6 +2537,7 @@ function renderTrekPage(t) {
   $('#tdNote').oninput = e => { t.note = e.target.value; clearTimeout(t._nt); t._nt = setTimeout(() => treks.store(), 500); };
   $('#photoIn').onchange = e => { const fs = [...e.target.files]; e.target.value = ''; addPhotos(t, fs); };
   $('#tdBody').querySelectorAll('.ph[data-i]').forEach(b => b.onclick = () => viewPhoto(t, +b.dataset.i));
+  $('#tdCard').onclick = () => showSouvenirs(t);
   $('#tdOpen').onclick = () => {
     if (t.id !== treks.cur && state.start && treks.dirty()) return confirmTap($('#tdOpen'), 'Le parcours en cours n\'est pas enregistré : touche encore pour l\'abandonner', () => openTrek(t.id));
     openTrek(t.id);
@@ -2380,6 +2560,316 @@ function renderTrekPage(t) {
   });
 }
 $('#bTrekBack').onclick = () => openPage('profile');
+// --- Souvenirs : plusieurs cartes à partager (couverture, carte en relief, chiffres et profil, jour après jour, photos) + survol 3D en vidéo ---
+const SV_W = 1080, SV_H = 1920, SVF = 'Fraunces, Georgia, serif', SVS = 'Figtree, system-ui, sans-serif';
+function svData(t) {
+  let s = t.sum || {};
+  if (t.id === treks.cur && R && R.n > 1 && !treks.dirty()) s = Object.assign({}, s, treks.summary());
+  const all = []; ((t.data && t.data.legs) || []).forEach(l => (l.pts || []).forEach(p => all.push(p)));
+  const st = Math.max(1, Math.floor(all.length / 1500)), pts = all.filter((p, i) => i % st === 0 || i === all.length - 1);
+  let prof = s.prof, dn = s.dn, h = s.h;
+  if ((!prof || dn == null) && pts.length > 1) {
+    const ts = trackStats(pts); dn = dn == null ? Math.round(ts.dn) : dn; h = h == null ? ts.time : h;
+    if (!prof && pts.some(p => p[2] != null)) { const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + hav(pts[i - 1], pts[i])); const z = interpNulls(pts.map(p => p[2] == null ? null : p[2])); prof = []; let j = 0; for (let k = 0; k <= 160; k++) { const d = cum[cum.length - 1] * k / 160; while (j < pts.length - 1 && cum[j] < d) j++; prof.push(Math.round(z[j])); } }
+  }
+  const photos = (t.photos || []).slice();
+  return { t, s, pts, prof: prof || null, dn: dn || 0, h: h || 0, days: s.days || null, photos, max: prof ? Math.max(...prof) : null };
+}
+async function svFonts() { try { await Promise.all([document.fonts.load('700 64px Fraunces'), document.fonts.load('600 30px Figtree'), document.fonts.load('400 30px Figtree')]); } catch (e) { } }
+const svCanvas = () => { const c = document.createElement('canvas'); c.width = SV_W; c.height = SV_H; return [c, c.getContext('2d')]; };
+function svFit(x, txt, font, max) { x.font = font; let t2 = txt; while (x.measureText(t2).width > max && t2.length > 3) t2 = t2.slice(0, -2); return t2 === txt ? txt : t2 + '…'; }
+function svWrap(x, txt, font, max, lines) {   // coupe un texte en lignes
+  x.font = font; const out = []; let cur = '';
+  txt.split(/\s+/).forEach(w => { const t2 = cur ? cur + ' ' + w : w; if (x.measureText(t2).width > max && cur) { out.push(cur); cur = w; } else cur = t2; });
+  if (cur) out.push(cur);
+  if (out.length > lines) { out.length = lines; out[lines - 1] = svFit(x, out[lines - 1] + '…', font, max); }
+  return out;
+}
+function svBrand(x, dark, n, tot) {
+  x.textBaseline = 'alphabetic'; x.textAlign = 'left';
+  x.fillStyle = dark ? '#fffaf0' : '#1f4636'; x.font = `700 44px ${SVF}`; x.fillText('Orri', 64, 110);
+  if (tot) { x.textAlign = 'right'; x.font = `600 26px ${SVS}`; x.fillStyle = dark ? 'rgba(255,250,240,.7)' : '#6f776f'; x.fillText(n + ' / ' + tot, SV_W - 64, 104); x.textAlign = 'left'; }
+}
+function svFoot(x, dark) { x.textAlign = 'center'; x.font = `500 24px ${SVS}`; x.fillStyle = dark ? 'rgba(255,250,240,.6)' : '#8a8f86'; x.fillText('Préparé avec Orri, le planificateur de treks', SV_W / 2, SV_H - 56); x.textAlign = 'left'; }
+async function svImg(id) { const u = await photoURL(id, true); return u ? new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = u; }) : null; }
+function svCover(x, im, X, Y, W, H) { const k = Math.max(W / im.naturalWidth, H / im.naturalHeight); x.drawImage(im, X + (W - im.naturalWidth * k) / 2, Y + (H - im.naturalHeight * k) / 2, im.naturalWidth * k, im.naturalHeight * k); }
+// Carte en relief du tracé (AWS Terrain Tiles, ombrage + couleurs naturelles) ; renvoie la projection pour y dessiner
+async function svRelief(pts, W, H, pad) {
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+  let a0 = 90, a1 = -90, o0 = 180, o1 = -180; pts.forEach(p => { a0 = Math.min(a0, p[0]); a1 = Math.max(a1, p[0]); o0 = Math.min(o0, p[1]); o1 = Math.max(o1, p[1]); });
+  const mx = (lon, z) => (lon + 180) / 360 * 256 * 2 ** z, my = (lat, z) => (1 - Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) / Math.PI) / 2 * 256 * 2 ** z;
+  const aw = W - pad.l - pad.r, ah = H - pad.t - pad.b, bw0 = Math.max(1e-6, mx(o1, 0) - mx(o0, 0)), bh0 = Math.max(1e-6, my(a0, 0) - my(a1, 0));
+  let z = Math.max(1, Math.min(13, Math.floor(Math.log2(Math.min(aw / bw0, ah / bh0)))));
+  const tilesFor = z => Math.ceil(W / Math.min(aw / (bw0 * 2 ** z), ah / (bh0 * 2 ** z)) / 256 + 1) * Math.ceil(H / Math.min(aw / (bw0 * 2 ** z), ah / (bh0 * 2 ** z)) / 256 + 1);
+  while (z > 1 && tilesFor(z) > 36) z--;
+  const k = Math.min(aw / (bw0 * 2 ** z), ah / (bh0 * 2 ** z)), cx = (mx(o0, z) + mx(o1, z)) / 2, cy = (my(a0, z) + my(a1, z)) / 2;
+  const vx0 = cx - (pad.l + aw / 2) / k, vy0 = cy - (pad.t + ah / 2) / k;
+  const P = (la, lo) => [(mx(lo, z) - vx0) * k, (my(la, z) - vy0) * k];
+  const tx0 = Math.floor(vx0 / 256), ty0 = Math.max(0, Math.floor(vy0 / 256)), tx1 = Math.floor((vx0 + W / k) / 256), ty1 = Math.min(2 ** z - 1, Math.floor((vy0 + H / k) / 256));
+  let rg = null; try { rg = await buildRegion(z, tx0, ty0, tx1 - tx0 + 1, ty1 - ty0 + 1, NAT); } catch (e) { }
+  if (rg) {
+    const tmp = document.createElement('canvas'); tmp.width = rg.W; tmp.height = rg.H; tmp.getContext('2d').putImageData(new ImageData(rg.rgba, rg.W, rg.H), 0, 0);
+    x.imageSmoothingQuality = 'high'; x.drawImage(tmp, (tx0 * 256 - vx0) * k, (ty0 * 256 - vy0) * k, rg.W * k, rg.H * k);
+  } else {   // sans réseau : courbes de niveau dessinées
+    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2f6650'); g.addColorStop(1, '#173a2c'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.strokeStyle = 'rgba(239,231,216,.10)'; x.lineWidth = 2;
+    for (let j = 0; j < 40; j++) { x.beginPath(); for (let i = 0; i <= 60; i++) { const X = i / 60 * W, Y = 40 + j * 48 + 22 * Math.sin(i / 7 + j * .7) + 14 * Math.sin(i / 3.1 + j); i ? x.lineTo(X, Y) : x.moveTo(X, Y); } x.stroke(); }
+  }
+  const mpp = 40075016 * Math.cos((a0 + a1) / 2 * Math.PI / 180) / (256 * 2 ** z) / k;   // mètres par pixel
+  return { c, P, mpp, relief: !!rg };
+}
+function svRoute(x, d, P, w) {
+  x.lineJoin = x.lineCap = 'round';
+  [[w + 7, 'rgba(23,58,44,.55)'], [w + 3.5, '#fffaf0'], [w, '#cf6a3c']].forEach(([lw, col]) => { x.beginPath(); d.pts.forEach((p, i) => { const [X, Y] = P(p[0], p[1]); i ? x.lineTo(X, Y) : x.moveTo(X, Y); }); x.lineWidth = lw; x.strokeStyle = col; x.stroke(); });
+}
+function svDot(x, X, Y, r, fill, txt) { x.beginPath(); x.arc(X, Y, r, 0, 7); x.fillStyle = fill; x.fill(); x.lineWidth = 5; x.strokeStyle = '#fffaf0'; x.stroke(); if (txt) { x.fillStyle = '#fff'; x.font = `700 ${Math.round(r * 1.05)}px ${SVS}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, X, Y + 1); x.textAlign = 'left'; x.textBaseline = 'alphabetic'; } }
+function svDateLine(d) {
+  const t = d.t, sd = t.data && t.data.S && t.data.S.startDate;
+  return t.status === 'done' ? (t.doneDate ? 'Fait le ' + fDay(t.doneDate) : 'Trek fait') : (sd ? 'Départ le ' + fDay(sd) : 'Mon prochain trek');
+}
+async function svSlideCover(d, map) {
+  const [c, x] = svCanvas(), t = d.t, s = d.s;
+  const ph = d.photos.slice().sort((a, b) => (b.lat != null) - (a.lat != null))[0], im = ph ? await svImg(ph.id) : null;
+  if (im) svCover(x, im, 0, 0, SV_W, SV_H); else { x.drawImage(map.c, 0, 0); svRoute(x, d, map.P, 9); }
+  let g = x.createLinearGradient(0, 0, 0, 300); g.addColorStop(0, 'rgba(0,0,0,.5)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, SV_W, 300);
+  g = x.createLinearGradient(0, SV_H - 900, 0, SV_H); g.addColorStop(0, 'rgba(10,29,23,0)'); g.addColorStop(.55, 'rgba(10,29,23,.72)'); g.addColorStop(1, 'rgba(10,29,23,.94)'); x.fillStyle = g; x.fillRect(0, SV_H - 900, SV_W, 900);
+  svBrand(x, true);
+  x.font = `600 30px ${SVS}`; x.fillStyle = 'rgba(255,250,240,.85)'; x.fillText(t.status === 'done' ? 'CARNET DE TREK' : 'MON PROCHAIN TREK', 64, 152);
+  const lines = svWrap(x, t.name, `700 96px ${SVF}`, SV_W - 128, 3); let y = SV_H - 420 - (lines.length - 1) * 104;
+  x.fillStyle = '#fffaf0'; x.font = `700 96px ${SVF}`; lines.forEach(l => { x.fillText(l, 64, y); y += 104; });
+  x.font = `600 36px ${SVS}`; x.fillStyle = '#f4c06b'; x.fillText(svDateLine(d), 64, y + 6);
+  x.font = `500 38px ${SVS}`; x.fillStyle = '#fffaf0';
+  x.fillText([s.km ? nf1.format(s.km) + ' km' : '', s.stages ? s.stages + (s.stages > 1 ? ' jours' : ' jour') : '', s.up ? '+' + nf0.format(s.up) + ' m' : ''].filter(Boolean).join('  ·  '), 64, y + 74);
+  if (t.note) { x.font = `italic 400 32px ${SVS}`; x.fillStyle = 'rgba(255,250,240,.85)'; x.fillText(svFit(x, '« ' + t.note.replace(/\s+/g, ' ') + ' »', `italic 400 32px ${SVS}`, SV_W - 128), 64, y + 140); }
+  return c;
+}
+async function svSlideMap(d, map) {
+  const [c, x] = svCanvas();
+  x.drawImage(map.c, 0, 0);
+  let g = x.createLinearGradient(0, 0, 0, 330); g.addColorStop(0, 'rgba(250,246,238,.97)'); g.addColorStop(.7, 'rgba(250,246,238,.85)'); g.addColorStop(1, 'rgba(250,246,238,0)'); x.fillStyle = g; x.fillRect(0, 0, SV_W, 330);
+  svBrand(x, false, 2, d.n);
+  x.fillStyle = '#1f4636'; x.font = `700 64px ${SVF}`; x.fillText('Le parcours', 64, 212);
+  x.font = `500 30px ${SVS}`; x.fillStyle = '#4a5a50'; x.fillText(svFit(x, d.t.name, `500 30px ${SVS}`, SV_W - 128), 64, 258);
+  svRoute(x, d, map.P, 9);
+  const p0 = d.pts[0], p1 = d.pts[d.pts.length - 1];
+  (d.days || []).slice(0, -1).forEach((dy, i) => { const [X, Y] = map.P(dy.end[0], dy.end[1]); svDot(x, X, Y, 24, '#1f4636', String(i + 1)); });
+  if (p0) { const [X, Y] = map.P(p0[0], p0[1]); svDot(x, X, Y, 20, '#fffaf0'); x.beginPath(); x.arc(X, Y, 9, 0, 7); x.fillStyle = '#1f4636'; x.fill(); }
+  if (p1) { const [X, Y] = map.P(p1[0], p1[1]); svDot(x, X, Y, 22, '#cf6a3c'); }
+  // échelle
+  const nice = [100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000].find(m => m / map.mpp > 140) || 100000, L2 = nice / map.mpp, Y0 = SV_H - 150;
+  x.fillStyle = 'rgba(250,246,238,.9)'; x.beginPath(); x.roundRect(48, Y0 - 52, L2 + 36, 78, 18); x.fill();
+  x.fillStyle = '#1f4636'; x.fillRect(66, Y0, L2, 8); x.font = `600 26px ${SVS}`; x.fillText(nice >= 1000 ? nf0.format(nice / 1000) + ' km' : nice + ' m', 66, Y0 - 14);
+  if (d.days && d.days.length > 1) { x.fillStyle = 'rgba(250,246,238,.9)'; x.beginPath(); x.roundRect(SV_W - 420, Y0 - 52, 372, 78, 18); x.fill(); svDot(x, SV_W - 384, Y0 - 13, 17, '#1f4636', '1'); x.fillStyle = '#1f4636'; x.font = `500 26px ${SVS}`; x.fillText('fin de chaque journée', SV_W - 354, Y0 - 3); }
+  x.font = `400 20px ${SVS}`; x.fillStyle = 'rgba(31,70,54,.75)'; x.textAlign = 'right'; x.fillText(map.relief ? 'Relief : AWS Terrain Tiles · Orri' : 'Orri', SV_W - 48, SV_H - 40); x.textAlign = 'left';
+  return c;
+}
+function svProfile(x, d, X, Y, W, H, dark) {
+  const pr = d.prof; if (!pr || pr.length < 2) return;
+  let lo = Math.min(...pr), hi = Math.max(...pr); if (hi - lo < 50) { hi += 25; lo -= 25; }
+  const P = (i, v) => [X + i / (pr.length - 1) * W, Y + H - (v - lo) / (hi - lo) * H];
+  const g = x.createLinearGradient(0, Y, 0, Y + H); g.addColorStop(0, 'rgba(207,106,60,.85)'); g.addColorStop(1, 'rgba(207,106,60,.08)');
+  x.beginPath(); pr.forEach((v, i) => { const [a, b] = P(i, v); i ? x.lineTo(a, b) : x.moveTo(a, b); }); x.lineTo(X + W, Y + H); x.lineTo(X, Y + H); x.closePath(); x.fillStyle = g; x.fill();
+  x.beginPath(); pr.forEach((v, i) => { const [a, b] = P(i, v); i ? x.lineTo(a, b) : x.moveTo(a, b); }); x.lineWidth = 5; x.strokeStyle = '#cf6a3c'; x.lineJoin = 'round'; x.stroke();
+  const tk = dark ? 'rgba(255,250,240,.7)' : '#6f776f';
+  if (d.days && d.days.length > 1) { const tot = d.days.reduce((a, b) => a + b.km, 0); let acc = 0; x.setLineDash([8, 8]); x.lineWidth = 2; x.strokeStyle = dark ? 'rgba(255,250,240,.35)' : 'rgba(31,70,54,.3)'; x.font = `600 22px ${SVS}`; x.fillStyle = tk;
+    d.days.forEach((dy, i) => { const xx = X + acc / tot * W; if (i) { x.beginPath(); x.moveTo(xx, Y - 10); x.lineTo(xx, Y + H); x.stroke(); } x.fillText('J' + (i + 1), xx + 8, Y - 14); acc += dy.km; }); x.setLineDash([]); }
+  x.font = `500 24px ${SVS}`; x.fillStyle = tk; x.fillText(nf0.format(hi) + ' m', X, Y - 46); x.fillText(nf0.format(lo) + ' m', X, Y + H + 38);
+}
+async function svSlideStats(d) {
+  const [c, x] = svCanvas(), s = d.s;
+  x.fillStyle = '#faf6ee'; x.fillRect(0, 0, SV_W, SV_H);
+  x.fillStyle = 'rgba(31,70,54,.05)'; for (let j = 0; j < 30; j++) { x.beginPath(); for (let i = 0; i <= 60; i++) { const X = i / 60 * SV_W, Y = 60 + j * 66 + 26 * Math.sin(i / 7 + j * .7); i ? x.lineTo(X, Y) : x.moveTo(X, Y); } x.lineWidth = 2; x.strokeStyle = 'rgba(31,70,54,.06)'; x.stroke(); }
+  svBrand(x, false, 3, d.n);
+  x.fillStyle = '#1f4636'; x.font = `700 64px ${SVF}`; x.fillText('En chiffres', 64, 232);
+  const cells = [[s.km ? nf1.format(s.km) : '—', 'kilomètres'], ['+' + nf0.format(s.up || 0), 'mètres de montée'], ['−' + nf0.format(d.dn || 0), 'mètres de descente'],
+    [String(s.stages || 0), (s.stages || 0) > 1 ? 'jours de marche' : 'jour de marche'], [d.h ? fDur(d.h) : '—', 'de marche en tout'], [d.max != null ? nf0.format(d.max) + ' m' : '—', 'point culminant']];
+  cells.forEach(([v, l], i) => {
+    const X = 64 + (i % 2) * 486, Y = 330 + Math.floor(i / 2) * 230;
+    x.fillStyle = '#fffdf8'; x.beginPath(); x.roundRect(X, Y, 466, 200, 28); x.fill(); x.strokeStyle = 'rgba(31,70,54,.1)'; x.lineWidth = 2; x.stroke();
+    x.fillStyle = i < 3 ? '#cf6a3c' : '#1f4636'; x.font = `700 76px ${SVF}`; x.fillText(svFit(x, v, `700 76px ${SVF}`, 420), X + 32, Y + 110);
+    x.fillStyle = '#5d675f'; x.font = `500 28px ${SVS}`; x.fillText(l, X + 32, Y + 160);
+  });
+  x.fillStyle = '#1f4636'; x.font = `700 40px ${SVF}`; x.fillText('Le profil', 64, 1110);
+  svProfile(x, d, 64, 1200, SV_W - 128, 330, false);
+  if (d.days) {
+    const n = { hut: 0, biv: 0, free: 0 }; d.days.slice(0, -1).forEach(dy => { const c2 = dy.night && dy.night.c; if (c2 === 'hut') n.hut++; else if (c2) n.biv++; else n.free++; });
+    const txt = [n.hut && `${n.hut} nuit${n.hut > 1 ? 's' : ''} en refuge`, n.biv && `${n.biv} en bivouac`, n.free && `${n.free} libre${n.free > 1 ? 's' : ''}`].filter(Boolean).join(' · ');
+    if (txt) { x.fillStyle = '#1f4636'; x.font = `600 32px ${SVS}`; x.fillText(txt, 64, 1680); }
+  }
+  svFoot(x, false);
+  return c;
+}
+async function svSlideDays(d) {
+  const [c, x] = svCanvas(), days = d.days || [];
+  const g = x.createLinearGradient(0, 0, 0, SV_H); g.addColorStop(0, '#24493d'); g.addColorStop(1, '#0f2a21'); x.fillStyle = g; x.fillRect(0, 0, SV_W, SV_H);
+  svBrand(x, true, 4, d.n);
+  x.fillStyle = '#fffaf0'; x.font = `700 64px ${SVF}`; x.fillText('Jour après jour', 64, 232);
+  const n = Math.min(days.length, 12), rh = Math.min(170, 1440 / Math.max(1, n));
+  days.slice(0, n).forEach((dy, i) => {
+    const Y = 300 + i * rh, r = Math.min(34, rh * .3);
+    if (i < n - 1) { x.strokeStyle = 'rgba(244,192,107,.5)'; x.lineWidth = 4; x.setLineDash([10, 10]); x.beginPath(); x.moveTo(98, Y + rh / 2 + r); x.lineTo(98, Y + rh * 1.5 - r); x.stroke(); x.setLineDash([]); }
+    x.beginPath(); x.arc(98, Y + rh / 2, r, 0, 7); x.fillStyle = '#cf6a3c'; x.fill(); x.fillStyle = '#fff'; x.font = `700 ${Math.round(r * .95)}px ${SVS}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(String(i + 1), 98, Y + rh / 2 + 1); x.textAlign = 'left'; x.textBaseline = 'alphabetic';
+    const fs = Math.min(40, rh * .26);
+    x.fillStyle = '#fffaf0'; x.font = `700 ${fs}px ${SVS}`; x.fillText(`${nf1.format(dy.km)} km  ·  +${nf0.format(dy.up)} m  ·  ${fDur(dy.h)}`, 160, Y + rh / 2 - fs * .15);
+    const where = i === days.length - 1 ? 'Arrivée' + (dy.to ? ' à ' + dy.to : '') : dy.night ? (dy.night.c === 'hut' ? 'Nuit au refuge : ' : dy.night.c === 'water' ? 'Nuit près de l\'eau : ' : 'Bivouac : ') + dy.night.n : 'Nuit libre' + (dy.to ? ' vers ' + dy.to : '');
+    x.fillStyle = 'rgba(255,250,240,.75)'; x.font = `500 ${fs * .78}px ${SVS}`; x.fillText(svFit(x, where, `500 ${fs * .78}px ${SVS}`, SV_W - 230), 160, Y + rh / 2 + fs * .95);
+  });
+  if (days.length > n) { x.fillStyle = 'rgba(255,250,240,.7)'; x.font = `500 30px ${SVS}`; x.fillText(`et ${days.length - n} jours de plus…`, 160, 300 + n * rh + 40); }
+  svFoot(x, true);
+  return c;
+}
+async function svSlidePhotos(d) {
+  const [c, x] = svCanvas();
+  x.fillStyle = '#faf6ee'; x.fillRect(0, 0, SV_W, SV_H);
+  svBrand(x, false, d.n, d.n);
+  x.fillStyle = '#1f4636'; x.font = `700 64px ${SVF}`; x.fillText('En images', 64, 232);
+  const ph = d.photos.slice(0, 6), n = ph.length, cols = n > 1 ? 2 : 1, rows = Math.ceil(n / cols), gw = SV_W - 128, gh = 1440, cw = (gw - (cols - 1) * 24) / cols, ch = Math.min(cw * 1.3, (gh - (rows - 1) * 24) / rows);
+  const imgs = await Promise.all(ph.map(p => svImg(p.id)));
+  imgs.forEach((im, i) => {
+    const X = 64 + (i % cols) * (cw + 24), Y = 300 + Math.floor(i / cols) * (ch + 24);
+    x.save(); x.beginPath(); x.roundRect(X, Y, cw, ch, 26); x.clip(); x.fillStyle = '#e8e0cf'; x.fillRect(X, Y, cw, ch); if (im) svCover(x, im, X, Y, cw, ch);
+    if (ph[i].date) { const gg = x.createLinearGradient(0, Y + ch - 120, 0, Y + ch); gg.addColorStop(0, 'rgba(0,0,0,0)'); gg.addColorStop(1, 'rgba(0,0,0,.55)'); x.fillStyle = gg; x.fillRect(X, Y + ch - 120, cw, 120); x.fillStyle = '#fff'; x.font = `600 26px ${SVS}`; x.fillText(new Date(ph[i].date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }), X + 24, Y + ch - 26); }
+    x.restore();
+  });
+  svFoot(x, false);
+  return c;
+}
+let story = null;
+async function showSouvenirs(t) {
+  toast('Préparation de tes souvenirs…');
+  await svFonts();
+  const d = svData(t);
+  if (d.pts.length < 2) return toast('Pas de tracé pour ce trek', 'warn');
+  d.n = 3 + (d.days && d.days.length > 1 ? 1 : 0) + (d.photos.length ? 1 : 0);
+  const map = await svRelief(d.pts, SV_W, SV_H, { l: 110, r: 110, t: 360, b: 260 });
+  const make = [() => svSlideCover(d, map), () => svSlideMap(d, map), () => svSlideStats(d)];
+  if (d.days && d.days.length > 1) make.push(() => svSlideDays(d));
+  if (d.photos.length) make.push(() => svSlidePhotos(d));
+  const slides = [];
+  for (const f of make) { const c = await f(); slides.push(await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.9))); }
+  if (slides.some(b => !b)) return toast('Souvenirs impossibles sur ce navigateur', 'err');
+  const base = 'orri-' + t.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+  story = { t, d, slides, urls: slides.map(b => URL.createObjectURL(b)), i: 0, base };
+  $('#story').hidden = false; $('#stBars').innerHTML = slides.map(() => '<i></i>').join('') + '<i class="fly"></i>';
+  storyGo(0);
+}
+function storyGo(i) {
+  const st = story; if (!st) return;
+  st.i = Math.max(0, Math.min(st.slides.length, i));
+  const fly = st.i === st.slides.length;
+  $('#stBars').querySelectorAll('i').forEach((b, k) => b.classList.toggle('on', k <= st.i));
+  $('#stImg').hidden = fly; $('#stFly').hidden = !fly;
+  if (!fly) { $('#stImg').src = st.urls[st.i]; stopFly(); }
+  else startFly();
+  $('#stShare').hidden = fly; $('#stRec').hidden = !fly;
+}
+async function shareFiles(files, title) {
+  try { if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files, title }); return true; } } catch (e) { if (e.name === 'AbortError') return true; }
+  files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); });
+  toast(files.length > 1 ? 'Souvenirs enregistrés dans tes téléchargements' : 'Enregistré dans tes téléchargements', 'ok'); return true;
+}
+$('#stShare').onclick = () => { const st = story; shareFiles([new File([st.slides[st.i]], `${st.base}-${st.i + 1}.jpg`, { type: 'image/jpeg' })], st.t.name); };
+$('#stAll').onclick = () => { const st = story; shareFiles(st.slides.map((b, k) => new File([b], `${st.base}-${k + 1}.jpg`, { type: 'image/jpeg' })), st.t.name); };
+$('#stPrev').onclick = () => storyGo(story.i - 1);
+$('#stNext').onclick = () => storyGo(story.i + 1);
+$('#stClose').onclick = () => { stopFly(true); if (story) story.urls.forEach(u => URL.revokeObjectURL(u)); story = null; $('#story').hidden = true; };
+// Survol 3D : la caméra suit le tracé au-dessus du relief ; « Enregistrer la vidéo » filme le survol (sur le téléphone, sans serveur)
+let flyer = null;
+function routeAlong(pts) { const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + hav(pts[i - 1], pts[i])); return { pts, cum, L: cum[cum.length - 1] }; }
+function alongAt(r, dist) {
+  let lo = 0, hi = r.cum.length - 1; dist = Math.max(0, Math.min(r.L, dist));
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (r.cum[m] < dist) lo = m; else hi = m; }
+  const a = r.pts[lo], b = r.pts[hi], f = r.cum[hi] > r.cum[lo] ? (dist - r.cum[lo]) / (r.cum[hi] - r.cum[lo]) : 0;
+  return { lat: a[0] + (b[0] - a[0]) * f, lon: a[1] + (b[1] - a[1]) * f, i: lo };
+}
+async function startFly() {
+  const st = story; if (!st) return;
+  if (flyer && flyer.t === st.t) return flyPlay();
+  stopFly(true);
+  let ml = null; if (can3D()) try { ml = await loadML5(); } catch (e) { }
+  if (!ml || !story) { $('#stFly').innerHTML = '<p class="stmsg">Le survol 3D a besoin du réseau et d\'un téléphone compatible 3D.</p>'; return; }
+  $('#stFly').innerHTML = '<div class="flymap"></div><div class="flyhud"><b></b><span></span></div>';
+  const d = st.d, r = routeAlong(d.pts.map(p => [p[0], p[1]]));
+  const style = globeStyle(); style.projection = { type: 'mercator' };
+  style.sources.route = { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: d.pts.map(p => [p[1], p[0]]) } } };
+  style.sources.done = { type: 'geojson', data: { type: 'FeatureCollection', features: [] } };
+  style.sources.me = { type: 'geojson', data: { type: 'FeatureCollection', features: [] } };
+  style.layers = style.layers.filter(l => !/^t|^s|frontieres/.test(l.id) || l.id === 'bg').concat([
+    { id: 'rcase', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#fffaf0', 'line-width': 7, 'line-opacity': .75 } },
+    { id: 'rdone', type: 'line', source: 'done', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#cf6a3c', 'line-width': 5.5 } },
+    { id: 'rme', type: 'circle', source: 'me', paint: { 'circle-radius': 9, 'circle-color': '#cf6a3c', 'circle-stroke-width': 4, 'circle-stroke-color': '#fffaf0', 'circle-pitch-alignment': 'map' } }]);
+  const m = new ml.Map({ container: $('#stFly .flymap'), style, attributionControl: false, interactive: false, fadeDuration: 0, canvasContextAttributes: { preserveDrawingBuffer: true, antialias: true } });
+  flyer = { t: st.t, m, r, d, ml };
+  m.on('load', () => { m.setTerrain({ source: 'dem3d', exaggeration: 1.5 }); flyPlay(); });
+}
+function flyPlay(rec) {   // intro vue d'ensemble -> survol le long du tracé -> recul final ; rec : appelée à chaque image
+  const F = flyer; if (!F) return;
+  cancelAnimationFrame(F.raf); const m = F.m, r = F.r, D = Math.max(14000, Math.min(26000, r.L / 4)), T0 = 2200, T2 = 2600;
+  let a0 = 90, a1 = -90, o0 = 180, o1 = -180; r.pts.forEach(p => { a0 = Math.min(a0, p[0]); a1 = Math.max(a1, p[0]); o0 = Math.min(o0, p[1]); o1 = Math.max(o1, p[1]); });
+  const over = m.cameraForBounds([[o0, a0], [o1, a1]], { padding: 50 }) || { center: [r.pts[0][1], r.pts[0][0]], zoom: 10 };
+  const zf = Math.min(13.2, Math.max(11, 12.6 - Math.log2(Math.max(1, r.L / 60000)) * .4));
+  const brg = (a, b) => Math.atan2((b.lon - a.lon) * Math.cos(a.lat * Math.PI / 180), b.lat - a.lat) * 180 / Math.PI;
+  let bear = brg(alongAt(r, 0), alongAt(r, 1500)), t = 0, last = performance.now(), hud = $('#stFly .flyhud');
+  const lerp = (a, b, k) => a + (b - a) * k, ease = k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2, angle = (a, b, k) => { let dd = ((b - a + 540) % 360) - 180; return a + dd * k; };
+  const setDone = dist => { const p = alongAt(r, dist), cs = r.pts.slice(0, p.i + 1).map(q => [q[1], q[0]]); cs.push([p.lon, p.lat]); m.getSource('done').setData({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: cs.length > 1 ? cs : [cs[0], cs[0]] } }); m.getSource('me').setData({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } }); return p; };
+  hud.querySelector('b').textContent = F.d.t.name;
+  F.playing = true;
+  const step = now => {
+    if (!flyer || flyer !== F || !F.playing) return;
+    const dt = Math.min(80, now - last); last = now;
+    if (!F.rec || m.areTilesLoaded()) t += dt; else if (F.rec && F.rec.state === 'recording') { F.rec.pause(); }
+    if (F.rec && F.rec.state === 'paused' && m.areTilesLoaded()) F.rec.resume();
+    if (t < T0) {   // vue d'ensemble qui s'incline puis plonge vers le départ
+      const k = ease(t / T0), p0 = alongAt(r, 0);
+      m.jumpTo({ center: [lerp(over.center.lng != null ? over.center.lng : over.center[0], p0.lon, k), lerp(over.center.lat != null ? over.center.lat : over.center[1], p0.lat, k)], zoom: lerp(over.zoom, zf, k), pitch: lerp(20, 62, k), bearing: angle(0, bear, k) });
+      setDone(0);
+    } else if (t < T0 + D) {
+      const k = (t - T0) / D, dist = r.L * (k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2) * .999 + r.L * .001 * k, p = setDone(dist), ahead = alongAt(r, dist + Math.max(800, r.L * .02));
+      bear = angle(bear, brg(p, ahead), Math.min(1, dt / 900));
+      m.jumpTo({ center: [p.lon, p.lat], zoom: zf, pitch: 62, bearing: bear });
+      const e = m.queryTerrainElevation ? m.queryTerrainElevation([p.lon, p.lat]) : null;
+      hud.querySelector('span').textContent = `${nf1.format(dist / 1000)} km` + (e != null && isFinite(e) ? ` · ${nf0.format(e / 1.5)} m` : '');
+    } else if (t < T0 + D + T2) {   // recul : tout le parcours en relief
+      const k = ease((t - T0 - D) / T2), p1 = alongAt(r, r.L);
+      setDone(r.L);
+      m.jumpTo({ center: [lerp(p1.lon, over.center.lng != null ? over.center.lng : over.center[0], k), lerp(p1.lat, over.center.lat != null ? over.center.lat : over.center[1], k)], zoom: lerp(zf, over.zoom - .2, k), pitch: lerp(62, 45, k), bearing: bear + 30 * k });
+      hud.querySelector('span').textContent = `${nf1.format(r.L / 1000)} km` + (F.d.s.up ? ` · +${nf0.format(F.d.s.up)} m` : '');
+    } else { F.playing = false; rec && rec(true); return; }
+    rec && rec(false);
+    F.raf = requestAnimationFrame(step);
+  };
+  if (reduceMotion && !rec) { t = T0 + D + T2 - 1; }
+  F.raf = requestAnimationFrame(step);
+}
+function stopFly(destroy) {
+  const F = flyer; if (!F) return;
+  F.playing = false; cancelAnimationFrame(F.raf);
+  if (F.rec && F.rec.state !== 'inactive') { F.cancel = true; F.rec.stop(); }
+  if (destroy) { try { F.m.remove(); } catch (e) { } flyer = null; $('#stFly').innerHTML = ''; }
+}
+$('#stRec').onclick = async () => {
+  const F = flyer; if (!F || F.rec) return;
+  if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) return toast('Vidéo impossible sur ce navigateur', 'err');
+  const types = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'], type = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+  const out = document.createElement('canvas'); out.width = 720; out.height = 1280; const x = out.getContext('2d'), src = F.m.getCanvas();
+  const stream = out.captureStream(30), rec = new MediaRecorder(stream, type ? { mimeType: type, videoBitsPerSecond: 6e6 } : {}), chunks = [];
+  rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+  F.rec = rec; F.cancel = false; $('#stRec').classList.add('on'); $('#stRec').lastChild.textContent = 'Enregistrement…';
+  const frame = () => {   // image de la vidéo : la carte (recadrée en 9:16) + le nom et les chiffres
+    const k = Math.max(720 / src.width, 1280 / src.height); x.drawImage(src, (720 - src.width * k) / 2, (1280 - src.height * k) / 2, src.width * k, src.height * k);
+    const g = x.createLinearGradient(0, 0, 0, 220); g.addColorStop(0, 'rgba(0,0,0,.55)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 720, 220);
+    x.fillStyle = '#fffaf0'; x.font = `700 30px ${SVF}`; x.fillText('Orri', 36, 64);
+    x.font = `700 44px ${SVF}`; x.fillText(svFit(x, F.d.t.name, `700 44px ${SVF}`, 650), 36, 128);
+    x.font = `600 28px ${SVS}`; x.fillStyle = '#f4c06b'; x.fillText($('#stFly .flyhud span').textContent, 36, 172);
+  };
+  const done = new Promise(ok => rec.onstop = ok);
+  rec.start(500); flyPlay(end => { frame(); if (end && rec.state !== 'inactive') rec.stop(); });
+  await done;
+  F.rec = null; $('#stRec').classList.remove('on'); $('#stRec').lastChild.textContent = 'Enregistrer la vidéo';
+  if (F.cancel || !chunks.length) return;
+  const mt = (rec.mimeType || type || 'video/webm').split(';')[0], blob = new Blob(chunks, { type: mt });
+  shareFiles([new File([blob], `${story ? story.base : 'orri'}-survol.${mt.includes('mp4') ? 'mp4' : 'webm'}`, { type: mt })], F.d.t.name);
+};
 // --- Visionneuse ---
 let viewing = null;
 async function viewPhoto(t, i) {
@@ -2545,7 +3035,6 @@ function loadGlobeLibs() {
   globeLibs.catch(() => { globeLibs = null; });
   return globeLibs;
 }
-const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function globeTreks() {   // treks du carnet (+ le parcours en cours s'il n'est pas enregistré)
   const out = treks.list.map(t => ({ id: t.id, name: t.name, done: t.status === 'done', pts: trekPts(t, 260), photos: (t.photos || []).filter(p => p.lat != null), t }));
   if (state.start && R && R.n > 1 && !(treks.cur && !treks.dirty())) {
@@ -2553,6 +3042,63 @@ function globeTreks() {   // treks du carnet (+ le parcours en cours s'il n'est 
     out.push({ id: '_cur', name: treks.cur ? (treks.get(treks.cur) || {}).name || 'Parcours en cours' : 'Parcours en cours', done: false, cur: true, pts, photos: [] });
   }
   return out.filter(g => g.pts.length > 1);
+}
+/* Relief du globe : texture mondiale carte/relief.jpg (ombrage + teintes d'altitude, tools/build_relief.py) ;
+   de près (zoom ≥ 4), relief détaillé calculé à la volée depuis les AWS Terrain Tiles (comme la carte Orri). */
+let reliefTex = null;
+function loadRelief() {
+  if (reliefTex) return reliefTex;
+  reliefTex = new Promise(ok => {
+    const im = new Image();
+    im.onload = () => { try { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d'); x.drawImage(im, 0, 0); ok({ w: im.width, h: im.height, d: x.getImageData(0, 0, im.width, im.height).data }); } catch (e) { ok(null); } };
+    im.onerror = () => ok(null); im.crossOrigin = 'anonymous'; im.src = 'carte/relief.jpg';
+  });
+  return reliefTex;
+}
+const TERRAIN = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/';
+const terrCache = new Map();
+function terrTile(z, x, y) {
+  const k = z + '/' + x + '/' + y; if (terrCache.has(k)) return terrCache.get(k);
+  const p = fetch(TERRAIN + k + '.png').then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); }).then(b => createImageBitmap(b)).then(bmp => {
+    const c = document.createElement('canvas'); c.width = c.height = 256; const x2 = c.getContext('2d'); x2.drawImage(bmp, 0, 0);
+    const d = x2.getImageData(0, 0, 256, 256).data, e = new Float32Array(65536);
+    for (let i = 0; i < 65536; i++) e[i] = d[4 * i] * 256 + d[4 * i + 1] + d[4 * i + 2] / 256 - 32768;
+    return e;
+  }).catch(() => null);
+  terrCache.set(k, p); if (terrCache.size > 300) terrCache.delete(terrCache.keys().next().value);
+  return p;
+}
+const HYPS = [[0, 236, 229, 210], [400, 239, 231, 216], [1200, 230, 214, 186], [2500, 214, 186, 150], [4000, 196, 160, 128], [6000, 246, 242, 234]];
+const NAT = { land: [[0, 157, 187, 132], [300, 163, 191, 133], [900, 134, 168, 106], [1500, 163, 176, 122], [2000, 205, 194, 156], [2500, 186, 166, 142], [3200, 207, 200, 192], [4000, 244, 242, 238], [6000, 255, 255, 255]],
+  sea: [[0, 134, 193, 184], [120, 79, 155, 160], [800, 47, 122, 134], [3000, 31, 92, 110], [5000, 22, 70, 90], [8000, 13, 47, 61]] };   // couleurs naturelles (souvenirs), comme le globe 3D
+const SEA = [[0, 52, 108, 86], [200, 40, 92, 72], [2000, 29, 72, 56], [6000, 21, 55, 42]];
+function rampCol(st, v, out) {
+  if (v <= st[0][0]) { out[0] = st[0][1]; out[1] = st[0][2]; out[2] = st[0][3]; return; }
+  for (let i = 1; i < st.length; i++) if (v <= st[i][0]) { const a = st[i - 1], b = st[i], t = (v - a[0]) / (b[0] - a[0]); out[0] = a[1] + (b[1] - a[1]) * t; out[1] = a[2] + (b[2] - a[2]) * t; out[2] = a[3] + (b[3] - a[3]) * t; return; }
+  const l = st[st.length - 1]; out[0] = l[1]; out[1] = l[2]; out[2] = l[3];
+}
+// Mosaïque de tuiles d'altitude -> image colorée et ombrée (lumière du nord-ouest), en projection Mercator
+async function buildRegion(z, x0, y0, nx, ny, pal) {
+  const LAND = pal ? pal.land : HYPS, SEA2 = pal ? pal.sea : SEA;
+  const n = 2 ** z, tiles = [];
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) tiles.push(terrTile(z, ((x0 + i) % n + n) % n, y0 + j));
+  const got = await Promise.all(tiles); if (!got.some(Boolean)) return null;
+  const W = nx * 256, H = ny * 256, el = new Float32Array(W * H);
+  got.forEach((e, k) => { const i = k % nx, j = (k / nx) | 0; for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) el[(j * 256 + y) * W + i * 256 + x] = e ? e[y * 256 + x] : 0; });
+  const rgba = new Uint8ClampedArray(W * H * 4), col = [0, 0, 0], L = [-0.577, 0.577, 0.577];
+  for (let y = 0; y < H; y++) {
+    const lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y0 * 256 + y + .5) / (256 * n)))), cell = 40075016 * Math.cos(lat) / (256 * n);
+    const ex = Math.max(1.6, Math.min(30, cell / 600)) / (2 * cell);
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x, v = el[i];
+      const dx = (el[y * W + Math.min(W - 1, x + 1)] - el[y * W + Math.max(0, x - 1)]) * ex, dy = (el[Math.max(0, y - 1) * W + x] - el[Math.min(H - 1, y + 1) * W + x]) * ex;
+      const sh = Math.max(0, (-dx * L[0] - dy * L[1] + L[2]) / Math.sqrt(dx * dx + dy * dy + 1));
+      let k;
+      if (v > 0) { rampCol(LAND, v, col); k = 0.55 + 0.55 * sh; } else { rampCol(SEA2, -v, col); k = 0.9 + 0.2 * sh; }
+      rgba[4 * i] = col[0] * k; rgba[4 * i + 1] = col[1] * k; rgba[4 * i + 2] = col[2] * k; rgba[4 * i + 3] = 255;
+    }
+  }
+  return { z, x0, y0, nx, ny, W, H, rgba, n };
 }
 class Globe {
   constructor(slot, opt) {
@@ -2566,6 +3112,77 @@ class Globe {
     this.wrap.querySelectorAll('.gzoom button').forEach(b => b.onclick = e => { e.stopPropagation(); const z = +b.dataset.z; if (!z) { this.select(null); this.fly(this.homeRot(), 1); } else this.fly(this.rot, this.zoom * (z > 0 ? 2.2 : 1 / 2.2)); });
     this.bind();
     this.ro = new ResizeObserver(() => this.resize()); this.ro.observe(this.wrap);
+    this.off = document.createElement('canvas'); this.offx = this.off.getContext('2d');
+    loadRelief().then(t => { this.tex = t; this.draw(); });
+  }
+  // Rendu du relief pixel par pixel (orthographique inverse) ; résolution réduite pendant les mouvements
+  raster(cx, cy, R) {
+    const moving = !!(this.drag || this.anim || (this.spinning && this.zoom < 1.6 && !this.sel && performance.now() > this.idleAt));
+    const sc = Math.min(this.dpr, moving ? 1 : 1.6), W = Math.ceil(this.w * sc), H = Math.ceil(this.h * sc);
+    if (this.off.width !== W || this.off.height !== H) { this.off.width = W; this.off.height = H; this.img0 = null; }
+    if (!this.img0) this.img0 = this.offx.createImageData(W, H);
+    const im = this.img0, d = im.data, T = this.tex, rg = this.zoom >= 3.5 ? this.region : null, D2R = Math.PI / 180;
+    d.fill(0);
+    const lam0 = -this.rot[0] * D2R, phi0 = -this.rot[1] * D2R, sp = Math.sin(phi0), cp = Math.cos(phi0), Rs = R * sc, Cx = cx * sc, Cy = cy * sc;
+    const y0 = Math.max(0, Math.floor(Cy - Rs)), y1 = Math.min(H, Math.ceil(Cy + Rs)), x0 = Math.max(0, Math.floor(Cx - Rs)), x1 = Math.min(W, Math.ceil(Cx + Rs));
+    const rn = rg ? 256 * rg.n : 0;
+    if (!rg) {   // vue d'ensemble : la géométrie ne dépend que de la latitude du centre, on la garde (rotation = simple décalage)
+      const key = [W, H, Rs.toFixed(2), Cx, Cy, phi0.toFixed(5)].join(':');
+      if (!this.geo || this.geo.key !== key) {
+        const js = [], ty = [], dl = [], kk = [];
+        for (let y = y0; y < y1; y++) {
+          const v = -(y + .5 - Cy) / Rs;
+          for (let x = x0; x < x1; x++) {
+            const u = (x + .5 - Cx) / Rs, r2 = u * u + v * v; if (r2 > 1) continue;
+            const cc = Math.sqrt(1 - r2), lat = Math.asin(cc * sp + v * cp);
+            js.push((y * W + x) * 4); ty.push(Math.min(T.h - 1, Math.max(0, ((90 - lat / D2R) / 180 * T.h) | 0)) * T.w); dl.push(Math.atan2(u, cc * cp - v * sp) / D2R / 360 * T.w); kk.push(0.72 + 0.28 * cc);
+          }
+        }
+        this.geo = { key, js: Int32Array.from(js), ty: Int32Array.from(ty), dl: Float32Array.from(dl), kk: Float32Array.from(kk) };
+      }
+      const G = this.geo, base = (lam0 / D2R + 180) / 360 * T.w, Tw = T.w, src = T.d;
+      for (let i = 0; i < G.js.length; i++) {
+        let tx = (base + G.dl[i]) | 0; tx = ((tx % Tw) + Tw) % Tw;
+        const o = (G.ty[i] + tx) * 4, j = G.js[i], k = G.kk[i];
+        d[j] = src[o] * k; d[j + 1] = src[o + 1] * k; d[j + 2] = src[o + 2] * k; d[j + 3] = 255;
+      }
+    } else for (let y = y0; y < y1; y++) {
+      const v = -(y + .5 - Cy) / Rs;
+      for (let x = x0; x < x1; x++) {
+        const u = (x + .5 - Cx) / Rs, r2 = u * u + v * v; if (r2 > 1) continue;
+        const cc = Math.sqrt(1 - r2), lat = Math.asin(cc * sp + v * cp), lon = lam0 + Math.atan2(u, cc * cp - v * sp);
+        let o = -1, src = null;
+        if (rg) {
+          let mx = ((lon / D2R + 180) / 360 * rn) - rg.x0 * 256; mx = ((mx % rn) + rn) % rn;
+          const my = (1 - Math.log(Math.tan(Math.PI / 4 + lat / 2)) / Math.PI) / 2 * rn - rg.y0 * 256;
+          if (mx < rg.W && my >= 0 && my < rg.H) { o = ((my | 0) * rg.W + (mx | 0)) * 4; src = rg.rgba; }
+        }
+        if (!src) { let tx = ((lon / D2R + 180) / 360 * T.w) | 0; tx = ((tx % T.w) + T.w) % T.w; const ty = Math.min(T.h - 1, Math.max(0, ((90 - lat / D2R) / 180 * T.h) | 0)); o = (ty * T.w + tx) * 4; src = T.d; }
+        const k = 0.72 + 0.28 * cc, j = (y * W + x) * 4;
+        d[j] = src[o] * k; d[j + 1] = src[o + 1] * k; d[j + 2] = src[o + 2] * k; d[j + 3] = 255;
+      }
+    }
+    this.offx.putImageData(im, 0, 0);
+    this.ctx.drawImage(this.off, 0, 0, W, H, 0, 0, this.w, this.h);
+    if (moving) { clearTimeout(this.hiT); this.hiT = setTimeout(() => { if (!this.drag && !this.anim) this.draw(); }, 220); }
+    else if (this.zoom >= 4) this.wantRegion();
+  }
+  wantRegion() {   // relief détaillé de la zone vue (tuiles d'altitude), recalculé quand la vue s'est posée
+    clearTimeout(this.rgT);
+    this.rgT = setTimeout(async () => {
+      const R = this.r0 * this.zoom, ppd = R * Math.PI / 180;
+      let z = Math.max(3, Math.min(11, Math.round(Math.log2(ppd * 360 / 256 * 1.1))));
+      const lon0 = -this.rot[0], lat0 = -this.rot[1], spanLon = (this.w / ppd) / Math.max(0.2, Math.cos(lat0 * Math.PI / 180)) / 2 + 0.2, spanLat = this.h / ppd / 2 + 0.2;
+      let t;
+      for (; z >= 3; z--) {
+        const n = 2 ** z, tx = l => Math.floor((l + 180) / 360 * n), ty = a => Math.floor((1 - Math.log(Math.tan(Math.PI / 4 + Math.max(-85, Math.min(85, a)) * Math.PI / 360)) / Math.PI) / 2 * n);
+        t = { z, x0: tx(lon0 - spanLon), x1: tx(lon0 + spanLon), y0: Math.max(0, ty(lat0 + spanLat)), y1: Math.min(n - 1, ty(lat0 - spanLat)) };
+        if ((t.x1 - t.x0 + 1) * (t.y1 - t.y0 + 1) <= 24) break;
+      }
+      const key = [t.z, t.x0, t.x1, t.y0, t.y1].join(':'); if (this.rgKey === key) return; this.rgKey = key;
+      const rg = await buildRegion(t.z, t.x0, t.y0, t.x1 - t.x0 + 1, t.y1 - t.y0 + 1);
+      if (this.rgKey === key && rg) { this.region = rg; this.draw(); }
+    }, 300);
   }
   homeRot() { const g = this.data.find(x => x.cur) || this.data[0]; if (!g) return [-5, -42, 0]; const c = d3.geoCentroid({ type: 'LineString', coordinates: g.pts.map(p => [p[1], p[0]]) }); return [-c[0], -Math.max(-60, Math.min(60, c[1])) , 0]; }
   setData(list) {
@@ -2593,13 +3210,19 @@ class Globe {
       halo.addColorStop(0, 'rgba(207,106,60,.22)'); halo.addColorStop(1, 'rgba(207,106,60,0)');
       c.fillStyle = halo; c.beginPath(); c.arc(cx, cy, R0 * 1.12, 0, 2 * Math.PI); c.fill();
     }
-    const sea = c.createRadialGradient(cx - R0 * .35, cy - R0 * .4, R0 * .1, cx, cy, R0);
-    sea.addColorStop(0, '#2f6650'); sea.addColorStop(1, '#173a2c');
-    c.beginPath(); path({ type: 'Sphere' }); c.fillStyle = sea; c.fill();
-    c.beginPath(); path(d3.geoGraticule10()); c.strokeStyle = 'rgba(239,231,216,.08)'; c.lineWidth = 1; c.stroke();
-    c.beginPath(); path(worldData.land); c.fillStyle = '#efe7d8'; c.fill();
-    c.strokeStyle = 'rgba(31,70,54,.35)'; c.lineWidth = .6; c.stroke();
-    c.beginPath(); path(worldData.borders); c.strokeStyle = 'rgba(31,70,54,.22)'; c.lineWidth = .6; c.stroke();
+    if (this.tex) {
+      this.raster(cx, cy, R0);
+      if (this.zoom < 3) { c.beginPath(); path(d3.geoGraticule10()); c.strokeStyle = 'rgba(239,231,216,.07)'; c.lineWidth = 1; c.stroke(); }
+      if (this.zoom < 5) { c.beginPath(); path(worldData.borders); c.strokeStyle = 'rgba(31,70,54,' + (0.28 * Math.min(1, (5 - this.zoom) / 2)).toFixed(2) + ')'; c.lineWidth = .6; c.stroke(); }
+    } else {
+      const sea = c.createRadialGradient(cx - R0 * .35, cy - R0 * .4, R0 * .1, cx, cy, R0);
+      sea.addColorStop(0, '#2f6650'); sea.addColorStop(1, '#173a2c');
+      c.beginPath(); path({ type: 'Sphere' }); c.fillStyle = sea; c.fill();
+      c.beginPath(); path(d3.geoGraticule10()); c.strokeStyle = 'rgba(239,231,216,.08)'; c.lineWidth = 1; c.stroke();
+      c.beginPath(); path(worldData.land); c.fillStyle = '#efe7d8'; c.fill();
+      c.strokeStyle = 'rgba(31,70,54,.35)'; c.lineWidth = .6; c.stroke();
+      c.beginPath(); path(worldData.borders); c.strokeStyle = 'rgba(31,70,54,.22)'; c.lineWidth = .6; c.stroke();
+    }
     // reflet
     const gl = c.createRadialGradient(cx - R0 * .45, cy - R0 * .5, 0, cx - R0 * .45, cy - R0 * .5, R0 * 1.1);
     gl.addColorStop(0, 'rgba(255,255,255,.16)'); gl.addColorStop(.5, 'rgba(255,255,255,0)');
@@ -2610,9 +3233,14 @@ class Globe {
     this.data.forEach(g => {
       const sel = this.sel && this.sel.id === g.id, col = g.done ? '#cf6a3c' : g.cur ? '#f4c06b' : '#fffaf0';
       if (showLines || sel) {
-        c.beginPath(); path(g.line); c.setLineDash([]); c.lineJoin = c.lineCap = 'round';
+        let ln = g.line;
+        if (sel && this.growT0 && !reduceMotion) {   // le trek choisi se dessine pendant le vol
+          const p = Math.min(1, (performance.now() - this.growT0) / 1900), n = Math.max(2, Math.round(g.line.coordinates.length * p));
+          if (p < 1) { ln = { type: 'LineString', coordinates: g.line.coordinates.slice(0, n) }; if (!this.anim) requestAnimationFrame(() => this.draw()); } else this.growT0 = 0;
+        }
+        c.beginPath(); path(ln); c.setLineDash([]); c.lineJoin = c.lineCap = 'round';
         c.strokeStyle = 'rgba(23,58,44,.55)'; c.lineWidth = sel ? 7 : 5; c.stroke();
-        c.beginPath(); path(g.line); c.setLineDash(g.done ? [] : [6, 5]); c.strokeStyle = col; c.lineWidth = sel ? 4 : 2.6; c.stroke(); c.setLineDash([]);
+        c.beginPath(); path(ln); c.setLineDash(g.done ? [] : [6, 5]); c.strokeStyle = col; c.lineWidth = sel ? 4 : 2.6; c.stroke(); c.setLineDash([]);
       }
       if (!this.visible(g.c)) return;
       const [x, y] = P(g.c);
@@ -2670,6 +3298,7 @@ class Globe {
     let last = performance.now();
     const step = now => {
       if (!this.slot.isConnected || !this.wrap.offsetParent) { this.spinning = false; return; }
+      if (now - last < 30) return requestAnimationFrame(step);
       if (!this.anim && !this.drag && now > this.idleAt && this.zoom < 1.6 && !this.sel) { this.rot[0] += (now - last) * 0.006; this.draw(); }
       last = now; requestAnimationFrame(step);
     };
@@ -2682,18 +3311,8 @@ class Globe {
     this.fly([-g.c[0], -g.c[1], 0], (0.55 * Math.min(this.w, this.h)) / ext / this.r0);
   }
   select(g) {
-    this.sel = g || null; this.draw();
-    if (!g) { this.card.hidden = true; return; }
-    const t = g.t, s = (t && t.sum) || {};
-    this.card.hidden = false;
-    this.card.innerHTML = `<div class="gtx"><b>${escXml(g.name)}</b><small>${g.cur ? 'en préparation, pas encore dans ton carnet' : (s.km ? nf1.format(s.km) + ' km · ' + s.stages + ' jour' + (s.stages > 1 ? 's' : '') + ' · ' : '') + (g.done ? 'fait' + (t.doneDate ? ' le ' + fDay(t.doneDate) : '') : 'à faire')}${g.photos.length ? ' · ' + g.photos.length + ' photo' + (g.photos.length > 1 ? 's' : '') : ''}</small></div>
-      ${g.cur ? '' : `<button data-g="memo">${I('book')}Souvenirs</button>`}<button class="primary" data-g="map">${I('route')}${g.done ? 'Carte' : 'Préparer'}</button>`;
-    this.card.querySelectorAll('[data-g]').forEach(b => b.onclick = () => {
-      if (b.dataset.g === 'memo') return openTrekPage(g.id);
-      if (g.cur) { closeWelcome(); return showTab('stages'); }
-      if (g.id !== treks.cur && state.start && treks.dirty()) return confirmTap(b, 'Parcours en cours non enregistré : touche encore', () => { openTrek(g.id); });
-      openTrek(g.id);
-    });
+    this.sel = g || null; this.growT0 = g ? performance.now() : 0; this.draw();
+    globeCard(this, g);
   }
   bind() {
     const cv = this.cv;
@@ -2724,17 +3343,199 @@ class Globe {
     this.select(best.g); this.focus(best.g);
   }
 }
+function globeCard(G, g) {   // carte du trek touché sur le globe (2D ou 3D)
+  if (!g) { G.card.hidden = true; return; }
+  const t = g.t, s = (t && t.sum) || {};
+  G.card.hidden = false;
+  G.card.innerHTML = `<div class="gtx"><b>${escXml(g.name)}</b><small>${g.cur ? 'en préparation, pas encore dans ton carnet' : (s.km ? nf1.format(s.km) + ' km · ' + s.stages + ' jour' + (s.stages > 1 ? 's' : '') + ' · ' : '') + (g.done ? 'fait' + (t.doneDate ? ' le ' + fDay(t.doneDate) : '') : 'à faire')}${g.photos.length ? ' · ' + g.photos.length + ' photo' + (g.photos.length > 1 ? 's' : '') : ''}</small></div>
+    ${g.cur ? '' : `<button data-g="memo">${I('book')}Souvenirs</button>`}<button class="primary" data-g="map">${I('route')}${g.done ? 'Carte' : 'Préparer'}</button>`;
+  G.card.querySelectorAll('[data-g]').forEach(b => b.onclick = () => {
+    if (b.dataset.g === 'memo') return openTrekPage(g.id);
+    if (g.cur) { closeWelcome(); return showTab('stages'); }
+    if (g.id !== treks.cur && state.start && treks.dirty()) return confirmTap(b, 'Parcours en cours non enregistré : touche encore', () => { openTrek(g.id); });
+    openTrek(g.id);
+  });
+}
+/* ================= Globe 3D (MapLibre GL 5 : projection globe, relief en volume, couleurs d'altitude, ciel) =================
+   Chargé à la demande depuis unpkg, à côté de MapLibre 4 (carte principale) : on remet tout de suite l'ancien
+   `maplibregl` global en place. Altitudes : AWS Terrain Tiles (terrarium, fonds marins compris), mises en cache
+   par le service worker. Sans WebGL, sans réseau ou avec ?globe3d=0 : le globe dessiné (class Globe) prend le relais. */
+const ML5 = 'https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js';
+let ml5P = null;
+function loadML5() {
+  if (ml5P) return ml5P;
+  ml5P = new Promise((ok, ko) => {
+    const prev = window.maplibregl, sc = document.createElement('script');
+    sc.src = ML5;
+    sc.onload = () => { const m = window.maplibregl; window.maplibregl = prev; m && m !== prev && m.Map ? ok(m) : ko(new Error('globe 3D')); };
+    sc.onerror = () => { window.maplibregl = prev; ko(new Error('globe 3D')); };
+    document.head.appendChild(sc);
+  });
+  ml5P.catch(() => { ml5P = null; });
+  return ml5P;
+}
+function can3D() {
+  try { if (new URLSearchParams(location.search).get('globe3d') === '0' || localStorage.getItem('orri.globe3d') === '0') return false; } catch (e) { }
+  if (navigator.onLine === false) return false;
+  try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; }
+}
+// Couleurs d'altitude : fonds marins bleu-vert, plaines vert sauge, forêts, alpages blonds, roche, neige
+const RELIEF_COLORS = ['interpolate', ['linear'], ['elevation'],
+  -8000, '#0d2f3d', -5000, '#16465a', -3000, '#1f5c6e', -800, '#2f7a86', -120, '#4f9ba0', -1, '#86c1b8',
+  0, '#9dbb84', 300, '#a3bf85', 900, '#86a86a', 1500, '#a3b07a', 2000, '#cdc29c', 2500, '#baa68e', 3200, '#cfc8c0', 4000, '#f4f2ee', 6000, '#ffffff'];
+function globeStyle() {
+  const dem = () => ({ type: 'raster-dem', tiles: [TERRAIN + '{z}/{x}/{y}.png'], encoding: 'terrarium', tileSize: 256, maxzoom: 12, attribution: 'Altitudes : AWS Terrain Tiles' });
+  const fc = { type: 'FeatureCollection', features: [] };
+  return {
+    version: 8, projection: { type: 'globe' },
+    sources: { dem: dem(), dem3d: Object.assign(dem(), { maxzoom: 11 }), borders: { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: worldData.borders } }, treks: { type: 'geojson', data: fc }, tpts: { type: 'geojson', data: fc }, sel: { type: 'geojson', data: fc } },
+    sky: { 'sky-color': '#9cc3d4', 'horizon-color': '#f3ead8', 'fog-color': '#efe7d8', 'sky-horizon-blend': 0.7, 'horizon-fog-blend': 0.5, 'fog-ground-blend': 0.85, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] },
+    layers: [
+      { id: 'bg', type: 'background', paint: { 'background-color': '#16465a' } },
+      { id: 'relief', type: 'color-relief', source: 'dem', paint: { 'color-relief-color': RELIEF_COLORS } },
+      { id: 'ombre', type: 'hillshade', source: 'dem', paint: { 'hillshade-method': 'multidirectional', 'hillshade-exaggeration': ['interpolate', ['linear'], ['zoom'], 2, 0.3, 9, 0.55], 'hillshade-shadow-color': 'rgba(18,38,30,0.6)', 'hillshade-highlight-color': 'rgba(255,250,235,0.4)' } },
+      { id: 'frontieres', type: 'line', source: 'borders', paint: { 'line-color': '#fffaf0', 'line-width': 0.7, 'line-opacity': ['interpolate', ['linear'], ['zoom'], 1, 0.45, 6, 0] } },
+      { id: 'tcase', type: 'line', source: 'treks', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#173a2c', 'line-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0, 5, 0.6], 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 4, 12, 8] } },
+      { id: 'tline', type: 'line', source: 'treks', filter: ['!=', ['get', 'k'], 'todo'], layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': ['match', ['get', 'k'], 'cur', '#f4c06b', '#e07a45'], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0, 5, 1], 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 2.4, 12, 4.5] } },
+      { id: 'tline2', type: 'line', source: 'treks', filter: ['==', ['get', 'k'], 'todo'], layout: { 'line-join': 'round' }, paint: { 'line-color': '#fffaf0', 'line-dasharray': [1.6, 1.2], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 3, 0, 5, 1], 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 2.4, 12, 4.5] } },
+      { id: 'sline', type: 'line', source: 'sel', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': ['match', ['get', 'k'], 'cur', '#f4c06b', 'todo', '#fffaf0', '#e07a45'], 'line-width': ['interpolate', ['linear'], ['zoom'], 4, 4, 12, 6.5] } },
+      { id: 'tpt', type: 'circle', source: 'tpts', paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 5, 4, 8], 'circle-color': ['match', ['get', 'k'], 'done', '#e07a45', '#173a2c'], 'circle-stroke-width': 2.5, 'circle-stroke-color': ['match', ['get', 'k'], 'cur', '#f4c06b', '#fffaf0'], 'circle-opacity': ['interpolate', ['linear'], ['zoom'], 4.5, 1, 6, 0], 'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'], 4.5, 1, 6, 0], 'circle-pitch-alignment': 'map' } }
+    ]
+  };
+}
+class Globe3D {
+  constructor(slot, opt, ml) {
+    this.slot = slot; this.opt = opt || {}; this.ml = ml; this.is3d = true; this.data = []; this.sel = null; this.idleAt = 0; this.marks = [];
+    slot.innerHTML = `<div class="globe g3d"><div class="gmap" aria-label="Globe de tes treks en relief : glisse pour tourner, deux doigts pour incliner, touche un trek"></div>
+      <div class="gzoom"><button data-z="1" aria-label="Zoomer">${I('plus')}</button><button data-z="-1" aria-label="Dézoomer">${I('minus')}</button><button data-z="0" aria-label="Vue d'ensemble">${I('globe')}</button></div>
+      <div class="ghint">${this.opt.hint || ''}</div></div><div class="gcard" hidden></div>`;
+    this.wrap = slot.firstElementChild; this.card = slot.querySelector('.gcard');
+    const m = this.map = new ml.Map({ container: this.wrap.querySelector('.gmap'), style: globeStyle(), center: [-20, 30], zoom: 0.4, attributionControl: false, maxPitch: 75, fadeDuration: 150, canvasContextAttributes: { antialias: true, preserveDrawingBuffer: !!this.opt.keep } });
+    m.on('error', e => console.warn('globe 3D', e && e.error && e.error.message));
+    m.on('load', () => { this.ready = true; this.apply(); this.home(true); this.terrain(); this.onload && this.onload(); });
+    m.on('zoom', () => { this.terrain(); this.wrap.classList.toggle('near', m.getZoom() >= 6); });
+    const touch = () => { this.idleAt = performance.now() + 9000; this.orbit = false; };
+    ['dragstart', 'zoomstart', 'rotatestart', 'pitchstart'].forEach(ev => m.on(ev, e => { if (e.originalEvent) touch(); }));
+    m.on('mousedown', touch); m.on('touchstart', touch);
+    m.on('click', e => this.tap(e.point));
+    this.wrap.querySelectorAll('.gzoom button').forEach(b => b.onclick = e => {
+      e.stopPropagation(); const z = +b.dataset.z; touch();
+      if (!z) { this.select(null); this.home(); } else m.easeTo({ zoom: m.getZoom() + z * 1.3, duration: reduceMotion ? 0 : 600 });
+    });
+  }
+  get zoom() { return this.map.getZoom(); }
+  get w() { return this.wrap.clientWidth; }
+  terrain() {   // relief en volume quand on est assez près (le globe entier reste lisse et rapide)
+    if (!this.ready) return;
+    const on = this.map.getZoom() >= 5.5, has = !!this.map.getTerrain();
+    if (on !== has) this.map.setTerrain(on ? { source: 'dem3d', exaggeration: 1.5 } : null);
+  }
+  overZoom() { const s = Math.min(this.wrap.clientWidth, this.wrap.clientHeight) || 320; return Math.log2(s * 0.42 / 81.5); }
+  homeCenter() { const g = this.data.find(x => x.cur) || this.data[0]; return g ? [g.c[0], Math.max(-50, Math.min(50, g.c[1] - 8))] : [6, 34]; }
+  home(first) {
+    const c = this.homeCenter(), o = { center: c, zoom: this.overZoom(), pitch: 0, bearing: 0 };
+    if (first) { this.map.jumpTo(Object.assign({}, o, { center: [c[0] + 50, c[1]] })); this.map.flyTo(Object.assign(o, { duration: reduceMotion ? 0 : 2200, curve: 1 })); }
+    else this.map.flyTo(Object.assign(o, { duration: reduceMotion ? 0 : 1800 }));
+    this.orbit = false; this.idleAt = performance.now() + (first ? 2500 : 2000);
+  }
+  setData(list) {
+    this.data = list.map(g => { let a = 0, o = 0; g.pts.forEach(p => { a += p[0]; o += p[1]; }); return Object.assign(g, { c: [o / g.pts.length, a / g.pts.length], line: { type: 'LineString', coordinates: g.pts.map(p => [p[1], p[0]]) } }); });
+    if (this.sel && !this.data.find(g => g.id === this.sel.id)) this.select(null);
+    this.apply();
+  }
+  apply() {
+    if (!this.ready) return;
+    const k = g => g.cur ? 'cur' : g.done ? 'done' : 'todo';
+    this.map.getSource('treks').setData({ type: 'FeatureCollection', features: this.data.map(g => ({ type: 'Feature', properties: { id: g.id, k: k(g) }, geometry: g.line })) });
+    this.map.getSource('tpts').setData({ type: 'FeatureCollection', features: this.data.map(g => ({ type: 'Feature', properties: { id: g.id, k: k(g) }, geometry: { type: 'Point', coordinates: g.c } })) });
+    this.marks.forEach(mk => mk.remove()); this.marks = [];
+    this.data.forEach(g => g.photos.forEach(ph => {
+      const el = document.createElement('button'); el.className = 'gph'; el.setAttribute('aria-label', 'Photo');
+      photoURL(ph.id).then(u => { if (u) el.style.backgroundImage = `url("${u}")`; });
+      el.onclick = e => { e.stopPropagation(); if (g.t) viewPhoto(g.t, g.t.photos.findIndex(p => p.id === ph.id)); };
+      this.marks.push(new this.ml.Marker({ element: el, anchor: 'bottom' }).setLngLat([ph.lon, ph.lat]).addTo(this.map));
+    }));
+    if (this.sel) this.growSel(true);
+  }
+  draw() { }
+  resize() { if (this.map) this.map.resize(); }
+  spin() {   // la Terre tourne doucement au repos ; près d'un trek, la caméra en fait le tour
+    if (reduceMotion || this.spinning || this.opt.still) return;
+    this.spinning = true; let last = performance.now();
+    const step = now => {
+      if (!this.slot.isConnected || !this.wrap.offsetParent) { this.spinning = false; return; }
+      const dt = now - last;
+      if (dt < 33) return requestAnimationFrame(step);
+      last = now;
+      const m = this.map;
+      if (this.ready && now > this.idleAt && !m.isMoving()) {
+        if (m.getZoom() < 3.5 && !this.sel) { const c = m.getCenter(); m.jumpTo({ center: [c.lng + dt * 0.004, c.lat] }); }
+        else if (this.orbit) m.jumpTo({ bearing: m.getBearing() + dt * 0.0025 });
+      }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  camFor(g, pitch) {
+    let a0 = 90, a1 = -90, o0 = 180, o1 = -180;
+    g.pts.forEach(p => { a0 = Math.min(a0, p[0]); a1 = Math.max(a1, p[0]); o0 = Math.min(o0, p[1]); o1 = Math.max(o1, p[1]); });
+    const pad = Math.min(60, this.wrap.clientWidth / 6);
+    const cam = this.map.cameraForBounds([[o0, a0], [o1, a1]], { padding: { top: pad * 1.6, bottom: pad, left: pad, right: pad } }) || { center: g.c, zoom: 10 };
+    return { center: cam.center, zoom: Math.min(13, cam.zoom - (pitch ? 0.35 : 0)), pitch: pitch == null ? 58 : pitch, bearing: -18 };
+  }
+  focus(g, ms) {
+    const cam = this.camFor(g);
+    this.map.flyTo(Object.assign(cam, { duration: reduceMotion ? 0 : (ms || 3200), curve: 1.5, essential: true }));
+    this.orbit = true; this.idleAt = performance.now() + (ms || 3200) + 2500;
+  }
+  growSel(now) {   // le trek choisi se dessine pendant le vol
+    const g = this.sel; if (!g || !this.ready) { this.ready && this.map.getSource('sel').setData({ type: 'FeatureCollection', features: [] }); return; }
+    const src = this.map.getSource('sel'), k = g.cur ? 'cur' : g.done ? 'done' : 'todo', t0 = performance.now(), cs = g.line.coordinates;
+    const step = () => {
+      if (this.sel !== g) return;
+      const p = now || reduceMotion ? 1 : Math.min(1, (performance.now() - t0) / 2600);
+      src.setData({ type: 'Feature', properties: { k }, geometry: { type: 'LineString', coordinates: cs.slice(0, Math.max(2, Math.round(cs.length * p))) } });
+      if (p < 1) requestAnimationFrame(step);
+    };
+    step();
+  }
+  select(g) {
+    this.sel = g || null; this.growSel();
+    this.slot.closest('.whero') && this.slot.closest('.whero').classList.toggle('sel', !!g);
+    globeCard(this, g);
+  }
+  tap(pt) {
+    const m = this.map, r = 16, f = m.queryRenderedFeatures([[pt.x - r, pt.y - r], [pt.x + r, pt.y + r]], { layers: ['tpt', 'tline', 'tline2', 'tcase', 'sline'] });
+    const id = f.length && f.find(x => x.properties.id) ? f.find(x => x.properties.id).properties.id : this.sel && f.length ? this.sel.id : null;
+    const g = id && this.data.find(x => x.id === id);
+    if (!g) { if (this.sel) this.select(null); return; }
+    this.select(g); this.focus(g);
+  }
+}
 const globes = {};
+function welcomeDive(G) {   // accueil : la Terre tourne, puis on plonge en 3D sur le parcours en cours
+  clearTimeout(G.diveT);
+  const t = G.data.find(x => x.cur) || G.data.find(x => x.id === treks.cur);
+  if (t && !reduceMotion) G.diveT = setTimeout(() => { if (!G.sel && G.wrap.offsetParent && performance.now() > G.idleAt - 400) G.focus(t, 5200); }, 2600);
+}
 async function mountGlobe(where) {
   const slot = $(where === 'welcome' ? '#globeSlotWelcome' : '#globeSlotProfile');
   const want = globePlace === 'both' || globePlace === where;
   document.body.classList.toggle('globe-' + where, want);
   if (!want) { slot.innerHTML = ''; delete globes[where]; return; }
   try { await loadGlobeLibs(); } catch (e) { slot.innerHTML = ''; document.body.classList.remove('globe-' + where); return; }
-  if (!globes[where] || !slot.firstElementChild) globes[where] = new Globe(slot, { hint: where === 'welcome' ? '' : 'Glisse pour tourner · touche un trek' });
+  if (!globes[where] || !slot.firstElementChild) {
+    let ml = null;
+    if (can3D()) try { ml = await loadML5(); } catch (e) { }
+    try { globes[where] = ml ? new Globe3D(slot, { intro: where === 'welcome' }, ml) : null; } catch (e) { globes[where] = null; }
+    if (!globes[where]) globes[where] = new Globe(slot, {});
+    const G = globes[where];
+    if (G.is3d && where === 'welcome') G.onload = () => welcomeDive(G);
+  } else if (globes[where].is3d && where === 'welcome' && globes[where].ready) { globes[where].select(null); globes[where].home(true); setTimeout(() => welcomeDive(globes[where]), 50); }
   const g = globes[where]; g.setData(globeTreks()); g.resize(); g.spin();
+  slot.closest('.whero') && slot.closest('.whero').classList.toggle('g3d', !!g.is3d);
   const n = treks.list.length, d = treks.list.filter(t => t.status === 'done').length;
-  g.wrap.querySelector('.ghint').textContent = where === 'welcome' ? (n ? `${d} trek${d > 1 ? 's' : ''} fait${d > 1 ? 's' : ''} · ${n - d} à faire` : 'Tes treks apparaîtront sur ce globe') : (n ? 'Glisse pour tourner · touche un trek' : 'Enregistre un trek : il apparaîtra sur ton globe');
+  g.wrap.querySelector('.ghint').textContent = where === 'welcome' ? (n ? `${d} trek${d > 1 ? 's' : ''} fait${d > 1 ? 's' : ''} · ${n - d} à faire` : 'Tes treks apparaîtront sur ce globe') : (n ? (g.is3d ? 'Glisse pour tourner · deux doigts pour incliner · touche un trek' : 'Glisse pour tourner · touche un trek') : 'Enregistre un trek : il apparaîtra sur ton globe');
 }
 $('#gPlace').value = globePlace;
 $('#gPlace').onchange = e => { globePlace = e.target.value; try { localStorage.setItem('orri.globe', globePlace); } catch (err) { } mountGlobe('profile'); mountGlobe('welcome'); };
@@ -2753,7 +3554,7 @@ function renderWelcome() {
   box.innerHTML = h;
   $('#wDraw').classList.toggle('primary', !has);
   $('#wDraw b').textContent = has ? 'Nouveau parcours' : 'Tracer mon itinéraire';
-  if (has) $('#wGo').onclick = () => { closeWelcome(); showTab('stages'); };
+  if (has) $('#wGo').onclick = () => { closeWelcome(); showTab('stages'); setTimeout(() => animateRoute(1.4), 250); };
   if (treks.list.length) $('#wTreks').onclick = () => openPage('profile');
 }
 function startDrawing() {
@@ -2781,7 +3582,7 @@ $('#wDemo').onclick = () => {
   enqueue(() => {
     state.mode = mode;
     if (R.n > 1) map.fitBounds(L.latLngBounds(R.lat.map((la, i) => [la, R.lon[i]]).filter((_, i) => i % 20 === 0 || i === R.n - 1)), fitPad(20));
-    showTab('stages');
+    showTab('stages'); animateRoute();
     toast('Voici l\'exemple : chaque étape finit à un refuge ou un bivouac. Touche une étape pour le détail.', 'ok');
   });
 };
