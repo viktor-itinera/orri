@@ -3537,10 +3537,15 @@ function renderNear() {
       <small>${acct.s && r.user_id === acct.s.uid ? 'Ton trek' : 'Par ' + escXml(r.author)} · départ à ${r.dist_km < 1 ? 'moins d\'1' : nf0.format(r.dist_km)} km</small></span></button></li>`; }).join('');
   $('#nList').querySelectorAll('[data-i]').forEach(b => b.onclick = () => openPublicTrek(near.rows[+b.dataset.i]));
 }
+function nearErr(e) {   // message clair : pas de réseau, ou base pas encore mise à jour (schema.sql pas relancé)
+  if (e instanceof TypeError) return 'Pas de réseau pour le moment : réessaie plus tard.';
+  if (e.status === 404 || e.code === 'PGRST202' || /nearby_treks|function/i.test(e.message || '')) return 'Les randos publiques ne sont pas encore activées sur le serveur d\'Orri (base à mettre à jour).';
+  return 'Randos publiques indisponibles pour le moment (' + (e.message || 'erreur ' + (e.status || '')) + ').';
+}
 async function nearSearch(at) {
   near.at = at; near.busy = true; near.msg = ''; renderNear();
   try { near.rows = ((await supa('/rest/v1/rpc/nearby_treks', { method: 'POST', auth: false, body: { lat: at.lat, lon: at.lon, km: near.km } })) || []).filter(r => (r.line || []).length > 1); }
-  catch (e) { near.rows = []; near.msg = e instanceof TypeError ? 'Pas de réseau pour le moment : réessaie plus tard.' : 'La recherche n\'a pas marché (' + (e.message || 'erreur') + ').'; }
+  catch (e) { near.rows = []; near.msg = nearErr(e); }
   near.busy = false; renderNear();
 }
 function openNear() { openPage('near'); renderNear(); }
@@ -3590,7 +3595,7 @@ async function refreshNearMap(force) {
     if (seq !== near.seq || !near.onMap) return;
     near.mapRows = rows; drawNear(rows); nearChip();
     if (force && !rows.length) toast('Aucune rando publique dans cette zone pour l\'instant');
-  } catch (e) { near.mapAt = null; if (force) toast(e instanceof TypeError ? 'Pas de réseau : les randos publiques s\'afficheront plus tard' : 'Randos publiques indisponibles pour le moment', 'warn'); }
+  } catch (e) { near.mapAt = null; if (force) toast(nearErr(e), 'warn'); }
 }
 let nearMoveT = 0;
 map.on('moveend', () => { if (!near.onMap) return; clearTimeout(nearMoveT); nearMoveT = setTimeout(() => refreshNearMap(false), 700); });

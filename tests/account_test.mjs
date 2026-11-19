@@ -37,6 +37,7 @@ async function supa(route) {
   if (p === '/rest/v1/rpc/nearby_treks') {   // public, même sans compte
     const R = x => x * Math.PI / 180, km = Math.min(body.km, 200);
     const dist = r => 6371 * 2 * Math.asin(Math.sqrt(Math.sin(R(r.lat - body.lat) / 2) ** 2 + Math.cos(R(body.lat)) * Math.cos(R(r.lat)) * Math.sin(R(r.lon - body.lon) / 2) ** 2));
+    if (db.noNear) return send(404, { code: 'PGRST202', message: 'Could not find the function public.nearby_treks(km, lat, lon) in the schema cache' });
     db.nearCalls = (db.nearCalls || 0) + 1;
     return send(200, db.treks.filter(r => r.share === 'public' && !r.deleted && r.lat != null && dist(r) <= km).map(r => ({ user_id: r.user_id, id: r.id, name: r.data.name,
       author: (db.profiles[r.user_id] || {}).name || 'Randonneur', sum: r.data.sum, status: r.data.status || 'todo', line: r.line, dist_km: dist(r), updated_at: r.updated_at })).sort((a, b) => a.dist_km - b.dist_km));
@@ -258,7 +259,9 @@ check((await A.textContent('#tdBody')).includes('Randos autour de moi'), 'page S
 const E = await device([]);
 await E.evaluate(() => { map.setView([42.95, -0.2], 10); openPage('welcome'); });
 check(await E.isVisible('#wNear'), 'accueil : « Randos autour de moi », sans compte');
-await E.click('#wNear'); await E.click('#nMap');
+db.noNear = true; await E.click('#wNear'); await E.click('#nMap');
+check(await until(E, () => /pas encore activées/.test($('#nStatus').textContent)), 'base pas à jour : message clair');
+db.noNear = false; await E.click('#nMap');
 check(await until(E, () => near.rows.length === 1 && $('#nList').textContent.includes('GR10 étape 1') && $('#nList').textContent.includes('Viktor')), 'sans compte : la rando publique de Viktor est trouvée autour de la carte');
 await E.click('#nKm [data-km="25"]');
 check(await until(E, () => near.km === 25 && !near.busy), 'rayon réglable');
