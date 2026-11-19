@@ -79,7 +79,7 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   échelle), en chiffres (km, D+/D−, jours, heures, point culminant, profil, nuits), jour après jour, photos. Données : `svData` (le résumé
   `sum` garde désormais `days`, `prof`, `dn`, `h` ; repli calculé depuis le tracé). Partage d'une carte ou de toutes (`shareFiles`,
   `navigator.share`, sinon téléchargement). Dernière carte : **survol 3D** (`startFly`, `flyPlay` : vue d'ensemble, caméra qui suit le
-  tracé au-dessus du relief, recul final) et **vidéo** (`#stRec` : `MediaRecorder` sur un canevas 720 × 1280, mp4 si possible sinon webm,
+  tracé au-dessus du relief en **images satellite** : Sentinel-2 cloudless 2016 d'EOX, `SAT`, CC BY 4.0, sans clé, couleurs d'altitude en dessous si une tuile manque ; recul final) et **vidéo** (`#stRec` : `MediaRecorder` sur un canevas 720 × 1280, mp4 si possible sinon webm,
   pause tant que les tuiles chargent), tout sur le téléphone.
 - **Accueil** (`#page-welcome`) à **chaque ouverture** (demande de Viktor) : `renderWelcome` met en premier « Reprendre » le parcours
   en cours (`#wGo`) et « Mes parcours » (`#wTreks`) ; puis Nouveau parcours / Tracer (`#wDraw`, 2e touche si non enregistré),

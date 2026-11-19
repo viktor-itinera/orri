@@ -277,6 +277,7 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
 #stFly .flyhud{position:absolute;left:0;right:0;top:0;padding:16px 18px 40px;background:linear-gradient(180deg,rgba(0,0,0,.55),transparent);color:#fffaf0;pointer-events:none}
 #stFly .flyhud b{display:block;font-family:Fraunces,Georgia,serif;font-size:22px}
 #stFly .flyhud span{color:#f4c06b;font-weight:600}
+#stFly .flyattr{position:absolute;right:8px;bottom:6px;left:8px;text-align:right;font-size:10px;color:rgba(255,250,240,.8);text-shadow:0 1px 2px rgba(0,0,0,.6);pointer-events:none}
 #stFly .stmsg{color:#fffaf0;text-align:center;padding:40% 30px 0}
 #stPrev,#stNext{position:absolute;top:0;bottom:0;width:32%;background:none;border:0;padding:0;min-height:0}
 #stPrev{left:0}#stNext{right:0}
@@ -588,7 +589,7 @@ details.why summary::-webkit-details-marker{display:none}
         <div id="poiRows"></div>
         <p class="note" id="poiStatus"></p>
 
-        <footer>Itinéraires : BRouter (serveur public communautaire, usage modéré) sur données © contributeurs OpenStreetMap. Carte Orri : OpenFreeMap, © OpenMapTiles, © contributeurs OpenStreetMap ; relief : Mapzen, AWS Terrain Tiles (SRTM et autres sources publiques). Plan IGN, photos, altitudes et noms de lieux : © IGN. Eau, refuges, bivouacs, commerces et gares : © contributeurs OpenStreetMap (ODbL), extraits chaque mois pour la France, l'Espagne, l'Andorre, la Norvège, la Suisse et l'Italie. Ton brouillon est gardé dans ce navigateur.</footer>
+        <footer>Itinéraires : BRouter (serveur public communautaire, usage modéré) sur données © contributeurs OpenStreetMap. Carte Orri : OpenFreeMap, © OpenMapTiles, © contributeurs OpenStreetMap ; relief : Mapzen, AWS Terrain Tiles (SRTM et autres sources publiques). Images satellite du survol 3D : Sentinel-2 cloudless 2016 by EOX IT Services (CC BY 4.0, données Copernicus modifiées). Plan IGN, photos, altitudes et noms de lieux : © IGN. Eau, refuges, bivouacs, commerces et gares : © contributeurs OpenStreetMap (ODbL), extraits chaque mois pour la France, l'Espagne, l'Andorre, la Norvège, la Suisse et l'Italie. Ton brouillon est gardé dans ce navigateur.</footer>
       </section>
     </div>
   </aside>
@@ -2788,13 +2789,20 @@ async function startFly() {
   stopFly(true);
   let ml = null; if (can3D()) try { ml = await loadML5(); } catch (e) { }
   if (!ml || !story) { $('#stFly').innerHTML = '<p class="stmsg">Le survol 3D a besoin du réseau et d\'un téléphone compatible 3D.</p>'; return; }
-  $('#stFly').innerHTML = '<div class="flymap"></div><div class="flyhud"><b></b><span></span></div>';
+  $('#stFly').innerHTML = '<div class="flymap"></div><div class="flyhud"><b></b><span></span></div><small class="flyattr">Satellite : Sentinel-2 cloudless 2016 by EOX (CC BY 4.0) · relief : AWS Terrain Tiles</small>';
   const d = st.d, r = routeAlong(d.pts.map(p => [p[0], p[1]]));
   const style = globeStyle(); style.projection = { type: 'mercator' };
   style.sources.route = { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: d.pts.map(p => [p[1], p[0]]) } } };
   style.sources.done = { type: 'geojson', data: { type: 'FeatureCollection', features: [] } };
   style.sources.me = { type: 'geojson', data: { type: 'FeatureCollection', features: [] } };
-  style.layers = style.layers.filter(l => !/^t|^s|frontieres/.test(l.id) || l.id === 'bg').concat([
+  // Images satellite (Sentinel-2 cloudless 2016 d'EOX, CC BY 4.0, gratuit et sans clé) posées sur le relief en volume ;
+  // une tuile qui ne charge pas laisse voir les couleurs d'altitude en dessous.
+  style.sources.sat = { type: 'raster', tiles: [SAT], tileSize: 256, maxzoom: 13, attribution: SAT_ATTR };
+  style.layers = style.layers.filter(l => !/^t|^s|frontieres/.test(l.id) || l.id === 'bg');
+  style.layers.splice(style.layers.findIndex(l => l.id === 'ombre') + 1, 0,
+    { id: 'sat', type: 'raster', source: 'sat', paint: { 'raster-fade-duration': 0, 'raster-saturation': 0.08, 'raster-contrast': 0.06 } });
+  style.layers.find(l => l.id === 'ombre').layout = { visibility: 'none' };
+  style.layers = style.layers.concat([
     { id: 'rcase', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#fffaf0', 'line-width': 7, 'line-opacity': .75 } },
     { id: 'rdone', type: 'line', source: 'done', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#cf6a3c', 'line-width': 5.5 } },
     { id: 'rme', type: 'circle', source: 'me', paint: { 'circle-radius': 9, 'circle-color': '#cf6a3c', 'circle-stroke-width': 4, 'circle-stroke-color': '#fffaf0', 'circle-pitch-alignment': 'map' } }]);
@@ -2861,6 +2869,7 @@ $('#stRec').onclick = async () => {
     x.fillStyle = '#fffaf0'; x.font = `700 30px ${SVF}`; x.fillText('Orri', 36, 64);
     x.font = `700 44px ${SVF}`; x.fillText(svFit(x, F.d.t.name, `700 44px ${SVF}`, 650), 36, 128);
     x.font = `600 28px ${SVS}`; x.fillStyle = '#f4c06b'; x.fillText($('#stFly .flyhud span').textContent, 36, 172);
+    x.font = `400 15px ${SVS}`; x.fillStyle = 'rgba(255,250,240,.75)'; x.textAlign = 'right'; x.fillText('Sentinel-2 cloudless 2016 by EOX · AWS Terrain Tiles', 704, 1262); x.textAlign = 'left';
   };
   const done = new Promise(ok => rec.onstop = ok);
   rec.start(500); flyPlay(end => { frame(); if (end && rec.state !== 'inactive') rec.stop(); });
@@ -3056,6 +3065,7 @@ function loadRelief() {
   return reliefTex;
 }
 const TERRAIN = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/';
+const SAT = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg', SAT_ATTR = 'Images satellite : Sentinel-2 cloudless 2016 by EOX (CC BY 4.0), données Copernicus modifiées';
 const terrCache = new Map();
 function terrTile(z, x, y) {
   const k = z + '/' + x + '/' + y; if (terrCache.has(k)) return terrCache.get(k);
