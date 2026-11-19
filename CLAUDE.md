@@ -20,6 +20,7 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 | `data/poi/` | Points d'intérêt générés par le robot — **ne pas éditer à la main**. |
 | `tools/build_pois.py` | Construit `data/poi/` à partir d'exports OpenStreetMap. |
 | `.github/workflows/poi-data.yml` | Robot mensuel qui lance l'extraction et publie les données. |
+| `.github/workflows/supabase-reveil.yml` | Robot qui appelle `ping()` (lundi et jeudi) pour que le projet Supabase gratuit ne soit pas mis en pause (7 jours sans activité). Clé publique lue dans `index.html`, aucun secret. |
 | `tests/` | Test de fumée Playwright avec services réseau simulés. |
 
 ## Interface

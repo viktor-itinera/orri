@@ -1,0 +1,38 @@
+name: Réveil de la base en ligne (Supabase)
+
+# L'offre gratuite de Supabase met le projet en pause après 7 jours sans activité.
+# Ce robot l'interroge deux fois par semaine pour le garder éveillé.
+# Il n'utilise que la clé publique (la même que l'appli, dans index.html) : aucun secret.
+# S'il échoue, GitHub envoie un e-mail : la base est peut-être en pause (la relancer depuis le tableau de bord Supabase).
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 5 * * 1,4"        # lundi et jeudi à 05:41 UTC
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Interroger la base
+        run: |
+          curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_SHA}/index.html" -o index.html
+          URL=$(grep -o "url: 'https://[a-z0-9]*\.supabase\.co'" index.html | head -1 | cut -d"'" -f2)
+          KEY=$(grep -o "key: 'sb_publishable_[A-Za-z0-9_-]*'" index.html | head -1 | cut -d"'" -f2)
+          test -n "$URL" && test -n "$KEY" || { echo "Adresse ou clé Supabase introuvable dans index.html"; exit 1; }
+          for i in 1 2 3; do
+            # ping() fait une vraie requête dans la base (voir supabase/schema.sql)
+            code=$(curl -s -o out.txt -w '%{http_code}' -X POST "$URL/rest/v1/rpc/ping" \
+              -H "apikey: $KEY" -H "Content-Type: application/json" -d '{}')
+            echo "Essai $i : HTTP $code $(head -c 200 out.txt)"
+            if [ "$code" = 200 ]; then exit 0; fi
+            # ping() pas encore créée (schema.sql pas relancé) : l'appel à l'Auth compte aussi comme activité
+            if [ "$code" = 404 ] && curl -fsS "$URL/auth/v1/health" -H "apikey: $KEY" >/dev/null; then
+              echo "::warning::Fonction ping absente : relancer supabase/schema.sql dans le SQL Editor."; exit 0
+            fi
+            sleep $((i * 20))
+          done
+          echo "::error::La base ne répond pas : elle est peut-être en pause (Supabase → Restore project)."
+          exit 1

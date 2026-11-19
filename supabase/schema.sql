@@ -163,3 +163,10 @@ create policy "stats : celles de mes amis" on public.stats for select to authent
   using (public.is_friend(user_id));
 revoke all on public.stats from anon;
 grant select, insert, update, delete on public.stats to authenticated;
+
+-- ================= Réveil =================
+-- Appelée deux fois par semaine par le robot GitHub (.github/workflows/supabase-reveil.yml) : l'offre gratuite
+-- met le projet en pause après 7 jours sans activité. Ne lit ni n'écrit aucune donnée.
+create or replace function public.ping() returns text language sql stable as $$ select 'ok ' || now()::text $$;
+revoke all on function public.ping() from public;
+grant execute on function public.ping() to anon, authenticated;
