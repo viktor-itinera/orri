@@ -3167,7 +3167,7 @@ acct.sync = async function (quiet) {
   this.busy = true; this.err = ''; renderAcct();
   let changedLocal = false;
   try {
-    const remote = await supa('/rest/v1/treks?select=id,updated_at,deleted');
+    const remote = await supa(`/rest/v1/treks?select=id,updated_at,deleted&user_id=eq.${this.s.uid}`);   // seulement les miens (la règle RLS laisse aussi passer ceux que mes amis partagent)
     const rem = new Map(remote.map(r => [r.id, r])), loc = new Map(treks.list.map(t => [t.id, t])), rows = this.m.rows;
     const ids = new Set([...rem.keys(), ...loc.keys(), ...Object.keys(rows)]);
     const up = [], down = [], tomb = [], drop = [];
@@ -3186,7 +3186,7 @@ acct.sync = async function (quiet) {
     }
     for (let i = 0; i < down.length; i += 20) {
       const part = down.slice(i, i + 20);
-      for (const r of await supa(`/rest/v1/treks?select=id,data,updated_at&id=in.(${part.join(',')})`)) {
+      for (const r of await supa(`/rest/v1/treks?select=id,data,updated_at&user_id=eq.${this.s.uid}&id=in.(${part.join(',')})`)) {
         if (!r.data || !r.data.id) continue;
         let t = treks.get(r.id);   // modifié sur place : la page Souvenirs ouverte garde le bon objet
         if (t) { for (const k in t) if (k[0] !== '_' && k !== 'photos' && !(k in r.data)) delete t[k]; Object.assign(t, r.data); }
