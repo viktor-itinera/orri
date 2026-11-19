@@ -11,7 +11,7 @@ const URL = process.env.ORRI_URL || 'http://localhost:8765/';
 const NM = path.join(path.dirname(fileURLToPath(import.meta.url)), 'node_modules/');
 
 // ---- Faux Supabase ----
-const db = { users: [], profiles: {}, treks: [], friends: [], tick: 0 };
+const db = { users: [], profiles: {}, treks: [], friends: [], files: {}, checkins: {}, tick: 0 };
 const isFriend = (x, y) => db.friends.some(f => (f.a === x && f.b === y) || (f.a === y && f.b === x));
 const now = () => new Date(Date.UTC(2026, 10, 19, 8, 0, 0) + ++db.tick).toISOString();
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*' };
@@ -22,7 +22,7 @@ async function supa(route) {
   const send = (status, body) => route.fulfill({ status, headers: CORS, contentType: 'application/json', body: body == null ? '' : JSON.stringify(body) });
   if (m === 'OPTIONS') return send(204);
   if (h.apikey !== 'sb_publishable_OY8bVQK6AKjK2hfGuxZzGQ_8TAM6pJZ') badKey++;
-  const body = rq.postData() ? JSON.parse(rq.postData()) : null;
+  let body = null; try { body = rq.postData() ? JSON.parse(rq.postData()) : null; } catch (e) { }
   const p = u.pathname, q = u.searchParams;
   if (p === '/auth/v1/signup') {
     if (db.users.find(x => x.email === body.email)) return send(422, { code: 422, error_code: 'user_already_exists', msg: 'User already registered' });
@@ -45,6 +45,18 @@ async function supa(route) {
   }
   if (p === '/rest/v1/rpc/my_friends') return send(200, Object.values(db.profiles).filter(x => isFriend(me.id, x.id)).map(x => ({ id: x.id, name: x.name })));
   if (p === '/rest/v1/rpc/remove_friend') { db.friends = db.friends.filter(f => !((f.a === me.id && f.b === body.other) || (f.b === me.id && f.a === body.other))); return send(204); }
+  if (p.startsWith('/storage/v1/')) {
+    const own = path => path.split('/')[0] === me.id, see = path => own(path) || isFriend(me.id, path.split('/')[0]);
+    if (p === '/storage/v1/object/list/photos') return send(200, Object.keys(db.files).filter(k => k.startsWith(body.prefix + '/')).map(k => ({ name: k.slice(body.prefix.length + 1) })));
+    if (p === '/storage/v1/object/photos' && m === 'DELETE') { body.prefixes.forEach(k => { if (own(k)) delete db.files[k]; }); return send(200, []); }
+    if (p.startsWith('/storage/v1/object/photos/') && m === 'POST') { const k = p.slice(26); if (!own(k)) return send(403, { message: 'RLS' }); db.files[k] = rq.postDataBuffer(); return send(200, { Key: k }); }
+    if (p.startsWith('/storage/v1/object/authenticated/photos/')) { const k = p.slice(40); return see(k) && db.files[k] ? route.fulfill({ status: 200, headers: CORS, contentType: 'image/jpeg', body: db.files[k] }) : send(400, { message: 'not found' }); }
+  }
+  if (p === '/rest/v1/checkins') {
+    if (m === 'POST') { body.forEach(r => { if (r.user_id === me.id) db.checkins[me.id] = r; }); return send(201); }
+    if (m === 'DELETE') { delete db.checkins[me.id]; return send(204); }
+    return send(200, Object.values(db.checkins).filter(c => c.user_id === me.id || isFriend(me.id, c.user_id)));
+  }
   if (p === '/rest/v1/profiles') {
     if (m === 'POST') { body.forEach(r => { if (r.id === me.id) db.profiles[me.id] = Object.assign({ code: ('K' + me.id).toUpperCase().padEnd(8, 'X') }, db.profiles[me.id], r); }); return send(201); }
     const pr = db.profiles[me.id]; return send(200, pr ? [{ name: pr.name, code: pr.code }] : []);
@@ -162,6 +174,37 @@ check(await D.evaluate(() => treks.list.length === 1 && treks.list[0].status ===
 await A.evaluate(() => friendsRefresh(true));
 check(await until(A, () => friends.list.length === 1 && friends.list[0].name === 'Léa'), 'Léa apparaît chez Viktor');
 check(await A.evaluate(() => friends.treks.length === 0), 'Viktor ne voit pas la copie privée de Léa');
+// C3 : photo partagée, position, jour en cours
+await A.evaluate(async () => {
+  const c = document.createElement('canvas'); c.width = 40; c.height = 30; c.getContext('2d').fillStyle = '#c63'; c.getContext('2d').fillRect(0, 0, 40, 30);
+  const bl = await new Promise(ok => c.toBlob(ok, 'image/jpeg'));
+  await photoDB.put({ id: 'p1', trek: 't1', full: bl, thumb: bl });
+  const t = treks.get('t1'); t.status = 'todo'; t.data.S.startDate = new Date().toISOString().slice(0, 10); t.sum.stages = 3; treks.store();
+  openTrekPage('t1'); await viewPhoto(t, 0);
+});
+check(await A.isVisible('#vShare') && (await A.textContent('#vShare')).includes('Partager'), 'visionneuse : bouton « Partager » sur un trek partagé');
+await A.click('#vShare');
+check(await until(A, () => (treks.get('t1').pub || []).length === 1 && $('#vShare').textContent.includes('Partagée')) && !!db.files['u1/p1.jpg'] && !!db.files['u1/p1_t.jpg'], 'photo envoyée (grande + vignette) et notée partagée');
+check(await until(A, () => !acct.busy && acct.m.rows.t1.h === trekHash(treks.get('t1')), 9000) && (db.treks.find(r => r.id === 't1').data.pub || []).length === 1, 'liste des photos partagées synchronisée');
+await A.evaluate(() => { closeViewer(); openPage('profile'); });
+await A.context().grantPermissions(['geolocation']); await A.context().setGeolocation({ latitude: 42.91, longitude: 0.12 });
+await A.click('#fHere');
+check(await until(A, () => !!friends.me) && db.checkins.u1 && Math.abs(db.checkins.u1.lat - 42.91) < 1e-6, '« Je suis ici » : position enregistrée');
+await D.evaluate(() => friendsRefresh(true));
+check(await until(D, () => friends.treks.length === 1 && friends.treks[0].photos.length === 1 && friends.pos.length === 1), 'Léa reçoit la photo partagée et la position de Viktor');
+check(await D.evaluate(() => /En route : jour 1 sur 3/.test($('#friendsBox').textContent)), 'chez Léa : « En route : jour 1 sur 3 »');
+check(await D.evaluate(() => friendLayer.getLayers().length === 2 && globeTreks().some(g => g.checkin) && globeTreks().find(g => g.friend && !g.checkin).photos.length === 1), 'carte : trek + point de position ; globe : position et photo géolocalisée');
+await D.evaluate(() => openPage('profile')); await D.click('[data-ft]');
+check(await until(D, () => { const im = $('#ftBody .ph img'); return im && im.src.startsWith('blob:'); }), 'page du trek : photo de Viktor téléchargée');
+check((await D.textContent('#ftBody')).includes('jour 1 sur 3'), 'page du trek : jour en cours');
+await D.click('#ftBody .ph');
+check(await until(D, () => !$('#viewer').hidden && $('#vImg').src.startsWith('blob:') && $('#vDel').hidden && $('#vShare').hidden), 'photo de l\'ami en grand, sans boutons Supprimer / Partager');
+await D.evaluate(() => closeViewer());
+await A.evaluate(() => { openTrekPage('t1'); return viewPhoto(treks.get('t1'), 0); }); await A.click('#vShare');
+check(await until(A, () => !(treks.get('t1').pub || []).length) && !db.files['u1/p1.jpg'], 'photo retirée du partage : effacée du serveur');
+await A.evaluate(() => { closeViewer(); openPage('profile'); }); await A.click('#fOff');
+check(await until(A, () => !friends.me) && !db.checkins.u1, 'position effacée');
+
 await D.evaluate(() => openPage('profile')); await D.fill('#fCode', 'ZZZZ9999'); await D.click('#fAdd');
 check(await until(D, () => /ne correspond/.test($('#friendsBox').textContent)), 'code inconnu : message clair');
 await A.evaluate(() => openTrekPage('t1')); await A.uncheck('#tdShare');

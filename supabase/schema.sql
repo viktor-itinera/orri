@@ -105,3 +105,42 @@ $$;
 
 revoke all on function public.is_friend(uuid), public.add_friend(text), public.my_friends(), public.remove_friend(uuid) from public, anon;
 grant execute on function public.is_friend(uuid), public.add_friend(text), public.my_friends(), public.remove_friend(uuid) to authenticated;
+
+-- ================= C3 : suivi partagé =================
+-- Photos choisies une par une, réduites (≤ 1600 px), dans un espace privé : dossier = identifiant du compte.
+-- Lisibles par leur auteur et ses amis seulement.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('photos', 'photos', false, 1572864, array['image/jpeg'])
+on conflict (id) do nothing;
+
+drop policy if exists "photos : les miennes" on storage.objects;
+create policy "photos : les miennes" on storage.objects for all to authenticated
+  using (bucket_id = 'photos' and (storage.foldername(name))[1] = (select auth.uid())::text)
+  with check (bucket_id = 'photos' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+create or replace function public.is_friend_txt(other text) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select other ~ '^[0-9a-f-]{36}$' and public.is_friend(other::uuid);
+$$;
+drop policy if exists "photos : celles de mes amis" on storage.objects;
+create policy "photos : celles de mes amis" on storage.objects for select to authenticated
+  using (bucket_id = 'photos' and public.is_friend_txt((storage.foldername(name))[1]));
+revoke all on function public.is_friend_txt(text) from public, anon;
+grant execute on function public.is_friend_txt(text) to authenticated;
+
+-- « Je suis ici » : la dernière position partagée de chacun, visible de ses amis.
+create table if not exists public.checkins (
+  user_id uuid primary key default auth.uid() references auth.users(id) on delete cascade,
+  lat double precision not null check (lat between -90 and 90),
+  lon double precision not null check (lon between -180 and 180),
+  at timestamptz not null default now()
+);
+alter table public.checkins enable row level security;
+drop policy if exists "position : la mienne" on public.checkins;
+create policy "position : la mienne" on public.checkins for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+drop policy if exists "position : celle de mes amis" on public.checkins;
+create policy "position : celle de mes amis" on public.checkins for select to authenticated
+  using (public.is_friend(user_id));
+revoke all on public.checkins from anon;
+grant select, insert, update, delete on public.checkins to authenticated;

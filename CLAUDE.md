@@ -110,7 +110,15 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   Un trek est **privé par défaut** ; case « Partager avec mes amis » sur la page Souvenirs (`t.share = 'friends'`, colonne `share`,
   règle RLS `is_friend`). Treks des amis (`friendsRefresh` après chaque synchro, au plus une fois par minute) : en bleu `FRIEND_COL`
   sur le globe (`globeTreks` → `g.friend`, couches 3D `k = 'ami' | 'ami2'`) et sur la carte (`friendLayer`, case « Voir leurs treks sur la carte »),
-  page `#page-ftrek` (`renderFriendTrek` : lecture seule, « Copier dans mon carnet »). Les photos ne sont pas partagées (C3).
+  page `#page-ftrek` (`renderFriendTrek` : lecture seule, « Copier dans mon carnet »).
+- **Suivi partagé** (C3) : photos partagées **une par une** depuis la visionneuse (`#vShare`, seulement sur un trek partagé) : `sharePhoto`
+  envoie la photo 1600 px et la vignette dans le stockage privé `photos/<uid>/<id>.jpg` (+ `_t.jpg`, règles RLS : l'auteur et ses amis),
+  la liste dans `t.pub` (synchronisée, maintenue à la main, jamais déduite des photos locales). Chez l'ami, id `f/<uid>/<id>` :
+  `photoURL` → `storageGet`, donc globe, grille et visionneuse marchent pareil (Supprimer / Partager cachés). Retirer / supprimer une photo
+  ou un trek efface les fichiers (`unsharePaths`) ; supprimer le compte vide d'abord le dossier (`deleteAllPhotos`).
+  **« Je suis ici »** (`checkIn` / `checkOut`, table `checkins`, une ligne par compte) : point bleu à étiquette sur la carte des amis
+  (`friendLayer`) et sur leur globe (`g.checkin`), 7 jours max. **« En route : jour X sur N »** (`trekProgress`, `friendProg` : date de
+  départ, étapes + jours de repos) dans la liste d'amis, la page du trek et la carte du globe.
 
 ## Services externes (tous gratuits, sans clé)
 
