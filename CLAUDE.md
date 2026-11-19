@@ -108,7 +108,7 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
 - **Amis** (`friends`, gardé sous `orri.friends.v1`) : code ami `profiles.code` (8 caractères), invitation par lien `?ami=CODE`
   (retenu sous `orri.invite` jusqu'à la connexion) ou saisi à la main ; RPC `add_friend` (amis des deux côtés : partager son code = accepter),
   `my_friends`, `remove_friend` ; table `friends (a < b)`. Carte **Mes amis** (`renderFriends`, `#friendsBox`) sous Mon compte.
-  Un trek est **privé par défaut** ; case « Partager avec mes amis » sur la page Souvenirs (`t.share = 'friends'`, colonne `share`,
+  Un trek est **privé par défaut** ; choix « Qui le voit ? » sur la page Souvenirs (`t.share = 'friends'`, colonne `share`,
   règle RLS `is_friend`). Treks des amis (`friendsRefresh` après chaque synchro, au plus une fois par minute) : en bleu `FRIEND_COL`
   sur le globe (`globeTreks` → `g.friend`, couches 3D `k = 'ami' | 'ami2'`) et sur la carte (`friendLayer`, case « Voir leurs treks sur la carte »),
   page `#page-ftrek` (`renderFriendTrek` : lecture seule, « Copier dans mon carnet »).
@@ -127,6 +127,13 @@ l'associé, chiffres). Les décisions et la feuille de route vivent dans le carn
   déjà vus sous `orri.rando.seen`, premier passage silencieux). Avec un compte : totaux publiés dans la table `stats` (`publishStats`,
   dans `friendsRefresh`), **classement** entre amis dans Mes amis (`renderBoard` : mois / année × km / dénivelé, `friends.lb`).
   Classement de toute la communauté : pas encore (il faudra un accord explicite de chacun pour apparaître).
+- **Randos publiques « autour de moi »** : sur la page Souvenirs, « Qui le voit ? » (`#tdShare` : Moi seul / Mes amis / Tout le monde,
+  `t.share` = absent | `'friends'` | `'public'`, 2e touche pour public). Un trek public est envoyé avec son départ `lat`/`lon` et un tracé
+  simplifié `line` (80 points, `pubRow`) ; les amis le voient aussi (`isShared`). Recherche **sans compte** possible : page `#page-near`
+  (`renderNear`, `nearSearch`, carte `#wNear` à l'accueil) → RPC `nearby_treks(lat, lon, km)` (rayon 25/50/100/200 km, 40 résultats,
+  clé publique seule), autour de soi (position au toucher) ou du centre de la carte. Détail dans `#page-ftrek` (`friends.open.pub`,
+  `renderPubTrek`), en violet `PUB_COL` sur la carte (`nearLayer`), « Copier dans mon carnet » via RPC `public_trek` (sans `note` ni `pub`).
+  Jamais publics : e-mail, souvenir écrit, photos, « Je suis ici ».
 - La synchro ne lit que ses propres lignes (`user_id=eq.<moi>`) : la règle RLS laisse aussi passer les treks partagés des amis.
 
 ## Services externes (tous gratuits, sans clé)

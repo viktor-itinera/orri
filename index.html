@@ -176,7 +176,7 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
 .pbody{flex:1;overflow-y:auto;padding:4px 16px 40px;max-width:640px;width:100%;margin:0 auto}
 .card{background:var(--panel);border-radius:var(--r);padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
 #trekName,.rename{width:100%;font:inherit;font-size:16px;font-weight:600;border:1px solid var(--line);border-radius:var(--r);padding:0 12px;min-height:44px;background:#fff;color:var(--ink)}
-#trekList{list-style:none;margin:0;padding:0}
+#trekList,#nList{list-style:none;margin:0;padding:0}
 .trek{background:var(--panel);border-radius:var(--r);margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:hidden}
 .trek.cur{box-shadow:0 0 0 2px var(--forest)}
 .tmain{display:block;width:100%;text-align:left;border:0;border-radius:0;background:transparent;padding:12px 14px;min-height:0}
@@ -425,6 +425,7 @@ button:active:not(:disabled),.btn:active,.chip:active,.wcard:active,.fab:active,
 .fcode{font-size:16px;letter-spacing:.12em;color:var(--ink)}
 .fmap{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;margin-top:6px}
 .ftby{display:flex;align-items:center;gap:10px;margin:4px 0 12px;font-size:15px}.ftby .fav{width:34px;height:34px;font-size:13px}
+.fav.pubav{background:#eee3f3;color:#6d4a88}
 .ftnote{white-space:pre-wrap;background:var(--panel);border-radius:var(--r);padding:12px;margin:0}
 .ph.pub::after{content:'';position:absolute;left:5px;top:5px;width:14px;height:14px;border-radius:50%;background:#4f9bd0;border:2px solid #fff}
 .vbar .vsh{width:auto;padding:0 14px;gap:6px;font-size:14px}.vbar .vsh.on{background:#4f9bd0}
@@ -650,6 +651,7 @@ details.why summary::-webkit-details-marker{display:none}
       <div id="wResume" style="display:contents"></div>
       <button class="wcard primary" id="wDraw"><svg class="ico"><use href="#i-pen"/></svg><span><b>Tracer mon itinéraire</b><small>Touche la carte : le tracé suit les sentiers</small></span></button>
       <label class="wcard" for="file" id="wImport"><svg class="ico"><use href="#i-up"/></svg><span><b>Importer un GPX</b><small>Un trek déjà tracé ailleurs</small></span></label>
+      <button class="wcard" id="wNear"><svg class="ico"><use href="#i-globe"/></svg><span><b>Randos autour de moi</b><small>Les treks que la communauté partage</small></span></button>
       <button class="wcard" id="wDemo"><svg class="ico"><use href="#i-route"/></svg><span><b>Voir un exemple</b><small>Pyrénées : de Gourette à Luz-Saint-Sauveur</small></span></button>
       <ul class="wpts">
         <li><svg class="ico"><use href="#i-flag"/></svg>Des étapes à ton rythme, qui finissent au refuge ou au bivouac</li>
@@ -713,6 +715,18 @@ details.why summary::-webkit-details-marker{display:none}
   <div class="page" id="page-ftrek" role="dialog" aria-label="Trek d'un ami">
     <header><button class="close back" id="bFtBack" aria-label="Retour au carnet"><svg class="ico"><use href="#i-back"/></svg></button><h1 id="ftName">Trek</h1></header>
     <div class="pbody" id="ftBody"></div>
+  </div>
+  <div class="page" id="page-near" role="dialog" aria-label="Randos autour de moi">
+    <header><h1>Randos autour de moi</h1><button class="close" aria-label="Fermer"><svg class="ico"><use href="#i-x"/></svg></button></header>
+    <div class="pbody">
+      <div class="row"><button class="primary grow" id="nMe"><svg class="ico"><use href="#i-locate"/></svg>Autour de moi</button><button class="grow" id="nMap"><svg class="ico"><use href="#i-route"/></svg>Autour de la carte</button></div>
+      <div class="seg" id="nKm" style="margin-top:10px" aria-label="Rayon"></div>
+      <p class="note" id="nStatus"></p>
+      <ul id="nList"></ul>
+      <button id="nAll" style="width:100%;margin-top:8px" hidden><svg class="ico"><use href="#i-route"/></svg>Les voir tous sur la carte</button>
+      <details class="why"><summary>D'où viennent ces randos ?</summary><p>Ce sont les treks que des randonneurs d'Orri ont choisi de rendre publics. On voit leur tracé, leurs étapes et le pseudo de leur auteur, jamais son e-mail, son souvenir écrit ni ses photos.
+        Pour partager le tien : crée un compte dans Mon carnet, puis sur un trek, « Souvenirs » → « Qui le voit ? » → « Tout le monde ».</p></details>
+    </div>
   </div>
   <div id="story" role="dialog" aria-label="Mes souvenirs" hidden>
     <div id="stBars"></div>
@@ -2573,15 +2587,17 @@ function renderTrekPage(t) {
     <h2>Ce trek, tu l'as…</h2>
     <div class="seg" id="tdStatus"><button data-s="todo" class="${done ? '' : 'on'}">${I('flag')}À faire</button><button data-s="done" class="${done ? 'on' : ''}">${I('check')}Fait</button></div>
     ${done ? `<div class="lim" style="margin-top:10px"><label for="tdDate">Fait le</label><input type="date" id="tdDate" value="${t.doneDate || ''}"></div>` : ''}
-    ${acct.s ? `<label class="tshare"><input type="checkbox" id="tdShare"${t.share === 'friends' ? ' checked' : ''}> Partager avec mes amis</label>
-    <p class="note" style="margin-top:0">${t.share === 'friends' ? 'Tes amis voient ce trek : tracé, étapes, statut et souvenir écrit (pas les photos).' : 'Privé : toi seul le vois.'}</p>` : ''}
+    ${acct.s ? `<h2>Qui le voit ?</h2>
+    <div class="seg" id="tdShare">${[['private', 'Moi seul'], ['friends', 'Mes amis'], ['public', 'Tout le monde']].map(([k, l]) => `<button data-sh="${k}" class="${(t.share || 'private') === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <p class="note" style="margin-top:6px">${t.share === 'public' ? 'Public : tout le monde peut le trouver dans « Randos autour de moi », même sans compte (tracé, étapes et ton pseudo). Ton souvenir écrit et tes photos restent pour tes amis.'
+      : t.share === 'friends' ? 'Tes amis voient ce trek : tracé, étapes, statut, souvenir écrit et les photos que tu partages.' : 'Privé : toi seul le vois.'}</p>` : ''}
     <h2>Mon souvenir</h2>
     <textarea id="tdNote" rows="4" maxlength="4000" placeholder="${done ? 'Le plus beau moment, la météo, avec qui, ce que tu referais…' : 'Pourquoi ce trek, avec qui, quand, ce qu\'il faut préparer…'}">${escXml(t.note || '')}</textarea>
     <h2>Photos ${ph.length ? `<span class="cnt">(${ph.length})</span>` : ''}</h2>
     <div class="pgrid">${ph.map((p, i) => `<button class="ph${(t.pub || []).some(x => x.id === p.id) ? ' pub' : ''}" data-i="${i}"><img data-ph="${p.id}" alt="Photo ${i + 1}">${p.lat != null ? `<span class="geo">${I('tap')}</span>` : ''}</button>`).join('')}
       <label class="ph add" for="photoIn">${I('camera')}<span>Ajouter</span></label></div>
     <input type="file" id="photoIn" accept="image/*" multiple hidden>
-    <p class="note">${acct.s && t.share === 'friends' ? 'Pour montrer une photo à tes amis, touche-la puis « Partager ». Les autres restent sur ce téléphone.' : 'Les photos restent sur ce téléphone (réduites pour prendre peu de place). Celles qui ont une position GPS se placent sur le tracé et sur ton globe.'}</p>
+    <p class="note">${acct.s && isShared(t) ? 'Pour montrer une photo à tes amis, touche-la puis « Partager ». Les autres restent sur ce téléphone.' : 'Les photos restent sur ce téléphone (réduites pour prendre peu de place). Celles qui ont une position GPS se placent sur le tracé et sur ton globe.'}</p>
     <div class="row" style="margin-top:14px"><button class="primary grow" id="tdOpen">${I('route')}Ouvrir sur la carte</button><button class="grow" id="tdCard">${I('camera')}Souvenirs</button></div>
     <div class="row" style="margin-top:8px"><button class="grow" id="tdRen">${I('pen')}Renommer</button><button class="grow" id="tdDup">Dupliquer</button><button class="grow danger" id="tdDel">${I('trash')}Supprimer</button></div>`;
   fillThumbs($('#tdBody'));
@@ -2592,10 +2608,15 @@ function renderTrekPage(t) {
     if (!was && t.status === 'done') { toast(`Bravo ! « ${t.name} » rejoint tes treks faits`, 'ok'); const st = $('#tdStatus [data-s=done]'); if (st) st.classList.add('pop'); }
     if (typeof globeRefresh === 'function') globeRefresh();
   });
-  if ($('#tdShare')) $('#tdShare').onchange = e => {
-    t.share = e.target.checked ? 'friends' : 'private'; treks.store(); renderTrekPage(t);
-    toast(t.share === 'friends' ? `« ${t.name} » est visible de tes amis` : `« ${t.name} » est de nouveau privé`, 'ok');
-  };
+  document.querySelectorAll('#tdShare button').forEach(b => b.onclick = () => {
+    const v = b.dataset.sh; if ((t.share || 'private') === v) return;
+    const go = () => {
+      if (v === 'private') { delete t.share; if ((t.pub || []).length) { unsharePaths(t.pub.map(p => p.id)); t.pub = []; } } else t.share = v;
+      treks.store(); renderTrekPage(t);
+      toast(v === 'public' ? `« ${t.name} » est public : on le trouve autour de son départ` : v === 'friends' ? `« ${t.name} » est visible de tes amis` : `« ${t.name} » est de nouveau privé`, 'ok');
+    };
+    if (v === 'public') confirmTap(b, 'Touche encore : tout le monde pourra le voir', go); else go();
+  });
   if ($('#tdDate')) $('#tdDate').onchange = e => { t.doneDate = e.target.value || ''; treks.store(); };
   $('#tdNote').oninput = e => { t.note = e.target.value; clearTimeout(t._nt); t._nt = setTimeout(() => treks.store(), 500); };
   $('#photoIn').onchange = e => { const fs = [...e.target.files]; e.target.value = ''; addPhotos(t, fs); };
@@ -2624,7 +2645,7 @@ function renderTrekPage(t) {
   });
 }
 $('#bTrekBack').onclick = () => openPage('profile');
-$('#bFtBack').onclick = () => openPage('profile');
+$('#bFtBack').onclick = () => openPage(friends.open && friends.open.pub ? 'near' : 'profile');
 // --- Souvenirs : plusieurs cartes à partager (couverture, carte en relief, chiffres et profil, jour après jour, photos) + survol 3D en vidéo ---
 const SV_W = 1080, SV_H = 1920, SVF = 'Fraunces, Georgia, serif', SVS = 'Figtree, system-ui, sans-serif';
 function svData(t) {
@@ -2940,7 +2961,7 @@ let viewing = null;
 async function viewPhoto(t, i) {
   const ph = t.photos || []; if (!ph[i]) return closeViewer();
   viewing = { t, i }; $('#viewer').hidden = false;
-  const p = ph[i], mine = !t.uid, canShare = mine && !!acct.s && t.share === 'friends', on = (t.pub || []).some(x => x.id === p.id);
+  const p = ph[i], mine = !t.uid, canShare = mine && !!acct.s && isShared(t), on = (t.pub || []).some(x => x.id === p.id);
   $('#vDel').hidden = !mine; $('#vShare').hidden = !canShare;
   $('#vShare').classList.toggle('on', on); $('#vShare').lastElementChild.textContent = on ? 'Partagée' : 'Partager';
   $('#vImg').src = await photoURL(p.id, true);
@@ -3128,6 +3149,15 @@ const acct = {
   },
   soon() { if (!this.s) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.sync(true), 4000); }
 };
+const SHARES = ['private', 'friends', 'public'];
+const isShared = t => !!t && (t.share === 'friends' || t.share === 'public');
+// Trek public : point de départ et tracé simplifié, pour la recherche « autour de moi » (nearby_treks)
+function pubRow(r) {
+  if (r.share !== 'public' || !r.data) return r;
+  const pts = trekPts(r.data, 80).map(p => [Math.round(p[0] * 1e5) / 1e5, Math.round(p[1] * 1e5) / 1e5]);
+  if (pts.length) Object.assign(r, { lat: pts[0][0], lon: pts[0][1], line: pts });
+  return r;
+}
 async function supa(path, o = {}) {
   const h = { apikey: SUPA.key, 'Content-Type': 'application/json' };
   if (o.auth !== false) { await acctToken(); h.Authorization = 'Bearer ' + acct.s.at; }
@@ -3220,7 +3250,7 @@ acct.sync = async function (quiet) {
     }
     const put = async (id, data) => {
       const res = await supa('/rest/v1/treks?on_conflict=user_id,id&select=id,updated_at', { method: 'POST', prefer: 'resolution=merge-duplicates,return=representation',
-        body: [{ user_id: this.s.uid, id, data, deleted: !data, share: (data && data.share === 'friends') ? 'friends' : 'private' }] });
+        body: [pubRow({ user_id: this.s.uid, id, data, deleted: !data, share: data && SHARES.includes(data.share) ? data.share : 'private' })] });
       return res && res[0] && res[0].updated_at;
     };
     for (const L of up) rows[L.id] = { h: trekHash(L), at: await put(L.id, trekClean(L)) };
@@ -3326,7 +3356,7 @@ async function friendsRefresh(force) {
       catch (e) { if (!/code_perso/.test(e.message || '')) toast(friendMsg(e), 'warn'); }
     }
     friends.list = (await supa('/rest/v1/rpc/my_friends', { method: 'POST', body: {} })) || [];
-    const rows = friends.list.length ? await supa(`/rest/v1/treks?select=user_id,id,data,updated_at&share=eq.friends&deleted=eq.false&user_id=neq.${acct.s.uid}`) : [];
+    const rows = friends.list.length ? await supa(`/rest/v1/treks?select=user_id,id,data,updated_at&share=in.(friends,public)&deleted=eq.false&user_id=neq.${acct.s.uid}`) : [];
     friends.treks = (rows || []).filter(r => r.data && r.data.data).map(r => {
       const d = r.data;
       return { uid: r.user_id, id: d.id, name: d.name, status: d.status || 'todo', doneDate: d.doneDate || '', note: d.note || '', sum: d.sum || {},
@@ -3402,6 +3432,7 @@ function renderFriends() {
 // --- Page d'un trek d'ami (lecture seule) ---
 function openFriendTrek(uid, id) { friends.open = { uid, id }; openPage('ftrek'); renderFriendTrek(); $('#ftBody').scrollTop = 0; }
 function renderFriendTrek() {
+  if (friends.open && friends.open.pub) return renderPubTrek(friends.open.pub);
   const o = friends.open, t = o && friends.treks.find(x => x.uid === o.uid && x.id === o.id);
   if (!t) { $('#ftName').textContent = 'Trek'; $('#ftBody').innerHTML = '<p class="note">Ce trek n\'est plus partagé.</p>'; return; }
   const s = t.sum || {}, done = t.status === 'done';
@@ -3427,9 +3458,12 @@ function renderFriendTrek() {
     let d = t.data;
     if (!d) { try { const r = await supa(`/rest/v1/treks?select=data&user_id=eq.${t.uid}&id=eq.${encodeURIComponent(t.id)}`); d = r && r[0] && r[0].data; } catch (e) { } }
     if (!d) return toast('Copie impossible hors ligne : réessaie avec du réseau', 'warn');
-    const now = new Date().toISOString(), c = { id: newId(), name: d.name, created: now, updated: now, data: JSON.parse(JSON.stringify(d.data)), sum: d.sum, status: 'todo', photos: [], from: friendName(t.uid) };
-    treks.list.unshift(c); treks.store(); toast(`« ${c.name} » copié dans ton carnet`, 'ok'); openTrekPage(c.id);
+    copyToCarnet(d, friendName(t.uid));
   };
+}
+function copyToCarnet(d, from) {
+  const now = new Date().toISOString(), c = { id: newId(), name: d.name, created: now, updated: now, data: JSON.parse(JSON.stringify(d.data)), sum: d.sum, status: 'todo', photos: [], from };
+  treks.list.unshift(c); treks.store(); toast(`« ${c.name} » copié dans ton carnet`, 'ok'); openTrekPage(c.id);
 }
 // --- Treks des amis sur la carte principale ---
 const friendLayer = L.layerGroup().addTo(map);
@@ -3448,6 +3482,75 @@ function drawFriendLayer() {
     mk.bindTooltip(`${escXml(friendName(ps.user_id))} · ${agoFr(Date.parse(ps.at))}`, { permanent: true, direction: 'top', offset: [0, -8], className: 'fposTip' });
     friendLayer.addLayer(mk);
   });
+}
+/* ================= Randos publiques « autour de moi » =================
+   Treks rendus publics (`share: 'public'`, avec départ `lat`/`lon` et tracé simplifié `line`, voir `pubRow`) : RPC `nearby_treks`
+   avec la seule clé publique, donc aussi sans compte. Page `#page-near`, détail dans `#page-ftrek` (`friends.open.pub`), carte `nearLayer`. */
+const PUB_COL = '#8a5fa8', NEAR_KM = [25, 50, 100, 200];
+const near = { km: 50, rows: [], at: null, busy: false, msg: '' };
+try { const k = +localStorage.getItem('orri.near.km'); if (NEAR_KM.includes(k)) near.km = k; } catch (e) { }
+const nearLayer = L.layerGroup().addTo(map);
+function renderNear() {
+  $('#nKm').innerHTML = NEAR_KM.map(k => `<button data-km="${k}" class="${k === near.km ? 'on' : ''}">${k} km</button>`).join('');
+  $('#nKm').querySelectorAll('button').forEach(b => b.onclick = () => { near.km = +b.dataset.km; try { localStorage.setItem('orri.near.km', near.km); } catch (e) { } renderNear(); if (near.at) nearSearch(near.at); });
+  const n = near.rows.length;
+  $('#nStatus').textContent = near.busy ? 'Recherche…' : near.msg || (near.at ? (n ? `${n} rando${n > 1 ? 's' : ''} à moins de ${near.km} km${near.at.label ? ' ' + near.at.label : ''}` : `Aucune rando publique à moins de ${near.km} km${near.at.label ? ' ' + near.at.label : ''} pour l'instant. Essaie un rayon plus grand.`)
+    : 'Cherche les treks que les randonneurs d\'Orri ont rendus publics, autour de toi ou de l\'endroit que montre la carte.');
+  $('#nAll').hidden = !n;
+  $('#nList').innerHTML = near.rows.map((r, i) => { const s = r.sum || {};
+    return `<li class="trek${r.status === 'done' ? ' done' : ''}"><button class="tmain" data-i="${i}">${trackSVG(r.line || [], 84, 84, { color: PUB_COL })}<span class="ttx"><b>${escXml(r.name || 'Trek')}</b>
+      <span>${s.km ? nf1.format(s.km) + ' km · +' + nf0.format(s.up || 0) + ' m · ' + (s.stages || 1) + ' jour' + (s.stages > 1 ? 's' : '') : ''}</span>
+      <small>${acct.s && r.user_id === acct.s.uid ? 'Ton trek' : 'Par ' + escXml(r.author)} · départ à ${r.dist_km < 1 ? 'moins d\'1' : nf0.format(r.dist_km)} km</small></span></button></li>`; }).join('');
+  $('#nList').querySelectorAll('[data-i]').forEach(b => b.onclick = () => openPublicTrek(near.rows[+b.dataset.i]));
+}
+async function nearSearch(at) {
+  near.at = at; near.busy = true; near.msg = ''; renderNear();
+  try { near.rows = ((await supa('/rest/v1/rpc/nearby_treks', { method: 'POST', auth: false, body: { lat: at.lat, lon: at.lon, km: near.km } })) || []).filter(r => (r.line || []).length > 1); }
+  catch (e) { near.rows = []; near.msg = e instanceof TypeError ? 'Pas de réseau pour le moment : réessaie plus tard.' : 'La recherche n\'a pas marché (' + (e.message || 'erreur') + ').'; }
+  near.busy = false; renderNear();
+}
+function openNear() { openPage('near'); renderNear(); }
+$('#nMe').onclick = () => {
+  if (!navigator.geolocation) return toast('Localisation non disponible sur cet appareil', 'warn');
+  near.busy = true; near.msg = ''; renderNear();
+  navigator.geolocation.getCurrentPosition(p => nearSearch({ lat: p.coords.latitude, lon: p.coords.longitude, label: 'de toi' }), err => {
+    near.busy = false; near.msg = err.code === 1 ? 'Localisation refusée : autorise-la, ou cherche autour de la carte.' : 'Position introuvable pour le moment : cherche autour de la carte.'; renderNear();
+  }, { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 });
+};
+$('#nMap').onclick = () => { const c = map.getCenter(); nearSearch({ lat: c.lat, lon: c.lng, label: 'du centre de la carte' }); };
+$('#wNear').onclick = openNear;
+function drawNear(rows) {
+  nearLayer.clearLayers();
+  rows.forEach(r => {
+    const ln = L.polyline(r.line, { color: PUB_COL, weight: 4, opacity: .85, dashArray: r.status === 'done' ? null : '8 7' });
+    ln.bindTooltip(`${escXml(r.name || 'Trek')} · ${escXml(r.author)}`, { sticky: true });
+    ln.on('click', e => { L.DomEvent.stopPropagation(e); if (!state.draw) openPublicTrek(r); });
+    nearLayer.addLayer(ln);
+  });
+}
+function showNearOnMap(rows) {
+  drawNear(rows); closePage(); if (typeof closeWelcome === 'function') closeWelcome();
+  map.fitBounds(L.latLngBounds(rows.flatMap(r => r.line)), fitPad(30));
+  toast(rows.length > 1 ? 'En violet : les randos publiques trouvées' : 'En violet : la rando publique');
+}
+$('#nAll').onclick = () => showNearOnMap(near.rows);
+function openPublicTrek(r) { friends.open = { pub: r }; openPage('ftrek'); renderFriendTrek(); $('#ftBody').scrollTop = 0; }
+function renderPubTrek(r) {
+  const s = r.sum || {}, mine = acct.s && r.user_id === acct.s.uid;
+  $('#ftName').textContent = r.name || 'Trek';
+  $('#ftBody').innerHTML = `<p class="ftby"><span class="fav pubav">${escXml(initials(r.author))}</span>Rando publique de <b>${mine ? 'toi' : escXml(r.author)}</b></p>
+    <div class="tdmap">${trackSVG(r.line, 600, 300, { sw: 4, pad: 22, color: PUB_COL })}</div>
+    <p class="tdnums"><b>${s.km ? nf1.format(s.km) + ' km' : '—'}</b> · +${nf0.format(s.up || 0)} m · ${s.stages || 1} jour${s.stages > 1 ? 's' : ''}</p>
+    <p>${r.status === 'done' ? `<span class="st done">${I('check')}Déjà fait par ${mine ? 'toi' : 'son auteur'}</span>` : `<span class="st todo">${I('flag')}En projet</span>`} · départ à ${r.dist_km < 1 ? 'moins d\'1' : nf0.format(r.dist_km)} km</p>
+    <button class="primary" id="ftMap" style="width:100%;margin-top:14px">${I('route')}Voir sur la carte</button>
+    ${mine ? '' : `<button id="ftCopy" style="width:100%;margin-top:8px">${I('plus')}Copier dans mon carnet</button>
+    <p class="note">La copie est à toi : tu peux la modifier, choisir tes nuits et préparer l'eau et le ravitaillement à ta façon.</p>`}`;
+  $('#ftMap').onclick = () => showNearOnMap([r]);
+  if ($('#ftCopy')) $('#ftCopy').onclick = async () => {
+    let d = null; try { d = await supa('/rest/v1/rpc/public_trek', { method: 'POST', auth: false, body: { uid: r.user_id, tid: r.id } }); } catch (e) { }
+    if (!d || !d.data) return toast('Copie impossible : ce trek n\'est plus public, ou pas de réseau', 'warn');
+    copyToCarnet(d, r.author);
+  };
 }
 // Lien d'invitation : ?ami=CODE
 (() => {
