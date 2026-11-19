@@ -463,6 +463,50 @@ details.why summary::-webkit-details-marker{display:none}
 .empty-ill{display:block;margin:6px auto 10px;width:120px;height:70px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
+/* --- Ménage visuel (L1) : un seul système de boutons, cartes, espacements --- */
+:root{--r:16px;--card:0 1px 0 rgba(31,70,54,.05),0 2px 10px rgba(31,70,54,.07);--pill:22px}
+/* Boutons : primaire terracotta, secondaire blanc, tous en pilule */
+button,.btn{border-radius:var(--pill);font-weight:600}
+button.danger{color:var(--err)!important}
+button.primary,.btn.primary{box-shadow:0 4px 12px rgba(207,106,60,.24)}
+button.primary:disabled{opacity:1;background:var(--moss);border-color:var(--moss);color:var(--forest);box-shadow:none}
+button:disabled:not(.primary){opacity:.45}
+:is(button,.btn,select,input,.chip,.wcard):focus-visible{outline:2px solid var(--terra);outline-offset:2px}
+input[type=number],input[type=date],input[type=time],select,#trekName,.rename,.acct input{border-radius:12px}
+/* Choix segmentés : pastille glissante plutôt que blocs noirs */
+.seg{border:0;background:var(--sand);border-radius:var(--pill);padding:3px;gap:3px}
+.seg button{border-radius:19px!important;min-height:40px;background:transparent!important;color:var(--muted)!important;box-shadow:none}
+.seg button.on{background:#fff!important;color:var(--forest)!important;box-shadow:0 1px 4px rgba(31,70,54,.16)}
+/* Cartes : blanches, sans bordure, une seule ombre douce */
+.card,.tsum,.day .body,.wcard,.badge,.rdefi{border:0;border-radius:18px;box-shadow:var(--card)}
+.tsum{background:#fff}
+.box{background:#fff;box-shadow:var(--card);border-radius:18px;padding:6px 14px}
+.more div{background:#fff;box-shadow:var(--card)}
+/* Plus de cartes dans les cartes : la nuit devient une ligne de la journée */
+.day .body{padding:14px 16px 6px}
+.night,.night.miss,.night.arr,.night.mine{background:transparent;border-radius:0;margin:12px -16px 0;padding:10px 16px;border-top:1px solid var(--line)}
+.night.mine{box-shadow:inset 3px 0 0 var(--terra)}
+.night .ni{background:var(--sand)}
+.night .chg{background:#fff;min-height:40px}
+.day .open{display:inline-flex;align-items:center;min-height:40px;margin-top:2px}
+/* Alertes : une petite pastille au lieu de lignes orange */
+.warnline,.day .w.warnline,.tsum .warnline{display:inline-flex;align-items:flex-start;gap:6px;background:#fbefe5;color:#9a4a21;border-radius:10px;padding:6px 10px;font-size:13px;line-height:1.35;margin-top:8px}
+.warnline .ii{flex:none;margin:1px 0 0}
+/* Titres et respiration */
+h2{margin:26px 0 12px}
+.pbody>h2:first-child,.content>.tab>h2:first-child{margin-top:16px}
+.note,footer{line-height:1.5}
+footer{font-size:11.5px;opacity:.85}
+/* Messages : en bas de l'écran (façon Android), jamais sur les onglets */
+@media (max-width:899px){#status,body:not(.paged) #status,.paged #status{top:auto;bottom:calc(16px + env(safe-area-inset-bottom));flex-direction:column-reverse}}
+@keyframes toastUp{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}}
+@media (max-width:899px){.toast{animation-name:toastUp}}
+.toast{box-shadow:0 8px 24px rgba(23,58,44,.25)}
+/* Pastilles de la carte : fond crème, icône colorée seulement si active */
+.chip{box-shadow:0 2px 8px rgba(28,58,46,.14)}
+.chip:not(.on) .cb{background:var(--sand);color:var(--muted)}
+#tdStatus button.on[data-s=done]{background:var(--ok)!important;color:#fff!important}#tdStatus button.on[data-s=todo]{background:var(--terra)!important;color:#fff!important}
+
 /* --- Ordinateur : panneau latéral, profil sous la carte --- */
 @media (min-width:900px){
   #map{left:var(--side);bottom:170px}
@@ -1502,7 +1546,7 @@ function renderSummary() {
   nights.forEach(s => { if (s.endPoi && s.endPoi.cat === 'hut') cnt.hut++; else if (s.endPoi) cnt.biv++; else cnt.free++; });
   const nl = [cnt.hut && `${I('hut', CAT.hut.color)}${cnt.hut} en refuge`, cnt.biv && `${I('tent', CAT.bivouac.color)}${cnt.biv} en bivouac`, cnt.free && `${I('moon', 'var(--forest-2)')}${cnt.free} ${cnt.free > 1 ? 'libres' : 'libre'}`].filter(Boolean);
   const dry = poiState !== 'loading' && R.pois.length ? R.stages.filter(s => s.waterGap && s.waterGap.h > 3).length : 0;
-  const keep = !t ? ['Garder ce trek', false] : dirty ? ['Mettre à jour Mes parcours', false] : ['Gardé dans Mes parcours', true];
+  const keep = !t ? ['Garder ce trek', false] : dirty ? ['Mettre à jour', false] : ['Gardé', true];
   box.innerHTML = `<div class="tsum">
     <div class="kick">${n > 1 ? `Ton trek en ${n + restCount()} jours${restCount() ? ` dont ${restCount()} de repos` : ''}` : 'Ta rando'}</div>
     <h3>${escXml(t ? t.name : defaultName())}</h3>
@@ -1510,7 +1554,7 @@ function renderSummary() {
     ${nl.length ? `<div class="nights">${n - 1} nuit${n > 2 ? 's' : ''} : ${nl.join(' · ')}</div>` : ''}
     ${dry ? `<div class="sub warnline">${I('nowater', 'var(--warn)')}${dry} journée${dry > 1 ? 's' : ''} avec plus de 3 h sans eau connue : prévois de la réserve.</div>` : ''}
     <div class="row" style="margin-top:12px">
-      <button id="bKeep" class="primary grow"${keep[1] ? ' disabled' : ''}>${I('save')}<span>${keep[0]}</span></button>
+      <button id="bKeep" class="primary grow"${keep[1] ? ' disabled' : ''}>${I(keep[1] ? 'check' : 'save')}<span>${keep[0]}</span></button>
       <button id="bAdjust" class="grow">${I('pen')}Ajuster</button>
     </div></div>`;
   $('#bKeep').onclick = () => { renderProfile(); saveTrek(false); renderSummary(); };
