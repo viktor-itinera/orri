@@ -277,6 +277,7 @@ footer{font-size:12px;color:var(--muted);margin-top:24px;border-top:1px solid va
 #stFly .flyhud{position:absolute;left:0;right:0;top:0;padding:16px 18px 40px;background:linear-gradient(180deg,rgba(0,0,0,.55),transparent);color:#fffaf0;pointer-events:none}
 #stFly .flyhud b{display:block;font-family:Fraunces,Georgia,serif;font-size:22px}
 #stFly .flyhud span{color:#f4c06b;font-weight:600}
+#stFly .flyattr{position:absolute;right:8px;bottom:6px;left:8px;text-align:right;font-size:10px;color:rgba(255,250,240,.8);text-shadow:0 1px 2px rgba(0,0,0,.6);pointer-events:none}
 #stFly .stmsg{color:#fffaf0;text-align:center;padding:40% 30px 0}
 #stPrev,#stNext{position:absolute;top:0;bottom:0;width:32%;background:none;border:0;padding:0;min-height:0}
 #stPrev{left:0}#stNext{right:0}
@@ -636,7 +637,7 @@ details.why summary::-webkit-details-marker{display:none}
         <div id="poiRows"></div>
         <p class="note" id="poiStatus"></p>
 
-        <footer>Itinéraires : BRouter (serveur public communautaire, usage modéré) sur données © contributeurs OpenStreetMap. Carte Orri : OpenFreeMap, © OpenMapTiles, © contributeurs OpenStreetMap ; relief : Mapzen, AWS Terrain Tiles (SRTM et autres sources publiques). Plan IGN, photos, altitudes et noms de lieux : © IGN. Eau, refuges, bivouacs, commerces et gares : © contributeurs OpenStreetMap (ODbL), extraits chaque mois pour la France, l'Espagne, l'Andorre, la Norvège, la Suisse et l'Italie. Ton brouillon est gardé dans ce navigateur.</footer>
+        <footer>Itinéraires : BRouter (serveur public communautaire, usage modéré) sur données © contributeurs OpenStreetMap. Carte Orri : OpenFreeMap, © OpenMapTiles, © contributeurs OpenStreetMap ; relief : Mapzen, AWS Terrain Tiles (SRTM et autres sources publiques). Images satellite du survol 3D : Esri World Imagery (Esri, Maxar, Earthstar Geographics) et Sentinel-2 cloudless 2016 by EOX IT Services (CC BY 4.0, données Copernicus modifiées). Plan IGN, photos, altitudes et noms de lieux : © IGN. Eau, refuges, bivouacs, commerces et gares : © contributeurs OpenStreetMap (ODbL), extraits chaque mois pour la France, l'Espagne, l'Andorre, la Norvège, la Suisse et l'Italie. Ton brouillon est gardé dans ce navigateur.</footer>
       </section>
     </div>
   </aside>
@@ -2862,6 +2863,18 @@ $('#stClose').onclick = () => { stopFly(true); if (story) story.urls.forEach(u =
 // Survol 3D : la caméra suit le tracé au-dessus du relief ; « Enregistrer la vidéo » filme le survol (sur le téléphone, sans serveur)
 let flyer = null;
 function routeAlong(pts) { const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + hav(pts[i - 1], pts[i])); return { pts, cum, L: cum[cum.length - 1] }; }
+// Chemin de la caméra : le tracé rééchantillonné puis lissé (3 moyennes glissantes ≈ gaussienne de largeur `win` m) ;
+// la caméra suit ce chemin souple au lieu des zigzags du sentier.
+function smoothAlong(r, win) {
+  const step = Math.max(20, r.L / 4000), n = Math.max(2, Math.ceil(r.L / step) + 1), la = new Float64Array(n), lo = new Float64Array(n);
+  for (let i = 0; i < n; i++) { const p = alongAt(r, i * step); la[i] = p.lat; lo[i] = p.lon; }
+  const h = Math.max(1, Math.round(win / step / 2)), box = a => {
+    const c = new Float64Array(n + 1); for (let i = 0; i < n; i++) c[i + 1] = c[i] + a[i];
+    const o = new Float64Array(n); for (let i = 0; i < n; i++) { const i0 = Math.max(0, i - h), i1 = Math.min(n - 1, i + h); o[i] = (c[i1 + 1] - c[i0]) / (i1 - i0 + 1); } return o;
+  };
+  const sla = box(box(box(la))), slo = box(box(box(lo)));
+  return dist => { const f = Math.max(0, Math.min(n - 1, dist / step)), i = Math.min(n - 2, Math.floor(f)), k = f - i; return { lat: sla[i] + (sla[i + 1] - sla[i]) * k, lon: slo[i] + (slo[i + 1] - slo[i]) * k }; };
+}
 function alongAt(r, dist) {
   let lo = 0, hi = r.cum.length - 1; dist = Math.max(0, Math.min(r.L, dist));
   while (hi - lo > 1) { const m = (lo + hi) >> 1; if (r.cum[m] < dist) lo = m; else hi = m; }
@@ -2874,18 +2887,30 @@ async function startFly() {
   stopFly(true);
   let ml = null; if (can3D()) try { ml = await loadML5(); } catch (e) { }
   if (!ml || !story) { $('#stFly').innerHTML = '<p class="stmsg">Le survol 3D a besoin du réseau et d\'un téléphone compatible 3D.</p>'; return; }
-  $('#stFly').innerHTML = '<div class="flymap"></div><div class="flyhud"><b></b><span></span></div>';
+  $('#stFly').innerHTML = '<div class="flymap"></div><div class="flyhud"><b></b><span></span></div><small class="flyattr">Images : Esri, Maxar, Earthstar Geographics · EOX Sentinel-2 · relief : AWS Terrain Tiles</small>';
   const d = st.d, r = routeAlong(d.pts.map(p => [p[0], p[1]]));
   const style = globeStyle(); style.projection = { type: 'mercator' };
   style.sources.route = { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: d.pts.map(p => [p[1], p[0]]) } } };
   style.sources.done = { type: 'geojson', data: { type: 'FeatureCollection', features: [] } };
   style.sources.me = { type: 'geojson', data: { type: 'FeatureCollection', features: [] } };
-  style.layers = style.layers.filter(l => !/^t|^s|frontieres/.test(l.id) || l.id === 'bg').concat([
+  // Images satellite posées sur le relief en volume (Esri, EOX en dessous) ; sans elles, les couleurs d'altitude restent visibles.
+  style.sources.sat = { type: 'raster', tiles: [SAT], tileSize: 256, maxzoom: 17, attribution: SAT_ATTR };
+  style.sources.sat0 = { type: 'raster', tiles: [SAT0], tileSize: 256, maxzoom: 13 };
+  style.sources.dem3d.maxzoom = 12;
+  style.layers = style.layers.filter(l => !/^t|^s|frontieres/.test(l.id) || l.id === 'bg');
+  style.layers.splice(style.layers.findIndex(l => l.id === 'ombre') + 1, 0,
+    { id: 'sat0', type: 'raster', source: 'sat0', paint: { 'raster-fade-duration': 0 } },
+    { id: 'sat', type: 'raster', source: 'sat', paint: { 'raster-fade-duration': 0, 'raster-saturation': 0.05, 'raster-contrast': 0.05 } });
+  style.layers.find(l => l.id === 'ombre').layout = { visibility: 'none' };
+  style.layers = style.layers.concat([
     { id: 'rcase', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#fffaf0', 'line-width': 7, 'line-opacity': .75 } },
     { id: 'rdone', type: 'line', source: 'done', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#cf6a3c', 'line-width': 5.5 } },
     { id: 'rme', type: 'circle', source: 'me', paint: { 'circle-radius': 9, 'circle-color': '#cf6a3c', 'circle-stroke-width': 4, 'circle-stroke-color': '#fffaf0', 'circle-pitch-alignment': 'map' } }]);
   const m = new ml.Map({ container: $('#stFly .flymap'), style, attributionControl: false, interactive: false, fadeDuration: 0, canvasContextAttributes: { preserveDrawingBuffer: true, antialias: true } });
-  flyer = { t: st.t, m, r, d, ml };
+  flyer = { t: st.t, m, r, d, ml, satOk: 0, satKo: 0 };
+  // Suivi des images satellite : si aucune ne charge (réseau, blocage), on le dit au lieu de laisser croire à un rendu satellite
+  m.on('sourcedata', e => { if (e.sourceId === 'sat' && e.tile && e.tile.state === 'loaded' && flyer) flyer.satOk++; });
+  m.on('error', e => { if (e && e.sourceId === 'sat' && flyer) { flyer.satKo++; if (!flyer.satOk && flyer.satKo > 8) { const a = $('#stFly .flyattr'); a && (a.textContent = 'Images satellite indisponibles ici : relief seul'); } } });
   m.on('load', () => { m.setTerrain({ source: 'dem3d', exaggeration: 1.5 }); flyPlay(); });
 }
 function flyPlay(rec) {   // intro vue d'ensemble -> survol le long du tracé -> recul final ; rec : appelée à chaque image
@@ -2895,7 +2920,10 @@ function flyPlay(rec) {   // intro vue d'ensemble -> survol le long du tracé ->
   const over = m.cameraForBounds([[o0, a0], [o1, a1]], { padding: 50 }) || { center: [r.pts[0][1], r.pts[0][0]], zoom: 10 };
   const zf = Math.min(13.2, Math.max(11, 12.6 - Math.log2(Math.max(1, r.L / 60000)) * .4));
   const brg = (a, b) => Math.atan2((b.lon - a.lon) * Math.cos(a.lat * Math.PI / 180), b.lat - a.lat) * 180 / Math.PI;
-  let bear = brg(alongAt(r, 0), alongAt(r, 1500)), t = 0, last = performance.now(), hud = $('#stFly .flyhud');
+  // Lissage réglé sur la vitesse : la caméra « voit » environ 3 s de parcours, le cap tourne au plus de 20°/s
+  const vel = r.L / D, cam = smoothAlong(r, Math.max(900, vel * 3000)), look = Math.max(1200, vel * 2500);
+  const capAt = dist => brg(cam(dist - look / 2), cam(dist + look / 2));
+  let bear = capAt(0), t = 0, last = performance.now(), hud = $('#stFly .flyhud');
   const lerp = (a, b, k) => a + (b - a) * k, ease = k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2, angle = (a, b, k) => { let dd = ((b - a + 540) % 360) - 180; return a + dd * k; };
   const setDone = dist => { const p = alongAt(r, dist), cs = r.pts.slice(0, p.i + 1).map(q => [q[1], q[0]]); cs.push([p.lon, p.lat]); m.getSource('done').setData({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: cs.length > 1 ? cs : [cs[0], cs[0]] } }); m.getSource('me').setData({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } }); return p; };
   hud.querySelector('b').textContent = F.d.t.name;
@@ -2906,17 +2934,19 @@ function flyPlay(rec) {   // intro vue d'ensemble -> survol le long du tracé ->
     if (!F.rec || m.areTilesLoaded()) t += dt; else if (F.rec && F.rec.state === 'recording') { F.rec.pause(); }
     if (F.rec && F.rec.state === 'paused' && m.areTilesLoaded()) F.rec.resume();
     if (t < T0) {   // vue d'ensemble qui s'incline puis plonge vers le départ
-      const k = ease(t / T0), p0 = alongAt(r, 0);
+      const k = ease(t / T0), p0 = cam(0);
       m.jumpTo({ center: [lerp(over.center.lng != null ? over.center.lng : over.center[0], p0.lon, k), lerp(over.center.lat != null ? over.center.lat : over.center[1], p0.lat, k)], zoom: lerp(over.zoom, zf, k), pitch: lerp(20, 62, k), bearing: angle(0, bear, k) });
       setDone(0);
     } else if (t < T0 + D) {
-      const k = (t - T0) / D, dist = r.L * (k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2) * .999 + r.L * .001 * k, p = setDone(dist), ahead = alongAt(r, dist + Math.max(800, r.L * .02));
-      bear = angle(bear, brg(p, ahead), Math.min(1, dt / 900));
-      m.jumpTo({ center: [p.lon, p.lat], zoom: zf, pitch: 62, bearing: bear });
+      // vitesse douce : départ et arrivée progressifs, allure régulière au milieu
+      const k = (t - T0) / D, sm = x => x < .12 ? x * x / .24 : x > .88 ? .88 - (1 - x) * (1 - x) / .24 : x - .06, dist = r.L * sm(k) / .88, p = setDone(dist), c = cam(dist);
+      const dd = ((capAt(dist) - bear + 540) % 360) - 180, mx = 20 * dt / 1000;
+      bear += Math.max(-mx, Math.min(mx, dd * Math.min(1, dt / 1400)));
+      m.jumpTo({ center: [c.lon, c.lat], zoom: zf, pitch: 62, bearing: bear });
       const e = m.queryTerrainElevation ? m.queryTerrainElevation([p.lon, p.lat]) : null;
       hud.querySelector('span').textContent = `${nf1.format(dist / 1000)} km` + (e != null && isFinite(e) ? ` · ${nf0.format(e / 1.5)} m` : '');
     } else if (t < T0 + D + T2) {   // recul : tout le parcours en relief
-      const k = ease((t - T0 - D) / T2), p1 = alongAt(r, r.L);
+      const k = ease((t - T0 - D) / T2), p1 = cam(r.L);
       setDone(r.L);
       m.jumpTo({ center: [lerp(p1.lon, over.center.lng != null ? over.center.lng : over.center[0], k), lerp(p1.lat, over.center.lat != null ? over.center.lat : over.center[1], k)], zoom: lerp(zf, over.zoom - .2, k), pitch: lerp(62, 45, k), bearing: bear + 30 * k });
       hud.querySelector('span').textContent = `${nf1.format(r.L / 1000)} km` + (F.d.s.up ? ` · +${nf0.format(F.d.s.up)} m` : '');
@@ -2947,6 +2977,7 @@ $('#stRec').onclick = async () => {
     x.fillStyle = '#fffaf0'; x.font = `700 30px ${SVF}`; x.fillText('Orri', 36, 64);
     x.font = `700 44px ${SVF}`; x.fillText(svFit(x, F.d.t.name, `700 44px ${SVF}`, 650), 36, 128);
     x.font = `600 28px ${SVS}`; x.fillStyle = '#f4c06b'; x.fillText($('#stFly .flyhud span').textContent, 36, 172);
+    x.font = `400 15px ${SVS}`; x.fillStyle = 'rgba(255,250,240,.75)'; x.textAlign = 'right'; x.fillText('Images : Esri, Maxar, Earthstar Geographics · EOX · AWS Terrain Tiles', 704, 1262); x.textAlign = 'left';
   };
   const done = new Promise(ok => rec.onstop = ok);
   rec.start(500); flyPlay(end => { frame(); if (end && rec.state !== 'inactive') rec.stop(); });
@@ -3772,6 +3803,11 @@ function loadRelief() {
   return reliefTex;
 }
 const TERRAIN = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/';
+// Images satellite du survol : Esri World Imagery (photos aériennes et satellite nettes, gratuites sans clé, crédit obligatoire),
+// et en dessous Sentinel-2 cloudless 2016 d'EOX (CC BY 4.0, 10 m) si une tuile Esri manque.
+const SAT = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  SAT0 = 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg',
+  SAT_ATTR = 'Images : Esri, Maxar, Earthstar Geographics · Sentinel-2 cloudless 2016 by EOX (CC BY 4.0)';
 const terrCache = new Map();
 function terrTile(z, x, y) {
   const k = z + '/' + x + '/' + y; if (terrCache.has(k)) return terrCache.get(k);
