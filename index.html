@@ -3088,7 +3088,7 @@ function acctMsg(e) {
   if (/weak_password|at least/i.test(c)) return 'Mot de passe trop faible : 8 caractères au moins.';
   if (/email_address_invalid|invalid.*email|validate email/i.test(c)) return 'Cette adresse e-mail n\'est pas valide.';
   if (e.status === 429 || /rate_limit/i.test(c)) return 'Trop d\'essais : réessaie dans quelques minutes.';
-  if (/email_not_confirmed|confirm/i.test(c)) return 'Ce compte attend une confirmation par e-mail, désactivée chez Orri : réessaie plus tard.';
+  if (/email_not_confirmed|confirm/i.test(c)) return 'Le serveur d\'Orri demande encore une confirmation par e-mail, qu\'il ne peut pas envoyer : l\'inscription est bloquée pour le moment. Réessaie un peu plus tard.';
   return 'Le serveur n\'a pas répondu comme prévu (' + (e.message || e.status) + ').';
 }
 async function acctSign(up) {
