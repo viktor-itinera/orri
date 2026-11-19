@@ -46,7 +46,7 @@ def handler(route):
     if "unpkg.com/@maplibre/maplibre-gl-leaflet" in u: return route.fulfill(path=NM + "@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js", content_type="application/javascript")
     if "cdnjs.cloudflare.com" in u and u.endswith(".js"): return route.fulfill(path=LEAF + "leaflet.js", content_type="application/javascript")
     if "cdnjs.cloudflare.com" in u and u.endswith(".css"): return route.fulfill(path=LEAF + "leaflet.css", content_type="text/css")
-    if "tiles.maps.eox.at" in u: calls["sat"] = calls.get("sat", 0) + 1; return route.fulfill(body=SAT, content_type="image/png", headers=JSON_HDR)
+    if "tiles.maps.eox.at" in u or "arcgisonline.com" in u: calls["sat"] = calls.get("sat", 0) + 1; return route.fulfill(body=SAT, content_type="image/png", headers=JSON_HDR)
     if "/wmts" in u or "opentopomap" in u or "kartverket" in u: return route.fulfill(body=TILE, content_type="image/png")
     if "brouter.de" in u:
         calls["brouter"] += 1
@@ -260,7 +260,7 @@ with sync_playwright() as p:
     if is3d_ok:
         pg.wait_for_function("flyer && flyer.playing && flyer.m.getTerrain() && flyer.m.getPitch() > 30", timeout=90000)
         check(J(pg, "() => flyer.m.getPitch() > 30 && flyer.m.getSource('done') && $('#stRec').offsetParent !== null"), "survol 3D du parcours, bouton vidéo")
-        check(J(pg, "() => !!(flyer.m.getLayer('sat') && flyer.m.getSource('sat'))") and calls.get("sat", 0) > 0, "survol 3D : images satellite sur le relief")
+        check(J(pg, "() => !!(flyer.m.getLayer('sat') && flyer.m.getSource('sat') && flyer.satOk > 0)") and calls.get("sat", 0) > 0, "survol 3D : images satellite chargées sur le relief")
         J(pg, "() => { $('#stRec').onclick(); }"); pg.wait_for_timeout(1500)
         check(J(pg, "() => !!(flyer.rec && ['recording', 'paused'].includes(flyer.rec.state))"), "survol 3D : enregistrement vidéo lancé")
     pg.click("#stClose"); pg.wait_for_timeout(300)
