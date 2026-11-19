@@ -47,3 +47,61 @@ language sql security definer set search_path = '' as $$
 $$;
 revoke all on function public.delete_my_account() from public, anon;
 grant execute on function public.delete_my_account() to authenticated;
+
+-- ================= C2 : amis =================
+-- Chaque profil a un code ami (8 caractères). Le partager = accepter l'amitié : celui qui l'utilise devient ami, des deux côtés.
+alter table public.profiles add column if not exists code text unique default upper(substr(md5(random()::text || clock_timestamp()::text), 1, 8));
+update public.profiles set code = upper(substr(md5(random()::text || id::text), 1, 8)) where code is null;
+
+create table if not exists public.friends (
+  a uuid not null references auth.users(id) on delete cascade,
+  b uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (a, b),
+  check (a < b)
+);
+alter table public.friends enable row level security;
+drop policy if exists "amis : les miens" on public.friends;
+create policy "amis : les miens" on public.friends for select to authenticated
+  using ((select auth.uid()) in (a, b));
+revoke all on public.friends from anon;
+grant select on public.friends to authenticated;
+
+create or replace function public.is_friend(other uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.friends f
+    where f.a = least((select auth.uid()), other) and f.b = greatest((select auth.uid()), other));
+$$;
+
+-- Mes amis voient les treks que je partage (share = 'friends'), jamais les autres.
+drop policy if exists "treks : partagés par mes amis" on public.treks;
+create policy "treks : partagés par mes amis" on public.treks for select to authenticated
+  using (share = 'friends' and not deleted and public.is_friend(user_id));
+
+create or replace function public.add_friend(friend_code text) returns table (id uuid, name text)
+language plpgsql security definer set search_path = '' as $$
+declare me uuid := auth.uid(); f uuid;
+begin
+  if me is null then raise exception 'non_connecte'; end if;
+  select p.id into f from public.profiles p where p.code = upper(trim(friend_code));
+  if f is null then raise exception 'code_inconnu'; end if;
+  if f = me then raise exception 'code_perso'; end if;
+  insert into public.friends (a, b) values (least(me, f), greatest(me, f)) on conflict do nothing;
+  return query select p.id, p.name from public.profiles p where p.id = f;
+end $$;
+
+create or replace function public.my_friends() returns table (id uuid, name text, since timestamptz)
+language sql stable security definer set search_path = '' as $$
+  select p.id, p.name, f.created_at from public.friends f
+  join public.profiles p on p.id = case when f.a = (select auth.uid()) then f.b else f.a end
+  where (select auth.uid()) in (f.a, f.b)
+  order by p.name;
+$$;
+
+create or replace function public.remove_friend(other uuid) returns void
+language sql security definer set search_path = '' as $$
+  delete from public.friends where a = least((select auth.uid()), other) and b = greatest((select auth.uid()), other);
+$$;
+
+revoke all on function public.is_friend(uuid), public.add_friend(text), public.my_friends(), public.remove_friend(uuid) from public, anon;
+grant execute on function public.is_friend(uuid), public.add_friend(text), public.my_friends(), public.remove_friend(uuid) to authenticated;

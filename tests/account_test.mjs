@@ -1,5 +1,5 @@
-// Test du compte facultatif d'Orri : inscription, synchro du carnet entre deux appareils, suppression, déconnexion,
-// suppression du compte. Supabase est simulé en mémoire (Auth + PostgREST), le reste du réseau est coupé.
+// Test du compte facultatif d'Orri : inscription, synchro du carnet entre deux appareils, suppression, amis (code, lien,
+// trek partagé visible sur le globe et la carte, copie, retrait), déconnexion, suppression du compte. Supabase est simulé en mémoire (Auth + PostgREST), le reste du réseau est coupé.
 // Lancer : python3 -m http.server 8765 (à la racine), puis : cd tests && node account_test.mjs
 // (node_modules : voir CLAUDE.md, section « Tester » ; Playwright pour Node doit être installé.)
 import { createRequire } from 'module';
@@ -11,7 +11,8 @@ const URL = process.env.ORRI_URL || 'http://localhost:8765/';
 const NM = path.join(path.dirname(fileURLToPath(import.meta.url)), 'node_modules/');
 
 // ---- Faux Supabase ----
-const db = { users: [], profiles: {}, treks: [], tick: 0 };
+const db = { users: [], profiles: {}, treks: [], friends: [], tick: 0 };
+const isFriend = (x, y) => db.friends.some(f => (f.a === x && f.b === y) || (f.a === y && f.b === x));
 const now = () => new Date(Date.UTC(2026, 10, 19, 8, 0, 0) + ++db.tick).toISOString();
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*' };
 const sess = u => ({ access_token: 'tok-' + u.id, refresh_token: 'ref-' + u.id, expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: u.id, email: u.email, user_metadata: u.meta } });
@@ -34,10 +35,19 @@ async function supa(route) {
   const tok = (h.authorization || '').replace('Bearer ', ''), me = db.users.find(x => 'tok-' + x.id === tok);
   if (p === '/auth/v1/logout') return send(204);
   if (!me) return send(401, { message: 'JWT invalide' });
-  if (p === '/rest/v1/rpc/delete_my_account') { db.users = db.users.filter(x => x !== me); db.treks = db.treks.filter(r => r.user_id !== me.id); delete db.profiles[me.id]; return send(204); }
+  if (p === '/rest/v1/rpc/delete_my_account') { db.users = db.users.filter(x => x !== me); db.treks = db.treks.filter(r => r.user_id !== me.id); db.friends = db.friends.filter(f => f.a !== me.id && f.b !== me.id); delete db.profiles[me.id]; return send(204); }
+  if (p === '/rest/v1/rpc/add_friend') {
+    const f = Object.values(db.profiles).find(x => x.code === body.friend_code);
+    if (!f) return send(400, { code: 'P0001', message: 'code_inconnu' });
+    if (f.id === me.id) return send(400, { code: 'P0001', message: 'code_perso' });
+    if (!isFriend(me.id, f.id)) db.friends.push({ a: me.id, b: f.id });
+    return send(200, [{ id: f.id, name: f.name }]);
+  }
+  if (p === '/rest/v1/rpc/my_friends') return send(200, Object.values(db.profiles).filter(x => isFriend(me.id, x.id)).map(x => ({ id: x.id, name: x.name })));
+  if (p === '/rest/v1/rpc/remove_friend') { db.friends = db.friends.filter(f => !((f.a === me.id && f.b === body.other) || (f.b === me.id && f.a === body.other))); return send(204); }
   if (p === '/rest/v1/profiles') {
-    if (m === 'POST') { body.forEach(r => { if (r.id === me.id) db.profiles[me.id] = r; }); return send(201); }
-    return send(200, db.profiles[me.id] ? [{ name: db.profiles[me.id].name }] : []);
+    if (m === 'POST') { body.forEach(r => { if (r.id === me.id) db.profiles[me.id] = Object.assign({ code: ('K' + me.id).toUpperCase().padEnd(8, 'X') }, db.profiles[me.id], r); }); return send(201); }
+    const pr = db.profiles[me.id]; return send(200, pr ? [{ name: pr.name, code: pr.code }] : []);
   }
   if (p === '/rest/v1/treks') {
     if (m === 'POST') {
@@ -45,13 +55,18 @@ async function supa(route) {
         if (r.user_id !== me.id) throw new Error('user_id');
         let row = db.treks.find(x => x.user_id === me.id && x.id === r.id);
         if (!row) { row = { user_id: me.id, id: r.id }; db.treks.push(row); }
-        Object.assign(row, { data: r.data, deleted: r.deleted, updated_at: now() });
+        Object.assign(row, { data: r.data, deleted: r.deleted, share: r.share || 'private', updated_at: now() });
         return { id: row.id, updated_at: row.updated_at };
       });
       return send(201, out);
     }
-    let rows = db.treks.filter(r => r.user_id === me.id);
-    const inq = q.get('id'); if (inq) { const ids = inq.slice(4, -1).split(','); rows = rows.filter(r => ids.includes(r.id)); }
+    let rows = db.treks.filter(r => r.user_id === me.id || (r.share === 'friends' && !r.deleted && isFriend(me.id, r.user_id)));   // RLS
+    for (const [k, v] of q) {
+      if (k === 'share') rows = rows.filter(r => r.share === v.slice(3));
+      if (k === 'deleted') rows = rows.filter(r => String(r.deleted) === v.slice(3));
+      if (k === 'user_id') rows = rows.filter(r => v.startsWith('neq.') ? r.user_id !== v.slice(4) : r.user_id === v.slice(3));
+    }
+    const inq = q.get('id'); if (inq) { const ids = inq.startsWith('in.') ? inq.slice(4, -1).split(',') : [inq.slice(3)]; rows = rows.filter(r => ids.includes(r.id)); }
     const cols = q.get('select').split(',');
     return send(200, rows.map(r => Object.fromEntries(cols.map(c => [c, r[c]]))));
   }
@@ -118,14 +133,53 @@ check(await until(A, () => !acct.busy) && db.treks.find(r => r.id === 't2').dele
 await B.evaluate(() => acct.sync());
 check(await until(B, () => !acct.busy && !treks.get('t2')), 'trek supprimé sur A disparaît de B');
 
+// Amis : Léa (appareil D) reçoit le lien d'invitation de Viktor
+await A.evaluate(() => friendsRefresh(true)); await A.waitForTimeout(300);
+const code = await A.evaluate(() => friends.code);
+check(/^[A-Z0-9]{8}$/.test(code) && (await A.textContent('#friendsBox')).includes(code), 'code ami affiché dans Mon carnet (' + code + ')');
+await A.evaluate(() => openTrekPage('t1')); await A.waitForTimeout(200);
+check(await A.isVisible('#tdShare') && !(await A.isChecked('#tdShare')), 'trek privé par défaut, case « Partager avec mes amis »');
+await A.check('#tdShare');
+check(await until(A, () => treks.get('t1').share === 'friends' && !acct.busy && acct.m.rows.t1.h === trekHash(treks.get('t1')), 9000) && db.treks.find(r => r.id === 't1').share === 'friends', 'trek partagé : colonne share = friends en ligne');
+const D = await (async () => {
+  const ctx = await b.newContext({ ...require('playwright').devices['Pixel 7'] }); await ctx.route('**/*', handler);
+  const pg = await ctx.newPage(); pg.on('pageerror', e => errors.push(String(e)));
+  await pg.goto(URL + '?globe=off'); await pg.evaluate(() => localStorage.clear());
+  await pg.goto(URL + '?globe=off&ami=' + code); await pg.waitForTimeout(1500); return pg;
+})();
+check(await D.evaluate(() => localStorage.getItem('orri.invite')) === code && !(await D.evaluate(() => location.search.includes('ami='))), 'lien d\'invitation retenu, retiré de l\'adresse');
+check((await D.textContent('#status')).includes('invite'), 'message « un ami t\'invite » sans compte');
+await D.evaluate(() => openPage('profile')); await D.fill('#aName', 'Léa'); await D.fill('#aMail', 'lea@exemple.fr'); await D.fill('#aPw', 'motdepasse2'); await D.click('#aGo');
+check(await until(D, () => friends.list.length === 1 && friends.treks.length === 1), 'Léa inscrite : amie avec Viktor, voit son trek partagé');
+check(isFriend('u1', 'u2'), 'amitié enregistrée des deux côtés');
+check(await D.evaluate(() => globeTreks().some(g => g.friend && g.name === 'GR10 étape 1')), 'trek de Viktor dans le globe de Léa');
+check(await D.evaluate(() => friendLayer.getLayers().length === 1), 'trek de Viktor sur la carte de Léa');
+check(await D.evaluate(() => !treks.list.length), 'le trek de l\'ami n\'entre pas dans le carnet de Léa');
+await D.click('[data-ft]'); await D.waitForTimeout(200);
+check((await D.textContent('#ftBody')).includes('Viktor') && (await D.textContent('#ftBody')).includes('Superbe'), 'page du trek de Viktor : auteur et souvenir');
+await D.click('#ftCopy'); await D.waitForTimeout(300);
+check(await D.evaluate(() => treks.list.length === 1 && treks.list[0].status === 'todo' && !treks.list[0].note && !treks.list[0].share), 'copie dans le carnet de Léa (à faire, privée, sans souvenir)');
+await A.evaluate(() => friendsRefresh(true));
+check(await until(A, () => friends.list.length === 1 && friends.list[0].name === 'Léa'), 'Léa apparaît chez Viktor');
+check(await A.evaluate(() => friends.treks.length === 0), 'Viktor ne voit pas la copie privée de Léa');
+await D.evaluate(() => openPage('profile')); await D.fill('#fCode', 'ZZZZ9999'); await D.click('#fAdd');
+check(await until(D, () => /ne correspond/.test($('#friendsBox').textContent)), 'code inconnu : message clair');
+await A.evaluate(() => openTrekPage('t1')); await A.uncheck('#tdShare');
+for (let i = 0; i < 60 && db.treks.find(r => r.id === 't1').share !== 'private'; i++) await A.waitForTimeout(150);
+check(db.treks.find(r => r.id === 't1').share === 'private', 'case décochée : trek de nouveau privé en ligne');
+await D.evaluate(() => friendsRefresh(true));
+check(await until(D, () => friends.treks.length === 0 && friendLayer.getLayers().length === 0), 'trek redevenu privé : disparaît chez Léa');
+await D.evaluate(() => openPage('profile')); await D.click('.fdel'); await D.click('.fdel');
+check(await until(D, () => friends.list.length === 0) && !isFriend('u1', 'u2'), 'Léa retire Viktor de ses amis');
+
 // Déconnexion sur B : le carnet reste
 await B.click('#aOut'); await B.click('#aOut');
 check(await until(B, () => !acct.s && treks.list.length === 1 && !!$('#aGo')), 'déconnexion : carnet gardé sur l\'appareil');
 
 // Suppression du compte depuis A
-await A.click('#acct summary'); await A.click('#aDel'); await A.click('#aDel');
+await A.evaluate(() => openPage('profile')); await A.click('#acct summary'); await A.click('#aDel'); await A.click('#aDel');
 check(await until(A, () => !acct.s), 'compte supprimé depuis A');
-check(!db.users.length && !db.treks.length && !Object.keys(db.profiles).length, 'plus rien en ligne après suppression');
+check(!db.users.some(u => u.id === 'u1') && !db.treks.some(r => r.user_id === 'u1') && !db.profiles.u1, 'plus rien de Viktor en ligne après suppression');
 check(await A.evaluate(() => treks.list.length === 1 && !localStorage.getItem('orri.account')), 'carnet de A gardé, session effacée');
 
 // Sans compte : aucun appel au serveur
